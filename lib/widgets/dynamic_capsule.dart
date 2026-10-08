@@ -1,4 +1,3 @@
-import 'dart:ui';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -29,15 +28,15 @@ class DynamicCapsule extends StatelessWidget {
         height: 38,
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
         decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF000000).withOpacity(0.85) : const Color(0xFF1D1D1F),
+          color: isDark ? const Color(0xFF000000).withValues(alpha: 0.85) : const Color(0xFF1D1D1F),
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: Colors.white.withOpacity(0.12),
+            color: Colors.white.withValues(alpha: 0.12),
             width: 0.8,
           ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.35),
+              color: Colors.black.withValues(alpha: 0.35),
               blurRadius: 16,
               offset: const Offset(0, 4),
             ),
@@ -60,7 +59,7 @@ class DynamicCapsule extends StatelessWidget {
                     color: (isDaemonOnline
                             ? (isSandbox ? AppleTheme.systemBlue : AppleTheme.systemGreen)
                             : AppleTheme.systemOrange)
-                        .withOpacity(0.7),
+                        .withValues(alpha: 0.7),
                     blurRadius: 8,
                     spreadRadius: 1.5,
                   ),
@@ -70,7 +69,7 @@ class DynamicCapsule extends StatelessWidget {
             const SizedBox(width: 8),
             // Profile & Status
             Text(
-              profile?.instagramHandle ?? '@emmsdigitalmedia',
+              profile.instagramHandle,
               style: const TextStyle(
                 color: Colors.white,
                 fontWeight: FontWeight.w600,
@@ -82,7 +81,7 @@ class DynamicCapsule extends StatelessWidget {
             Container(
               width: 1,
               height: 12,
-              color: Colors.white.withOpacity(0.2),
+              color: Colors.white.withValues(alpha: 0.2),
             ),
             const SizedBox(width: 8),
             Text(
@@ -90,7 +89,7 @@ class DynamicCapsule extends StatelessWidget {
                   ? (isSandbox ? 'SANDBOX ACTIVE' : 'DAEMON 3001')
                   : 'OFFLINE SYNC',
               style: TextStyle(
-                color: Colors.white.withOpacity(0.75),
+                color: Colors.white.withValues(alpha: 0.75),
                 fontSize: 10.5,
                 fontWeight: FontWeight.w500,
                 letterSpacing: 0.5,
@@ -99,7 +98,7 @@ class DynamicCapsule extends StatelessWidget {
             const SizedBox(width: 4),
             Icon(
               CupertinoIcons.chevron_down,
-              color: Colors.white.withOpacity(0.5),
+              color: Colors.white.withValues(alpha: 0.5),
               size: 11,
             ),
           ],

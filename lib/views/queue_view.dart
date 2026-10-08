@@ -8,7 +8,6 @@ import '../models/queue_slot_model.dart';
 import '../providers/posts_provider.dart';
 import '../theme/apple_theme.dart';
 import '../widgets/apple_glass_card.dart';
-import '../widgets/dynamic_capsule.dart';
 import '../widgets/media_player_widget.dart';
 import '../widgets/media_picker_dialog.dart';
 
@@ -63,23 +62,17 @@ class _QueueViewState extends State<QueueView> {
                     ),
                   ],
                 ),
-                Row(
-                  children: [
-                    const DynamicCapsule(),
-                    const SizedBox(width: 12),
-                    CupertinoButton.filled(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                      borderRadius: BorderRadius.circular(12),
-                      onPressed: () => _showComposeModal(context),
-                      child: const Row(
-                        children: [
-                          Icon(CupertinoIcons.plus_circle_fill, size: 16),
-                          SizedBox(width: 8),
-                          Text('Create Post', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
-                        ],
-                      ),
-                    ),
-                  ],
+                CupertinoButton.filled(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  borderRadius: BorderRadius.circular(12),
+                  onPressed: () => _showComposeModal(context),
+                  child: const Row(
+                    children: [
+                      Icon(CupertinoIcons.plus_circle_fill, size: 16),
+                      SizedBox(width: 8),
+                      Text('Create Post', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+                    ],
+                  ),
                 ),
               ],
             ),
@@ -92,7 +85,7 @@ class _QueueViewState extends State<QueueView> {
               child: ListView.separated(
                 scrollDirection: Axis.horizontal,
                 itemCount: queueSlots.length,
-                separatorBuilder: (_, __) => const SizedBox(width: 12),
+                separatorBuilder: (_, _) => const SizedBox(width: 12),
                 itemBuilder: (context, index) {
                   final slot = queueSlots[index];
                   return _buildSlotCard(slot, isDark);
@@ -154,7 +147,7 @@ class _QueueViewState extends State<QueueView> {
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: (slot.isActive ? AppleTheme.systemBlue : Colors.grey).withOpacity(0.12),
+              color: (slot.isActive ? AppleTheme.systemBlue : Colors.grey).withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(10),
             ),
             child: Icon(
@@ -216,7 +209,7 @@ class _QueueViewState extends State<QueueView> {
 
     return ListView.separated(
       itemCount: posts.length,
-      separatorBuilder: (_, __) => const SizedBox(height: 12),
+      separatorBuilder: (_, _) => const SizedBox(height: 12),
       itemBuilder: (context, index) {
         final post = posts[index];
         final formattedDate = DateFormat('EEE, MMM d • h:mm a').format(post.scheduledTime);
@@ -247,7 +240,7 @@ class _QueueViewState extends State<QueueView> {
                           child: Container(
                             padding: const EdgeInsets.all(4),
                             decoration: BoxDecoration(
-                              color: Colors.black.withOpacity(0.7),
+                              color: Colors.black.withValues(alpha: 0.7),
                               borderRadius: BorderRadius.circular(6),
                             ),
                             child: const Icon(CupertinoIcons.videocam_fill, size: 12, color: Colors.white),
@@ -271,7 +264,7 @@ class _QueueViewState extends State<QueueView> {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                           decoration: BoxDecoration(
-                            color: post.platformInfo.color.withOpacity(0.15),
+                            color: post.platformInfo.color.withValues(alpha: 0.15),
                             borderRadius: BorderRadius.circular(6),
                           ),
                           child: Text(
@@ -287,7 +280,7 @@ class _QueueViewState extends State<QueueView> {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                           decoration: BoxDecoration(
-                            color: isDark ? Colors.white.withOpacity(0.08) : Colors.black.withOpacity(0.05),
+                            color: isDark ? Colors.white.withValues(alpha: 0.08) : Colors.black.withValues(alpha: 0.05),
                             borderRadius: BorderRadius.circular(6),
                           ),
                           child: Row(
@@ -305,12 +298,12 @@ class _QueueViewState extends State<QueueView> {
                             ],
                           ),
                         ),
-                        if (post.status == PostStatus.published) ...[
+                        if (post.status == 'published') ...[
                           const SizedBox(width: 8),
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                             decoration: BoxDecoration(
-                              color: AppleTheme.systemGreen.withOpacity(0.15),
+                              color: AppleTheme.systemGreen.withValues(alpha: 0.15),
                               borderRadius: BorderRadius.circular(6),
                             ),
                             child: const Text(
@@ -387,7 +380,7 @@ class _QueueViewState extends State<QueueView> {
                       'Remove',
                       style: TextStyle(
                         fontSize: 11,
-                        color: AppleTheme.systemRed.withOpacity(0.9),
+                        color: AppleTheme.systemRed.withValues(alpha: 0.9),
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -421,7 +414,7 @@ class _ComposePostModalState extends State<_ComposePostModal> {
   SocialPlatform _platform = SocialPlatform.instagram;
   String _mediaUrl = 'assets/samples/emms_storytelling_reel.mp4';
   bool _isVideo = true;
-  DateTime _scheduledTime = DateTime.now().add(const Duration(hours: 3));
+  final DateTime _scheduledTime = DateTime.now().add(const Duration(hours: 3));
 
   @override
   void dispose() {
@@ -444,7 +437,7 @@ class _ComposePostModalState extends State<_ComposePostModal> {
             borderRadius: BorderRadius.circular(AppleTheme.radiusXl),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.4),
+                color: Colors.black.withValues(alpha: 0.4),
                 blurRadius: 36,
                 offset: const Offset(0, 10),
               ),
@@ -504,7 +497,7 @@ class _ComposePostModalState extends State<_ComposePostModal> {
                   decoration: InputDecoration(
                     hintText: 'Craft your high-converting caption, hooks, or call-to-action...',
                     filled: true,
-                    fillColor: isDark ? Colors.white.withOpacity(0.05) : Colors.black.withOpacity(0.04),
+                    fillColor: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.04),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                       borderSide: BorderSide.none,
@@ -550,7 +543,7 @@ class _ComposePostModalState extends State<_ComposePostModal> {
                     ),
                     CupertinoButton(
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                      color: isDark ? Colors.white.withOpacity(0.12) : Colors.black.withOpacity(0.08),
+                      color: isDark ? Colors.white.withValues(alpha: 0.12) : Colors.black.withValues(alpha: 0.08),
                       borderRadius: BorderRadius.circular(8),
                       onPressed: () async {
                         final res = await MediaPickerDialog.show(context);

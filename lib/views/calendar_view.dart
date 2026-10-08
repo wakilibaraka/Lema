@@ -3,12 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:table_calendar/table_calendar.dart';
-import '../models/platform_info.dart';
 import '../models/post_model.dart';
 import '../providers/posts_provider.dart';
 import '../theme/apple_theme.dart';
 import '../widgets/apple_glass_card.dart';
-import '../widgets/dynamic_capsule.dart';
 import '../widgets/media_player_widget.dart';
 
 class CalendarView extends StatefulWidget {
@@ -73,7 +71,6 @@ class _CalendarViewState extends State<CalendarView> {
                     ),
                   ],
                 ),
-                const DynamicCapsule(),
               ],
             ),
 
@@ -102,7 +99,7 @@ class _CalendarViewState extends State<CalendarView> {
                             calendarStyle: CalendarStyle(
                               outsideDaysVisible: false,
                               todayDecoration: BoxDecoration(
-                                color: AppleTheme.systemBlue.withOpacity(0.35),
+                                color: AppleTheme.systemBlue.withValues(alpha: 0.35),
                                 shape: BoxShape.circle,
                               ),
                               selectedDecoration: const BoxDecoration(
@@ -127,7 +124,7 @@ class _CalendarViewState extends State<CalendarView> {
                                 color: isDark ? Colors.white : Colors.black,
                               ),
                               formatButtonDecoration: BoxDecoration(
-                                color: isDark ? Colors.white.withOpacity(0.1) : Colors.black.withOpacity(0.06),
+                                color: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.black.withValues(alpha: 0.06),
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               formatButtonTextStyle: TextStyle(
@@ -191,7 +188,7 @@ class _CalendarViewState extends State<CalendarView> {
                               Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                                 decoration: BoxDecoration(
-                                  color: AppleTheme.systemBlue.withOpacity(0.12),
+                                  color: AppleTheme.systemBlue.withValues(alpha: 0.12),
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                                 child: Text(
@@ -219,16 +216,16 @@ class _CalendarViewState extends State<CalendarView> {
                                   )
                                 : ListView.separated(
                                     itemCount: selectedPosts.length,
-                                    separatorBuilder: (_, __) => const SizedBox(height: 10),
+                                    separatorBuilder: (_, _) => const SizedBox(height: 10),
                                     itemBuilder: (context, index) {
                                       final post = selectedPosts[index];
                                       return Container(
                                         padding: const EdgeInsets.all(12),
                                         decoration: BoxDecoration(
-                                          color: isDark ? Colors.white.withOpacity(0.04) : Colors.black.withOpacity(0.03),
+                                          color: isDark ? Colors.white.withValues(alpha: 0.04) : Colors.black.withValues(alpha: 0.03),
                                           borderRadius: BorderRadius.circular(12),
                                           border: Border.all(
-                                            color: isDark ? Colors.white.withOpacity(0.06) : Colors.black.withOpacity(0.04),
+                                            color: isDark ? Colors.white.withValues(alpha: 0.06) : Colors.black.withValues(alpha: 0.04),
                                           ),
                                         ),
                                         child: Row(
@@ -262,7 +259,7 @@ class _CalendarViewState extends State<CalendarView> {
                                                       Container(
                                                         padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
                                                         decoration: BoxDecoration(
-                                                          color: post.platformInfo.color.withOpacity(0.15),
+                                                          color: post.platformInfo.color.withValues(alpha: 0.15),
                                                           borderRadius: BorderRadius.circular(4),
                                                         ),
                                                         child: Text(

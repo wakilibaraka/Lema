@@ -8,7 +8,6 @@ import '../models/script_model.dart';
 import '../providers/posts_provider.dart';
 import '../theme/apple_theme.dart';
 import '../widgets/apple_glass_card.dart';
-import '../widgets/dynamic_capsule.dart';
 import '../widgets/media_player_widget.dart';
 
 class HooksPipelineView extends StatefulWidget {
@@ -126,7 +125,6 @@ class _HooksPipelineViewState extends State<HooksPipelineView> {
                     ),
                   ],
                 ),
-                const DynamicCapsule(),
               ],
             ),
 
@@ -142,7 +140,7 @@ class _HooksPipelineViewState extends State<HooksPipelineView> {
                     flex: 4,
                     child: ListView.separated(
                       itemCount: _scripts.length,
-                      separatorBuilder: (_, __) => const SizedBox(height: 12),
+                      separatorBuilder: (_, _) => const SizedBox(height: 12),
                       itemBuilder: (context, index) {
                         final script = _scripts[index];
                         final isSelected = script.id == _activeScript?.id;
@@ -161,7 +159,7 @@ class _HooksPipelineViewState extends State<HooksPipelineView> {
                                   Container(
                                     padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
                                     decoration: BoxDecoration(
-                                      color: _getStageColor(script.stage).withOpacity(0.15),
+                                      color: _getStageColor(script.stage).withValues(alpha: 0.15),
                                       borderRadius: BorderRadius.circular(6),
                                     ),
                                     child: Text(
@@ -296,7 +294,7 @@ class _HooksPipelineViewState extends State<HooksPipelineView> {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: isDark ? Colors.white.withOpacity(0.04) : Colors.black.withOpacity(0.03),
+        color: isDark ? Colors.white.withValues(alpha: 0.04) : Colors.black.withValues(alpha: 0.03),
         borderRadius: BorderRadius.circular(12),
         border: Border(left: BorderSide(color: accent, width: 3.5)),
       ),

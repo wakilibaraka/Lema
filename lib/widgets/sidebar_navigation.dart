@@ -34,12 +34,12 @@ class SidebarNavigation extends StatelessWidget {
     ];
 
     return Container(
-      width: 260,
+      width: 250,
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF141416).withOpacity(0.85) : const Color(0xFFF2F2F7).withOpacity(0.9),
+        color: isDark ? const Color(0xFF131317).withAlpha(210) : const Color(0xFFF9F9FB).withAlpha(220),
         border: Border(
           right: BorderSide(
-            color: isDark ? Colors.white.withOpacity(0.08) : Colors.black.withOpacity(0.06),
+            color: isDark ? Colors.white.withAlpha(16) : Colors.black.withAlpha(12),
             width: 1,
           ),
         ),
@@ -50,75 +50,19 @@ class SidebarNavigation extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // App Brand Header
-              Padding(
-                padding: const EdgeInsets.fromLTRB(20, 24, 20, 16),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 36,
-                      height: 36,
-                      decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          colors: [AppleTheme.systemBlue, AppleTheme.systemIndigo],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        ),
-                        borderRadius: BorderRadius.circular(10),
-                        boxShadow: [
-                          BoxShadow(
-                            color: AppleTheme.systemBlue.withOpacity(0.4),
-                            blurRadius: 10,
-                            offset: const Offset(0, 3),
-                          ),
-                        ],
-                      ),
-                      child: const Center(
-                        child: Icon(CupertinoIcons.paperplane_fill, color: Colors.white, size: 20),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Lema',
-                            style: TextStyle(
-                              fontSize: 19,
-                              fontWeight: FontWeight.w800,
-                              letterSpacing: -0.5,
-                              color: isDark ? Colors.white : Colors.black,
-                            ),
-                          ),
-                          Text(
-                            'Social Auto-Poster',
-                            style: TextStyle(
-                              fontSize: 11,
-                              color: isDark ? Colors.white54 : Colors.black45,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
               // Active Profile Card (Emms Digital Media)
               Container(
-                margin: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+                margin: const EdgeInsets.fromLTRB(14, 16, 14, 12),
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: isDark ? Colors.white.withOpacity(0.05) : Colors.white,
+                  color: isDark ? Colors.white.withAlpha(12) : Colors.white,
                   borderRadius: BorderRadius.circular(14),
                   border: Border.all(
-                    color: isDark ? Colors.white.withOpacity(0.08) : Colors.black.withOpacity(0.06),
+                    color: isDark ? Colors.white.withAlpha(16) : Colors.black.withAlpha(10),
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(isDark ? 0.2 : 0.03),
+                      color: Colors.black.withAlpha(isDark ? 30 : 8),
                       blurRadius: 8,
                       offset: const Offset(0, 2),
                     ),
@@ -129,11 +73,11 @@ class SidebarNavigation extends StatelessWidget {
                     ClipRRect(
                       borderRadius: BorderRadius.circular(10),
                       child: Image.asset(
-                        profile?.avatarUrl ?? 'assets/emms_avatar.png',
+                        profile.avatarUrl.isNotEmpty ? profile.avatarUrl : 'assets/emms_avatar.png',
                         width: 38,
                         height: 38,
                         fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => Container(
+                        errorBuilder: (_, _, _) => Container(
                           width: 38,
                           height: 38,
                           color: AppleTheme.systemBlue,
@@ -150,7 +94,7 @@ class SidebarNavigation extends StatelessWidget {
                             children: [
                               Flexible(
                                 child: Text(
-                                  profile?.name ?? 'Emms Digital Media',
+                                  profile.name,
                                   style: TextStyle(
                                     fontWeight: FontWeight.w700,
                                     fontSize: 13,
@@ -166,7 +110,7 @@ class SidebarNavigation extends StatelessWidget {
                           ),
                           const SizedBox(height: 1),
                           Text(
-                            profile?.instagramHandle ?? '@emmsdigitalmedia',
+                            profile.instagramHandle,
                             style: TextStyle(
                               fontSize: 11,
                               color: isDark ? Colors.white60 : Colors.black54,
@@ -180,36 +124,38 @@ class SidebarNavigation extends StatelessWidget {
                 ),
               ),
 
-              const SizedBox(height: 12),
+              const SizedBox(height: 4),
 
               // Navigation Links
               Expanded(
                 child: ListView.separated(
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  padding: const EdgeInsets.symmetric(horizontal: 10),
                   itemCount: navItems.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 4),
+                  separatorBuilder: (_, _) => const SizedBox(height: 3),
                   itemBuilder: (context, index) {
                     final item = navItems[index];
                     final isSelected = selectedIndex == index;
 
                     return AnimatedContainer(
-                      duration: const Duration(milliseconds: 200),
+                      duration: const Duration(milliseconds: 180),
                       curve: Curves.easeInOut,
                       decoration: BoxDecoration(
                         color: isSelected
-                            ? (isDark ? AppleTheme.systemBlue.withOpacity(0.25) : AppleTheme.systemBlue.withOpacity(0.12))
+                            ? (isDark ? AppleTheme.systemBlue.withAlpha(55) : AppleTheme.systemBlue.withAlpha(28))
                             : Colors.transparent,
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(11),
                         border: isSelected
-                            ? Border.all(color: AppleTheme.systemBlue.withOpacity(0.3), width: 1)
+                            ? Border.all(color: AppleTheme.systemBlue.withAlpha(70), width: 1)
                             : null,
                       ),
                       child: ListTile(
                         dense: true,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
+                        visualDensity: VisualDensity.compact,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(11)),
                         leading: Icon(
                           item['icon'] as IconData,
-                          size: 19,
+                          size: 18,
                           color: isSelected
                               ? AppleTheme.systemBlue
                               : (isDark ? Colors.white70 : Colors.black54),
@@ -217,29 +163,30 @@ class SidebarNavigation extends StatelessWidget {
                         title: Text(
                           item['label'] as String,
                           style: TextStyle(
-                            fontSize: 13.5,
-                            fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                            fontSize: 13,
+                            fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                            letterSpacing: -0.2,
                             color: isSelected
                                 ? (isDark ? Colors.white : AppleTheme.systemBlue)
-                                : (isDark ? Colors.white.withOpacity(0.85) : Colors.black87),
+                                : (isDark ? Colors.white.withAlpha(220) : Colors.black87),
                           ),
                         ),
                         trailing: item['badge'] != null
                             ? Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                                 decoration: BoxDecoration(
                                   color: isSelected
-                                      ? AppleTheme.systemBlue.withOpacity(0.2)
-                                      : (isDark ? Colors.white.withOpacity(0.08) : Colors.black.withOpacity(0.06)),
+                                      ? AppleTheme.systemBlue.withAlpha(50)
+                                      : (isDark ? Colors.white.withAlpha(20) : Colors.black.withAlpha(14)),
                                   borderRadius: BorderRadius.circular(6),
                                 ),
                                 child: Text(
                                   item['badge'] as String,
                                   style: TextStyle(
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.w600,
+                                    fontSize: 9.5,
+                                    fontWeight: FontWeight.w700,
                                     color: isSelected
-                                        ? AppleTheme.systemBlue
+                                        ? (isDark ? Colors.white : AppleTheme.systemBlue)
                                         : (isDark ? Colors.white60 : Colors.black54),
                                   ),
                                 ),
@@ -252,13 +199,13 @@ class SidebarNavigation extends StatelessWidget {
                 ),
               ),
 
-              // Bottom Section: Theme & Daemon Pill
+              // Bottom Section: Theme & Daemon
               Container(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                 decoration: BoxDecoration(
                   border: Border(
                     top: BorderSide(
-                      color: isDark ? Colors.white.withOpacity(0.06) : Colors.black.withOpacity(0.06),
+                      color: isDark ? Colors.white.withAlpha(14) : Colors.black.withAlpha(12),
                     ),
                   ),
                 ),
@@ -272,15 +219,15 @@ class SidebarNavigation extends StatelessWidget {
                           children: [
                             Icon(
                               isDark ? CupertinoIcons.moon_fill : CupertinoIcons.sun_max_fill,
-                              size: 16,
+                              size: 15,
                               color: isDark ? AppleTheme.systemIndigo : AppleTheme.systemOrange,
                             ),
                             const SizedBox(width: 8),
                             Text(
                               isDark ? 'Dark Mode' : 'Light Mode',
                               style: TextStyle(
-                                fontSize: 12.5,
-                                fontWeight: FontWeight.w500,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
                                 color: isDark ? Colors.white70 : Colors.black87,
                               ),
                             ),
@@ -288,38 +235,44 @@ class SidebarNavigation extends StatelessWidget {
                         ),
                         CupertinoSwitch(
                           value: isDark,
-                          activeColor: AppleTheme.systemBlue,
+                          activeTrackColor: AppleTheme.systemBlue,
                           onChanged: (_) => app.toggleTheme(),
                         ),
                       ],
                     ),
 
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 10),
 
-                    // Daemon Status
+                    // Daemon Status Row
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                       decoration: BoxDecoration(
-                        color: isDark ? Colors.white.withOpacity(0.04) : Colors.black.withOpacity(0.03),
-                        borderRadius: BorderRadius.circular(10),
+                        color: isDark ? Colors.white.withAlpha(10) : Colors.black.withAlpha(8),
+                        borderRadius: BorderRadius.circular(8),
                       ),
                       child: Row(
                         children: [
                           Container(
-                            width: 7,
-                            height: 7,
+                            width: 6.5,
+                            height: 6.5,
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
                               color: app.isDaemonOnline ? AppleTheme.systemGreen : AppleTheme.systemOrange,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: (app.isDaemonOnline ? AppleTheme.systemGreen : AppleTheme.systemOrange).withAlpha(120),
+                                  blurRadius: 4,
+                                ),
+                              ],
                             ),
                           ),
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(
-                              app.isDaemonOnline ? 'Port 3001 Active' : 'Offline / Standalone',
+                              app.isDaemonOnline ? 'Port 3001 Active' : 'Sandbox Simulated',
                               style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w500,
+                                fontSize: 10.5,
+                                fontWeight: FontWeight.w600,
                                 color: isDark ? Colors.white54 : Colors.black54,
                               ),
                             ),
@@ -327,7 +280,7 @@ class SidebarNavigation extends StatelessWidget {
                           Text(
                             'v1.0.0',
                             style: TextStyle(
-                              fontSize: 10,
+                              fontSize: 9.5,
                               color: isDark ? Colors.white30 : Colors.black26,
                             ),
                           ),

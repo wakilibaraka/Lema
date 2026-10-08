@@ -8,7 +8,6 @@ import '../providers/profile_provider.dart';
 import '../services/ai_service.dart';
 import '../theme/apple_theme.dart';
 import '../widgets/apple_glass_card.dart';
-import '../widgets/dynamic_capsule.dart';
 
 class AiStudioView extends StatefulWidget {
   const AiStudioView({super.key});
@@ -47,7 +46,6 @@ class _AiStudioViewState extends State<AiStudioView> {
 
   Future<void> _generatePost() async {
     final profile = context.read<ProfileProvider>().activeProfile;
-    if (profile == null) return;
 
     setState(() {
       _isLoading = true;
@@ -76,7 +74,6 @@ class _AiStudioViewState extends State<AiStudioView> {
 
   Future<void> _generate7DayPlan() async {
     final profile = context.read<ProfileProvider>().activeProfile;
-    if (profile == null) return;
 
     setState(() {
       _isLoading = true;
@@ -158,7 +155,6 @@ class _AiStudioViewState extends State<AiStudioView> {
                     ),
                   ],
                 ),
-                const DynamicCapsule(),
               ],
             ),
 
@@ -191,7 +187,7 @@ class _AiStudioViewState extends State<AiStudioView> {
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
                                       Text(
-                                        'AI Persona: ${profile?.name ?? "The Content Doctor"}',
+                                        'AI Persona: ${profile.name}',
                                         style: TextStyle(
                                           fontWeight: FontWeight.w700,
                                           fontSize: 13.5,
@@ -209,7 +205,7 @@ class _AiStudioViewState extends State<AiStudioView> {
                                 Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                                   decoration: BoxDecoration(
-                                    color: AppleTheme.systemPurple.withOpacity(0.15),
+                                    color: AppleTheme.systemPurple.withValues(alpha: 0.15),
                                     borderRadius: BorderRadius.circular(8),
                                   ),
                                   child: const Text('GEMINI 1.5 PRO', style: TextStyle(color: AppleTheme.systemPurple, fontSize: 10, fontWeight: FontWeight.w700)),
@@ -280,7 +276,7 @@ class _AiStudioViewState extends State<AiStudioView> {
                             decoration: InputDecoration(
                               hintText: 'Describe your topic, hook idea, or campaign goal...',
                               filled: true,
-                              fillColor: isDark ? Colors.white.withOpacity(0.05) : Colors.black.withOpacity(0.04),
+                              fillColor: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.04),
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(12),
                                 borderSide: BorderSide.none,
@@ -399,7 +395,7 @@ class _AiStudioViewState extends State<AiStudioView> {
     if (_generatedBatch != null && _generatedBatch!.isNotEmpty) {
       return ListView.separated(
         itemCount: _generatedBatch!.length,
-        separatorBuilder: (_, __) => const SizedBox(height: 12),
+        separatorBuilder: (_, _) => const SizedBox(height: 12),
         itemBuilder: (context, index) {
           final item = _generatedBatch![index];
           final day = item['day'] ?? 'Day ${index + 1}';
@@ -411,10 +407,10 @@ class _AiStudioViewState extends State<AiStudioView> {
           return Container(
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
-              color: isDark ? Colors.white.withOpacity(0.04) : Colors.black.withOpacity(0.03),
+              color: isDark ? Colors.white.withValues(alpha: 0.04) : Colors.black.withValues(alpha: 0.03),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
-                color: isDark ? Colors.white.withOpacity(0.06) : Colors.black.withOpacity(0.04),
+                color: isDark ? Colors.white.withValues(alpha: 0.06) : Colors.black.withValues(alpha: 0.04),
               ),
             ),
             child: Column(
@@ -426,7 +422,7 @@ class _AiStudioViewState extends State<AiStudioView> {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                       decoration: BoxDecoration(
-                        color: AppleTheme.systemPurple.withOpacity(0.15),
+                        color: AppleTheme.systemPurple.withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: Text(
@@ -463,7 +459,7 @@ class _AiStudioViewState extends State<AiStudioView> {
         child: Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: isDark ? Colors.white.withOpacity(0.04) : Colors.black.withOpacity(0.03),
+            color: isDark ? Colors.white.withValues(alpha: 0.04) : Colors.black.withValues(alpha: 0.03),
             borderRadius: BorderRadius.circular(12),
           ),
           child: SelectableText(

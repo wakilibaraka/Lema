@@ -45,7 +45,7 @@ class AppleGlassCard extends StatelessWidget {
             border: border,
             boxShadow: [
               BoxShadow(
-                color: isDark ? Colors.black.withOpacity(0.25) : Colors.black.withOpacity(0.04),
+                color: isDark ? Colors.black.withValues(alpha: 0.25) : Colors.black.withValues(alpha: 0.04),
                 blurRadius: 18,
                 offset: const Offset(0, 6),
               ),

@@ -74,11 +74,11 @@ class PostModel {
 
   DateTime get scheduledTime {
     if (_scheduledTimeRaw is DateTime) {
-      return _scheduledTimeRaw as DateTime;
+      return _scheduledTimeRaw;
     }
     if (_scheduledTimeRaw is String) {
       try {
-        final timeParts = (_scheduledTimeRaw as String).split(':');
+        final timeParts = (_scheduledTimeRaw).split(':');
         final dateParts = scheduledDate.split('-');
         if (dateParts.length == 3 && timeParts.length >= 2) {
           return DateTime(
@@ -141,7 +141,7 @@ class PostModel {
       mediaUrl: mediaUrl ?? this.mediaUrl,
       localFilePath: localFilePath ?? this.localFilePath,
       scheduledDate: scheduledDate ?? this.scheduledDate,
-      scheduledTime: scheduledTime ?? this._scheduledTimeRaw,
+      scheduledTime: scheduledTime ?? _scheduledTimeRaw,
       status: status ?? this.status,
       views: views ?? this.views,
       likes: likes ?? this.likes,

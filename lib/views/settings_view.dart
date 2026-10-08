@@ -6,7 +6,6 @@ import '../providers/app_provider.dart';
 import '../providers/profile_provider.dart';
 import '../theme/apple_theme.dart';
 import '../widgets/apple_glass_card.dart';
-import '../widgets/dynamic_capsule.dart';
 
 class SettingsView extends StatefulWidget {
   const SettingsView({super.key});
@@ -74,7 +73,6 @@ class _SettingsViewState extends State<SettingsView> {
                       ),
                     ],
                   ),
-                  const DynamicCapsule(),
                 ],
               ),
 
@@ -91,7 +89,7 @@ class _SettingsViewState extends State<SettingsView> {
                         Container(
                           padding: const EdgeInsets.all(10),
                           decoration: BoxDecoration(
-                            color: (app.isDaemonOnline ? AppleTheme.systemGreen : AppleTheme.systemOrange).withOpacity(0.12),
+                            color: (app.isDaemonOnline ? AppleTheme.systemGreen : AppleTheme.systemOrange).withValues(alpha: 0.12),
                             borderRadius: BorderRadius.circular(10),
                           ),
                           child: Icon(
@@ -132,13 +130,12 @@ class _SettingsViewState extends State<SettingsView> {
                           borderRadius: BorderRadius.circular(10),
                           onPressed: () async {
                             await app.checkDaemonHealth();
-                            if (mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(app.isDaemonOnline ? 'Daemon Ping Succeeded! (Port 3001)' : 'Daemon offline or unreachable'),
-                                ),
-                              );
-                            }
+                            if (!mounted || !context.mounted) return;
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(app.isDaemonOnline ? 'Daemon Ping Succeeded! (Port 3001)' : 'Daemon offline or unreachable'),
+                              ),
+                            );
                           },
                           child: const Text('Ping Daemon', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
                         ),
@@ -171,7 +168,7 @@ class _SettingsViewState extends State<SettingsView> {
                         ),
                         CupertinoSwitch(
                           value: app.sandboxMode,
-                          activeColor: AppleTheme.systemBlue,
+                          activeTrackColor: AppleTheme.systemBlue,
                           onChanged: (_) => app.toggleSandbox(),
                         ),
                       ],
@@ -193,7 +190,7 @@ class _SettingsViewState extends State<SettingsView> {
                         Container(
                           padding: const EdgeInsets.all(10),
                           decoration: BoxDecoration(
-                            color: AppleTheme.systemPurple.withOpacity(0.12),
+                            color: AppleTheme.systemPurple.withValues(alpha: 0.12),
                             borderRadius: BorderRadius.circular(10),
                           ),
                           child: const Icon(CupertinoIcons.sparkles, color: AppleTheme.systemPurple, size: 20),
@@ -233,7 +230,7 @@ class _SettingsViewState extends State<SettingsView> {
                       decoration: InputDecoration(
                         hintText: 'Enter Gemini API Key (Optional - Heuristic fallbacks enabled)',
                         filled: true,
-                        fillColor: isDark ? Colors.white.withOpacity(0.05) : Colors.black.withOpacity(0.04),
+                        fillColor: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.04),
                         contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
@@ -267,7 +264,7 @@ class _SettingsViewState extends State<SettingsView> {
                               Row(
                                 children: [
                                   Text(
-                                    profile?.name ?? 'Emms Digital Media',
+                                    profile.name,
                                     style: TextStyle(
                                       fontSize: 15,
                                       fontWeight: FontWeight.w700,
@@ -280,7 +277,7 @@ class _SettingsViewState extends State<SettingsView> {
                               ),
                               const SizedBox(height: 2),
                               Text(
-                                '${profile?.instagramHandle ?? "@emmsdigitalmedia"} • Nairobi, Kenya',
+                                '${profile.instagramHandle} • Nairobi, Kenya',
                                 style: TextStyle(
                                   fontSize: 12,
                                   color: isDark ? Colors.white60 : Colors.black54,
@@ -292,7 +289,7 @@ class _SettingsViewState extends State<SettingsView> {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                           decoration: BoxDecoration(
-                            color: AppleTheme.systemGreen.withOpacity(0.15),
+                            color: AppleTheme.systemGreen.withValues(alpha: 0.15),
                             borderRadius: BorderRadius.circular(6),
                           ),
                           child: const Text('BASE PROFILE', style: TextStyle(color: AppleTheme.systemGreen, fontSize: 10, fontWeight: FontWeight.w700)),
@@ -306,7 +303,7 @@ class _SettingsViewState extends State<SettingsView> {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      profile?.bio ?? 'Storytelling reels tailored for businesses to grab attention & convert.',
+                      profile.bio ?? 'Storytelling reels tailored for businesses to grab attention & convert.',
                       style: TextStyle(fontSize: 12, color: isDark ? Colors.white60 : Colors.black54, height: 1.3),
                     ),
                     const SizedBox(height: 10),
@@ -363,7 +360,7 @@ class _SettingsViewState extends State<SettingsView> {
                     ),
                     CupertinoButton(
                       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                      color: isDark ? Colors.white.withOpacity(0.12) : Colors.black.withOpacity(0.08),
+                      color: isDark ? Colors.white.withValues(alpha: 0.12) : Colors.black.withValues(alpha: 0.08),
                       borderRadius: BorderRadius.circular(10),
                       onPressed: _openGitHub,
                       child: Text(

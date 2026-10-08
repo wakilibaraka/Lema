@@ -14,6 +14,7 @@ import 'views/settings_view.dart';
 import 'views/simulator_view.dart';
 import 'views/tasks_view.dart';
 import 'widgets/sidebar_navigation.dart';
+import 'widgets/window_title_bar.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -66,6 +67,16 @@ class _MainLayoutScreenState extends State<MainLayoutScreen> {
     SettingsView(),
   ];
 
+  final List<String> _viewTitles = const [
+    'Device Simulator',
+    'Publishing Queue',
+    'Content Calendar',
+    'AI Studio & Planner',
+    'Hooks & Scripts Pipeline',
+    'Daily Operations Tick',
+    'Daemon & Settings',
+  ];
+
   @override
   Widget build(BuildContext context) {
     final app = context.watch<AppProvider>();
@@ -73,16 +84,25 @@ class _MainLayoutScreenState extends State<MainLayoutScreen> {
 
     if (isDesktop) {
       return Scaffold(
-        body: Row(
+        body: Column(
           children: [
-            SidebarNavigation(
-              selectedIndex: app.selectedNavIndex,
-              onDestinationSelected: (index) => app.setNavIndex(index),
+            WindowTitleBar(
+              title: _viewTitles[app.selectedNavIndex],
             ),
             Expanded(
-              child: AnimatedSwitcher(
-                duration: const Duration(milliseconds: 250),
-                child: _views[app.selectedNavIndex],
+              child: Row(
+                children: [
+                  SidebarNavigation(
+                    selectedIndex: app.selectedNavIndex,
+                    onDestinationSelected: (index) => app.setNavIndex(index),
+                  ),
+                  Expanded(
+                    child: AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 200),
+                      child: _views[app.selectedNavIndex],
+                    ),
+                  ),
+                ],
               ),
             ),
           ],

@@ -1,4 +1,3 @@
-import 'dart:io' if (dart.library.html) 'dart:html' as io_or_html;
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -210,15 +209,16 @@ class _UniversalMediaPlayerState extends State<UniversalMediaPlayer> {
               ),
               const SizedBox(height: 4),
               Text(
-                widget.mediaUrl.split('/').last,
-                style: TextStyle(color: Colors.white.withOpacity(0.6), fontSize: 11),
-                maxLines: 1,
+                _errorMessage.isNotEmpty ? _errorMessage : widget.mediaUrl.split('/').last,
+                style: TextStyle(color: Colors.white.withValues(alpha: 0.6), fontSize: 11),
+                maxLines: 2,
                 overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center,
               ),
               const SizedBox(height: 10),
               CupertinoButton(
                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-                color: Colors.white.withOpacity(0.15),
+                color: Colors.white.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(12),
                 onPressed: _initVideo,
                 child: const Text('Retry Decode', style: TextStyle(color: Colors.white, fontSize: 12)),
@@ -268,9 +268,9 @@ class _UniversalMediaPlayerState extends State<UniversalMediaPlayer> {
               width: 58,
               height: 58,
               decoration: BoxDecoration(
-                color: Colors.black.withOpacity(0.55),
+                color: Colors.black.withValues(alpha: 0.55),
                 shape: BoxShape.circle,
-                border: Border.all(color: Colors.white.withOpacity(0.3), width: 1.5),
+                border: Border.all(color: Colors.white.withValues(alpha: 0.3), width: 1.5),
               ),
               child: const Icon(CupertinoIcons.play_fill, color: Colors.white, size: 28),
             ),
@@ -289,7 +289,7 @@ class _UniversalMediaPlayerState extends State<UniversalMediaPlayer> {
                     child: Container(
                       padding: const EdgeInsets.all(6),
                       decoration: BoxDecoration(
-                        color: Colors.black.withOpacity(0.6),
+                        color: Colors.black.withValues(alpha: 0.6),
                         shape: BoxShape.circle,
                       ),
                       child: Icon(
@@ -309,7 +309,7 @@ class _UniversalMediaPlayerState extends State<UniversalMediaPlayer> {
                         value: duration.inMilliseconds > 0
                             ? (position.inMilliseconds / duration.inMilliseconds).clamp(0.0, 1.0)
                             : 0.0,
-                        backgroundColor: Colors.white.withOpacity(0.25),
+                        backgroundColor: Colors.white.withValues(alpha: 0.25),
                         valueColor: const AlwaysStoppedAnimation<Color>(AppleTheme.systemBlue),
                         minHeight: 3.5,
                       ),
@@ -323,7 +323,7 @@ class _UniversalMediaPlayerState extends State<UniversalMediaPlayer> {
                     child: Container(
                       padding: const EdgeInsets.all(6),
                       decoration: BoxDecoration(
-                        color: Colors.black.withOpacity(0.6),
+                        color: Colors.black.withValues(alpha: 0.6),
                         shape: BoxShape.circle,
                       ),
                       child: Icon(
@@ -350,13 +350,13 @@ class _UniversalMediaPlayerState extends State<UniversalMediaPlayer> {
           children: [
             Icon(
               widget.isVideo ? CupertinoIcons.video_camera : CupertinoIcons.photo,
-              color: Colors.white.withOpacity(0.4),
+              color: Colors.white.withValues(alpha: 0.4),
               size: 32,
             ),
             const SizedBox(height: 6),
             Text(
               'Emms Media Asset',
-              style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 11),
+              style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 11),
             ),
           ],
         ),

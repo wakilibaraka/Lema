@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../models/platform_info.dart';
 import '../models/post_model.dart';
@@ -7,7 +8,6 @@ import '../providers/posts_provider.dart';
 import '../providers/profile_provider.dart';
 import '../theme/apple_theme.dart';
 import '../widgets/apple_glass_card.dart';
-import '../widgets/dynamic_capsule.dart';
 import '../widgets/media_player_widget.dart';
 import '../widgets/media_picker_dialog.dart';
 
@@ -30,6 +30,7 @@ class _SimulatorViewState extends State<SimulatorView> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final screenWidth = MediaQuery.of(context).size.width;
     final postsProvider = context.watch<PostsProvider>();
     final profileProvider = context.watch<ProfileProvider>();
     final profile = profileProvider.activeProfile;
@@ -48,20 +49,23 @@ class _SimulatorViewState extends State<SimulatorView> {
 
     final mediaUrl = _customMediaUrl ?? activePost.mediaUrl;
     final isVideo = _customIsVideo ?? activePost.isVideo;
+    final showInspector = screenWidth >= 1250;
 
     return Scaffold(
       backgroundColor: Colors.transparent,
       body: Row(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Left Sidebar Controls & Post Selector
+          // Left Sidebar Controls & Post Selector (370px)
           Container(
-            width: 360,
-            padding: const EdgeInsets.all(20),
+            width: 370,
+            padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 20),
             decoration: BoxDecoration(
+              color: isDark ? const Color(0xFF131317).withAlpha(140) : Colors.white.withAlpha(160),
               border: Border(
                 right: BorderSide(
-                  color: isDark ? Colors.white.withOpacity(0.08) : Colors.black.withOpacity(0.06),
+                  color: isDark ? Colors.white.withAlpha(18) : Colors.black.withAlpha(12),
+                  width: 1,
                 ),
               ),
             ),
@@ -69,51 +73,46 @@ class _SimulatorViewState extends State<SimulatorView> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'Device Simulator',
-                        style: TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: -0.5,
-                          color: isDark ? Colors.white : Colors.black,
-                        ),
-                      ),
-                      const DynamicCapsule(),
-                    ],
-                  ),
-                  const SizedBox(height: 6),
+                  // Section Title (no overflow!)
                   Text(
-                    'Real-time iPhone preview across networks with genuine media playback.',
+                    'Device Simulator',
                     style: TextStyle(
-                      fontSize: 12.5,
+                      fontSize: 20,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: -0.4,
+                      color: isDark ? Colors.white : Colors.black,
+                    ),
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    'Real-time iPhone 16 Pro mockup with live playable reels.',
+                    style: TextStyle(
+                      fontSize: 12,
                       color: isDark ? Colors.white60 : Colors.black54,
                     ),
                   ),
 
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 18),
 
                   // Platform Selector Tabs
                   Text(
                     'TARGET PLATFORM',
                     style: TextStyle(
-                      fontSize: 11,
+                      fontSize: 10.5,
                       fontWeight: FontWeight.w700,
                       letterSpacing: 0.8,
                       color: isDark ? Colors.white38 : Colors.black38,
                     ),
                   ),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 8),
                   Wrap(
                     spacing: 8,
                     runSpacing: 8,
                     children: [
-                      _buildPlatformChip(SocialPlatform.instagram, 'Instagram', CupertinoIcons.camera),
-                      _buildPlatformChip(SocialPlatform.tiktok, 'TikTok', CupertinoIcons.music_note_2),
-                      _buildPlatformChip(SocialPlatform.youtube, 'YT Shorts', CupertinoIcons.play_rectangle),
-                      _buildPlatformChip(SocialPlatform.facebook, 'Facebook', CupertinoIcons.bubble_left_bubble_right),
+                      _buildPlatformChip(SocialPlatform.instagram, 'Instagram', CupertinoIcons.camera, isDark),
+                      _buildPlatformChip(SocialPlatform.tiktok, 'TikTok', CupertinoIcons.music_note_2, isDark),
+                      _buildPlatformChip(SocialPlatform.youtube, 'Shorts', CupertinoIcons.play_rectangle, isDark),
+                      _buildPlatformChip(SocialPlatform.facebook, 'Facebook', CupertinoIcons.bubble_left_bubble_right, isDark),
                     ],
                   ),
 
@@ -122,7 +121,7 @@ class _SimulatorViewState extends State<SimulatorView> {
                     Row(
                       children: [
                         Text(
-                          'Format:',
+                          'Layout:',
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
@@ -134,12 +133,12 @@ class _SimulatorViewState extends State<SimulatorView> {
                           groupValue: _isReelMode,
                           children: const {
                             true: Padding(
-                              padding: EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                              child: Text('Reels (9:16)', style: TextStyle(fontSize: 12)),
+                              padding: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                              child: Text('Reels (9:16)', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600)),
                             ),
                             false: Padding(
-                              padding: EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                              child: Text('Feed (1:1)', style: TextStyle(fontSize: 12)),
+                              padding: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                              child: Text('Feed (1:1)', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600)),
                             ),
                           },
                           onValueChanged: (val) {
@@ -150,47 +149,68 @@ class _SimulatorViewState extends State<SimulatorView> {
                     ),
                   ],
 
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 20),
 
-                  // Media Testing Controls
+                  // Media Testing Controls Card
                   Text(
                     'ACTIVE MEDIA & TESTING',
                     style: TextStyle(
-                      fontSize: 11,
+                      fontSize: 10.5,
                       fontWeight: FontWeight.w700,
                       letterSpacing: 0.8,
                       color: isDark ? Colors.white38 : Colors.black38,
                     ),
                   ),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 8),
                   AppleGlassCard(
-                    padding: const EdgeInsets.all(12),
+                    padding: const EdgeInsets.all(14),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         Row(
                           children: [
-                            Icon(
-                              isVideo ? CupertinoIcons.videocam_fill : CupertinoIcons.photo_fill,
-                              color: isVideo ? AppleTheme.systemPurple : AppleTheme.systemTeal,
-                              size: 18,
+                            Container(
+                              padding: const EdgeInsets.all(6),
+                              decoration: BoxDecoration(
+                                color: (isVideo ? AppleTheme.systemPurple : AppleTheme.systemTeal).withAlpha(35),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Icon(
+                                isVideo ? CupertinoIcons.videocam_fill : CupertinoIcons.photo_fill,
+                                color: isVideo ? AppleTheme.systemPurple : AppleTheme.systemTeal,
+                                size: 16,
+                              ),
                             ),
-                            const SizedBox(width: 8),
+                            const SizedBox(width: 10),
                             Expanded(
-                              child: Text(
-                                mediaUrl.split('/').last,
-                                style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 12),
-                                overflow: TextOverflow.ellipsis,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    mediaUrl.split('/').last,
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: 12,
+                                      color: isDark ? Colors.white : Colors.black87,
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                  Text(
+                                    isVideo ? 'MP4 Story Reel' : 'PNG Carousel Asset',
+                                    style: TextStyle(
+                                      fontSize: 10.5,
+                                      color: isDark ? Colors.white54 : Colors.black45,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                           ],
                         ),
-                        const SizedBox(height: 10),
-                        CupertinoButton(
-                          padding: const EdgeInsets.symmetric(vertical: 8),
-                          color: AppleTheme.systemBlue,
-                          borderRadius: BorderRadius.circular(10),
-                          onPressed: () async {
+                        const SizedBox(height: 12),
+                        // High-contrast button!
+                        GestureDetector(
+                          onTap: () async {
                             final res = await MediaPickerDialog.show(context);
                             if (res != null) {
                               setState(() {
@@ -199,32 +219,58 @@ class _SimulatorViewState extends State<SimulatorView> {
                               });
                             }
                           },
-                          child: const Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(CupertinoIcons.arrow_2_squarepath, size: 14),
-                              SizedBox(width: 6),
-                              Text('Swap Media (File / Sample)', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
-                            ],
+                          child: Container(
+                            height: 38,
+                            decoration: BoxDecoration(
+                              gradient: const LinearGradient(
+                                colors: [AppleTheme.systemBlue, Color(0xFF0056B3)],
+                                begin: Alignment.topCenter,
+                                end: Alignment.bottomCenter,
+                              ),
+                              borderRadius: BorderRadius.circular(10),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: AppleTheme.systemBlue.withAlpha(60),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            child: const Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(CupertinoIcons.folder_badge_plus, size: 15, color: Colors.white),
+                                SizedBox(width: 8),
+                                Text(
+                                  'Swap Media (File / Sample)',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 12.5,
+                                    letterSpacing: -0.2,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                       ],
                     ),
                   ),
 
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 22),
 
                   // Post Selector list
                   Text(
                     'SELECT QUEUE POST TO PREVIEW',
                     style: TextStyle(
-                      fontSize: 11,
+                      fontSize: 10.5,
                       fontWeight: FontWeight.w700,
                       letterSpacing: 0.8,
                       color: isDark ? Colors.white38 : Colors.black38,
                     ),
                   ),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 8),
                   ...posts.map((p) {
                     final isSelected = p.id == activePost.id;
                     return Padding(
@@ -232,7 +278,10 @@ class _SimulatorViewState extends State<SimulatorView> {
                       child: AppleGlassCard(
                         padding: const EdgeInsets.all(10),
                         customBorder: isSelected
-                            ? Border.all(color: AppleTheme.systemBlue, width: 1.5)
+                            ? Border.all(color: AppleTheme.systemBlue, width: 2)
+                            : null,
+                        customBackground: isSelected
+                            ? (isDark ? AppleTheme.systemBlue.withAlpha(35) : AppleTheme.systemBlue.withAlpha(20))
                             : null,
                         onTap: () {
                           setState(() {
@@ -264,9 +313,9 @@ class _SimulatorViewState extends State<SimulatorView> {
                                   Row(
                                     children: [
                                       Container(
-                                        padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
+                                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
                                         decoration: BoxDecoration(
-                                          color: p.platformInfo.color.withOpacity(0.15),
+                                          color: p.platformInfo.color.withAlpha(35),
                                           borderRadius: BorderRadius.circular(4),
                                         ),
                                         child: Text(
@@ -281,16 +330,16 @@ class _SimulatorViewState extends State<SimulatorView> {
                                       const SizedBox(width: 6),
                                       if (p.isVideo)
                                         Container(
-                                          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1.5),
+                                          padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
                                           decoration: BoxDecoration(
-                                            color: AppleTheme.systemPurple.withOpacity(0.15),
+                                            color: AppleTheme.systemPurple.withAlpha(35),
                                             borderRadius: BorderRadius.circular(4),
                                           ),
                                           child: const Text(
                                             'VIDEO',
                                             style: TextStyle(
                                               color: AppleTheme.systemPurple,
-                                              fontSize: 9,
+                                              fontSize: 8.5,
                                               fontWeight: FontWeight.w700,
                                             ),
                                           ),
@@ -304,8 +353,8 @@ class _SimulatorViewState extends State<SimulatorView> {
                                     overflow: TextOverflow.ellipsis,
                                     style: TextStyle(
                                       fontSize: 11.5,
-                                      fontWeight: FontWeight.w500,
-                                      color: isDark ? Colors.white70 : Colors.black87,
+                                      fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                                      color: isDark ? Colors.white : Colors.black87,
                                     ),
                                   ),
                                 ],
@@ -321,59 +370,342 @@ class _SimulatorViewState extends State<SimulatorView> {
             ),
           ),
 
-          // Main Stage: Apple iPhone Mockup
+          // Center Stage: Apple iPhone 16 Pro Mockup
           Expanded(
-            child: Center(
+            child: Container(
+              alignment: Alignment.center,
               child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(vertical: 30),
-                child: _buildIPhoneMockup(activePost, mediaUrl, isVideo, profile?.name ?? 'Emms Digital Media', profile?.instagramHandle ?? '@emmsdigitalmedia'),
+                padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 20),
+                child: _buildIPhoneMockup(
+                  activePost,
+                  mediaUrl,
+                  isVideo,
+                  profile.name,
+                  profile.instagramHandle,
+                  isDark,
+                ),
               ),
             ),
           ),
+
+          // Right Column: Creator Studio Inspector & Virality Diagnostics (>= 1250px)
+          if (showInspector)
+            Container(
+              width: 340,
+              padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 20),
+              decoration: BoxDecoration(
+                color: isDark ? const Color(0xFF131317).withAlpha(140) : Colors.white.withAlpha(160),
+                border: Border(
+                  left: BorderSide(
+                    color: isDark ? Colors.white.withAlpha(18) : Colors.black.withAlpha(12),
+                    width: 1,
+                  ),
+                ),
+              ),
+              child: SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text(
+                      'Creator Studio Inspector',
+                      style: TextStyle(
+                        fontSize: 17,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: -0.3,
+                        color: isDark ? Colors.white : Colors.black,
+                      ),
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      'Virality metrics, dispatch diagnostics & caption export.',
+                      style: TextStyle(fontSize: 11.5, color: isDark ? Colors.white60 : Colors.black54),
+                    ),
+
+                    const SizedBox(height: 18),
+
+                    // Virality Score Card
+                    AppleGlassCard(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                'STORY HOOK VELOCITY',
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w700,
+                                  letterSpacing: 0.8,
+                                  color: isDark ? Colors.white38 : Colors.black38,
+                                ),
+                              ),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: AppleTheme.systemGreen.withAlpha(35),
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: const Text(
+                                  'VIRAL GRADE',
+                                  style: TextStyle(color: AppleTheme.systemGreen, fontSize: 9.5, fontWeight: FontWeight.w700),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 10),
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              const Text(
+                                '94',
+                                style: TextStyle(
+                                  fontSize: 32,
+                                  fontWeight: FontWeight.w900,
+                                  color: AppleTheme.systemGreen,
+                                  height: 1.0,
+                                ),
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                '/100',
+                                style: TextStyle(fontSize: 14, color: isDark ? Colors.white38 : Colors.black38),
+                              ),
+                              const Spacer(),
+                              Icon(CupertinoIcons.flame_fill, color: AppleTheme.systemOrange, size: 22),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(4),
+                            child: const LinearProgressIndicator(
+                              value: 0.94,
+                              minHeight: 5,
+                              backgroundColor: Colors.white12,
+                              valueColor: AlwaysStoppedAnimation<Color>(AppleTheme.systemGreen),
+                            ),
+                          ),
+                          const SizedBox(height: 10),
+                          Text(
+                            'Hooks viewers within 2.8 seconds. Emotional bridge from tension to solution verified.',
+                            style: TextStyle(fontSize: 11, color: isDark ? Colors.white60 : Colors.black54),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    const SizedBox(height: 16),
+
+                    // Recommended Window Card
+                    AppleGlassCard(
+                      padding: const EdgeInsets.all(14),
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: AppleTheme.systemBlue.withAlpha(35),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: const Icon(CupertinoIcons.clock_fill, color: AppleTheme.systemBlue, size: 18),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Optimal Window: 6:30 PM EAT',
+                                  style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12.5, color: isDark ? Colors.white : Colors.black),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  'Peak audience activity for Kenyan & African businesses.',
+                                  style: TextStyle(fontSize: 10.5, color: isDark ? Colors.white60 : Colors.black54),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    const SizedBox(height: 16),
+
+                    // Caption Inspector & Copy Card
+                    AppleGlassCard(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                'CAPTION & TAGS',
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w700,
+                                  letterSpacing: 0.8,
+                                  color: isDark ? Colors.white38 : Colors.black38,
+                                ),
+                              ),
+                              Text(
+                                '${activePost.caption.length} chars',
+                                style: TextStyle(fontSize: 10.5, color: isDark ? Colors.white54 : Colors.black45),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 10),
+                          Container(
+                            constraints: const BoxConstraints(maxHeight: 120),
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: isDark ? Colors.white.withAlpha(8) : Colors.black.withAlpha(6),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: SingleChildScrollView(
+                              child: SelectableText(
+                                activePost.caption,
+                                style: TextStyle(
+                                  fontSize: 11.5,
+                                  height: 1.35,
+                                  color: isDark ? Colors.white70 : Colors.black87,
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          CupertinoButton(
+                            padding: const EdgeInsets.symmetric(vertical: 8),
+                            color: isDark ? Colors.white.withAlpha(20) : Colors.black.withAlpha(12),
+                            borderRadius: BorderRadius.circular(8),
+                            onPressed: () {
+                              Clipboard.setData(ClipboardData(text: activePost.caption));
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text('Caption and tags copied to clipboard!')),
+                              );
+                            },
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(CupertinoIcons.doc_on_clipboard, size: 14, color: isDark ? Colors.white : Colors.black87),
+                                const SizedBox(width: 6),
+                                Text(
+                                  'Copy Caption',
+                                  style: TextStyle(
+                                    fontSize: 11.5,
+                                    fontWeight: FontWeight.w600,
+                                    color: isDark ? Colors.white : Colors.black87,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    const SizedBox(height: 16),
+
+                    // Primary Action: Publish Now via Daemon
+                    CupertinoButton.filled(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      borderRadius: BorderRadius.circular(12),
+                      onPressed: () {
+                        context.read<PostsProvider>().publishNow(activePost.id);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Dispatched "${activePost.title}" to ${activePost.platformInfo.name} via Daemon!')),
+                        );
+                      },
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(CupertinoIcons.paperplane_fill, size: 14),
+                          const SizedBox(width: 8),
+                          Text(
+                            'Publish Now to ${activePost.platformInfo.name}',
+                            style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12.5),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
         ],
       ),
     );
   }
 
-  Widget _buildPlatformChip(SocialPlatform platform, String label, IconData icon) {
+  Widget _buildPlatformChip(SocialPlatform platform, String label, IconData icon, bool isDark) {
     final isSelected = _selectedPlatform == platform;
     final color = PlatformInfo.fromPlatform(platform).color;
 
-    return ChoiceChip(
-      label: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 14, color: isSelected ? Colors.white : color),
-          const SizedBox(width: 6),
-          Text(label),
-        ],
+    return InkWell(
+      onTap: () => setState(() => _selectedPlatform = platform),
+      borderRadius: BorderRadius.circular(10),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? (isDark ? color.withAlpha(50) : color.withAlpha(25))
+              : (isDark ? Colors.white.withAlpha(12) : Colors.black.withAlpha(8)),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: isSelected ? color : (isDark ? Colors.white.withAlpha(16) : Colors.black.withAlpha(12)),
+            width: isSelected ? 1.5 : 1.0,
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 14, color: isSelected ? color : (isDark ? Colors.white70 : Colors.black54)),
+            const SizedBox(width: 6),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                color: isSelected ? (isDark ? Colors.white : color) : (isDark ? Colors.white70 : Colors.black87),
+              ),
+            ),
+          ],
+        ),
       ),
-      selected: isSelected,
-      selectedColor: color,
-      onSelected: (selected) {
-        if (selected) setState(() => _selectedPlatform = platform);
-      },
     );
   }
 
-  Widget _buildIPhoneMockup(PostModel post, String mediaUrl, bool isVideo, String authorName, String handle) {
+  Widget _buildIPhoneMockup(PostModel post, String mediaUrl, bool isVideo, String authorName, String handle, bool isDark) {
     return Container(
       width: 380,
-      height: 780,
+      height: 770,
       decoration: BoxDecoration(
-        color: Colors.black,
-        borderRadius: BorderRadius.circular(50),
-        border: Border.all(color: const Color(0xFF2C2C2E), width: 7),
+        color: const Color(0xFF0D0D11),
+        borderRadius: BorderRadius.circular(52),
+        // Titanium Frame effect
+        border: Border.all(
+          color: isDark ? const Color(0xFF383842) : const Color(0xFF26262B),
+          width: 8,
+        ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.4),
-            blurRadius: 40,
-            offset: const Offset(0, 16),
+            color: Colors.black.withAlpha(isDark ? 160 : 70),
+            blurRadius: 48,
+            offset: const Offset(0, 20),
+          ),
+          BoxShadow(
+            color: (post.platformInfo.color).withAlpha(35),
+            blurRadius: 70,
+            offset: const Offset(0, 15),
           ),
         ],
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(43),
+        borderRadius: BorderRadius.circular(44),
         child: Stack(
           children: [
             // Screen Content by Platform
@@ -381,36 +713,44 @@ class _SimulatorViewState extends State<SimulatorView> {
               child: _renderPlatformScreen(post, mediaUrl, isVideo, authorName, handle),
             ),
 
-            // Top Dynamic Island Notch
+            // Top Dynamic Island Notch (iPhone 16 Pro)
             Positioned(
-              top: 10,
+              top: 11,
               left: 0,
               right: 0,
               child: Center(
                 child: Container(
                   width: 120,
-                  height: 30,
+                  height: 31,
                   decoration: BoxDecoration(
                     color: Colors.black,
                     borderRadius: BorderRadius.circular(20),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withAlpha(120),
+                        blurRadius: 6,
+                      ),
+                    ],
                   ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
+                      // Camera Aperture
                       Container(
                         width: 11,
                         height: 11,
                         decoration: BoxDecoration(
-                          color: const Color(0xFF1A1A24),
+                          color: const Color(0xFF13131D),
                           shape: BoxShape.circle,
-                          border: Border.all(color: const Color(0xFF282834), width: 1.5),
+                          border: Border.all(color: const Color(0xFF232333), width: 1.5),
                         ),
                       ),
+                      // Sensor aperture
                       Container(
-                        width: 9,
-                        height: 9,
+                        width: 8,
+                        height: 8,
                         decoration: const BoxDecoration(
-                          color: Color(0xFF0F172A),
+                          color: Color(0xFF090D18),
                           shape: BoxShape.circle,
                         ),
                       ),
@@ -427,10 +767,10 @@ class _SimulatorViewState extends State<SimulatorView> {
               right: 0,
               child: Center(
                 child: Container(
-                  width: 130,
+                  width: 135,
                   height: 4.5,
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.8),
+                    color: Colors.white.withAlpha(200),
                     borderRadius: BorderRadius.circular(10),
                   ),
                 ),
@@ -474,18 +814,18 @@ class _SimulatorViewState extends State<SimulatorView> {
           ),
         ),
 
-        // Gradient overlay bottom & top
+        // Gradient overlay
         Positioned.fill(
           child: Container(
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
-                  Colors.black.withOpacity(0.5),
+                  Colors.black.withAlpha(120),
                   Colors.transparent,
                   Colors.transparent,
-                  Colors.black.withOpacity(0.85),
+                  Colors.black.withAlpha(210),
                 ],
-                stops: const [0.0, 0.15, 0.55, 1.0],
+                stops: const [0.0, 0.16, 0.55, 1.0],
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
               ),
@@ -521,7 +861,7 @@ class _SimulatorViewState extends State<SimulatorView> {
           bottom: 70,
           child: Column(
             children: [
-              _buildMetricIcon(CupertinoIcons.heart_fill, '${post.likesCount > 0 ? post.likes : "2.8K"}', Colors.redAccent),
+              _buildMetricIcon(CupertinoIcons.heart_fill, post.likesCount > 0 ? post.likes : "2.8K", Colors.redAccent),
               const SizedBox(height: 18),
               _buildMetricIcon(CupertinoIcons.bubble_left_fill, '${post.comments > 0 ? post.comments : "142"}', Colors.white),
               const SizedBox(height: 18),
@@ -572,7 +912,7 @@ class _SimulatorViewState extends State<SimulatorView> {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
                     decoration: BoxDecoration(
-                      border: Border.all(color: Colors.white.withOpacity(0.6), width: 1),
+                      border: Border.all(color: Colors.white.withAlpha(150), width: 1),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: const Text('Follow', style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w600)),
@@ -593,7 +933,7 @@ class _SimulatorViewState extends State<SimulatorView> {
                   const SizedBox(width: 6),
                   Text(
                     'Original audio - $authorName',
-                    style: TextStyle(color: Colors.white.withOpacity(0.85), fontSize: 11),
+                    style: TextStyle(color: Colors.white.withAlpha(220), fontSize: 11),
                   ),
                 ],
               ),
@@ -604,14 +944,13 @@ class _SimulatorViewState extends State<SimulatorView> {
     );
   }
 
-  // 2. INSTAGRAM FEED (Header, 1:1 Media, Actions, Caption)
+  // 2. INSTAGRAM FEED
   Widget _buildInstagramFeed(PostModel post, String mediaUrl, bool isVideo, String authorName, String handle) {
     return Container(
       color: Colors.black,
       child: Column(
         children: [
           const SizedBox(height: 48),
-          // IG Feed Header
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
             child: Row(
@@ -623,7 +962,7 @@ class _SimulatorViewState extends State<SimulatorView> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(handle, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 13)),
-                      Text('Nairobi, Kenya', style: TextStyle(color: Colors.white.withOpacity(0.6), fontSize: 10.5)),
+                      Text('Nairobi, Kenya', style: TextStyle(color: Colors.white.withAlpha(150), fontSize: 10.5)),
                     ],
                   ),
                 ),
@@ -631,8 +970,6 @@ class _SimulatorViewState extends State<SimulatorView> {
               ],
             ),
           ),
-
-          // Media container (Square/Tall)
           Expanded(
             child: UniversalMediaPlayer(
               mediaUrl: mediaUrl,
@@ -642,8 +979,6 @@ class _SimulatorViewState extends State<SimulatorView> {
               showControls: true,
             ),
           ),
-
-          // IG Action Bar
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             child: Row(
@@ -662,8 +997,6 @@ class _SimulatorViewState extends State<SimulatorView> {
               ],
             ),
           ),
-
-          // Likes & Caption
           Padding(
             padding: const EdgeInsets.fromLTRB(14, 0, 14, 30),
             child: Column(
@@ -706,7 +1039,6 @@ class _SimulatorViewState extends State<SimulatorView> {
             showControls: true,
           ),
         ),
-        // TikTok Action Bar
         Positioned(
           right: 12,
           bottom: 60,
@@ -727,7 +1059,7 @@ class _SimulatorViewState extends State<SimulatorView> {
                 ],
               ),
               const SizedBox(height: 18),
-              _buildMetricIcon(CupertinoIcons.heart_fill, '${post.likesCount > 0 ? post.likes : "12.4K"}', Colors.white),
+              _buildMetricIcon(CupertinoIcons.heart_fill, post.likesCount > 0 ? post.likes : "12.4K", Colors.white),
               const SizedBox(height: 16),
               _buildMetricIcon(CupertinoIcons.bubble_left_fill, '${post.comments > 0 ? post.comments : "389"}', Colors.white),
               const SizedBox(height: 16),
@@ -735,7 +1067,6 @@ class _SimulatorViewState extends State<SimulatorView> {
               const SizedBox(height: 16),
               _buildMetricIcon(CupertinoIcons.arrowshape_turn_up_right_fill, 'Share', Colors.white),
               const SizedBox(height: 18),
-              // Spinning Record Disc
               Container(
                 width: 38,
                 height: 38,
@@ -751,8 +1082,6 @@ class _SimulatorViewState extends State<SimulatorView> {
             ],
           ),
         ),
-
-        // Caption info
         Positioned(
           left: 14,
           right: 76,
@@ -773,7 +1102,7 @@ class _SimulatorViewState extends State<SimulatorView> {
                 children: [
                   const Icon(CupertinoIcons.music_note_2, size: 12, color: Colors.white),
                   const SizedBox(width: 6),
-                  Text('Trending Story Sound - Emms', style: TextStyle(color: Colors.white.withOpacity(0.9), fontSize: 11)),
+                  Text('Trending Story Sound - Emms', style: TextStyle(color: Colors.white.withAlpha(230), fontSize: 11)),
                 ],
               ),
             ],
@@ -796,13 +1125,12 @@ class _SimulatorViewState extends State<SimulatorView> {
             showControls: true,
           ),
         ),
-        // YouTube Action Column
         Positioned(
           right: 12,
           bottom: 60,
           child: Column(
             children: [
-              _buildMetricIcon(CupertinoIcons.hand_thumbsup_fill, '${post.likesCount > 0 ? post.likes : "3.1K"}', Colors.white),
+              _buildMetricIcon(CupertinoIcons.hand_thumbsup_fill, post.likesCount > 0 ? post.likes : "3.1K", Colors.white),
               const SizedBox(height: 18),
               _buildMetricIcon(CupertinoIcons.hand_thumbsdown, 'Dislike', Colors.white),
               const SizedBox(height: 18),
@@ -814,8 +1142,6 @@ class _SimulatorViewState extends State<SimulatorView> {
             ],
           ),
         ),
-
-        // Author & Subscribe
         Positioned(
           left: 14,
           right: 80,
@@ -857,7 +1183,6 @@ class _SimulatorViewState extends State<SimulatorView> {
       child: Column(
         children: [
           const SizedBox(height: 48),
-          // Facebook Post Header
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             child: Row(
@@ -871,8 +1196,8 @@ class _SimulatorViewState extends State<SimulatorView> {
                       Text(authorName, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 13.5)),
                       Row(
                         children: [
-                          Text('2 hrs ago • ', style: TextStyle(color: Colors.white.withOpacity(0.6), fontSize: 11)),
-                          Icon(CupertinoIcons.globe, color: Colors.white.withOpacity(0.6), size: 11),
+                          Text('2 hrs ago • ', style: TextStyle(color: Colors.white.withAlpha(150), fontSize: 11)),
+                          Icon(CupertinoIcons.globe, color: Colors.white.withAlpha(150), size: 11),
                         ],
                       ),
                     ],
@@ -882,8 +1207,6 @@ class _SimulatorViewState extends State<SimulatorView> {
               ],
             ),
           ),
-
-          // Caption
           Padding(
             padding: const EdgeInsets.fromLTRB(14, 0, 14, 8),
             child: Text(
@@ -893,8 +1216,6 @@ class _SimulatorViewState extends State<SimulatorView> {
               overflow: TextOverflow.ellipsis,
             ),
           ),
-
-          // Media container
           Expanded(
             child: UniversalMediaPlayer(
               mediaUrl: mediaUrl,
@@ -904,8 +1225,6 @@ class _SimulatorViewState extends State<SimulatorView> {
               showControls: true,
             ),
           ),
-
-          // Action counts & button bar
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
             child: Row(

@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import '../models/task_model.dart';
 import '../theme/apple_theme.dart';
 import '../widgets/apple_glass_card.dart';
-import '../widgets/dynamic_capsule.dart';
 
 class TasksView extends StatefulWidget {
   const TasksView({super.key});
@@ -133,7 +132,6 @@ class _TasksViewState extends State<TasksView> {
                     ),
                   ],
                 ),
-                const DynamicCapsule(),
               ],
             ),
 
@@ -147,7 +145,7 @@ class _TasksViewState extends State<TasksView> {
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: AppleTheme.systemGreen.withOpacity(0.12),
+                      color: AppleTheme.systemGreen.withValues(alpha: 0.12),
                       shape: BoxShape.circle,
                     ),
                     child: const Icon(CupertinoIcons.checkmark_seal_fill, color: AppleTheme.systemGreen, size: 24),
@@ -207,7 +205,7 @@ class _TasksViewState extends State<TasksView> {
                     decoration: InputDecoration(
                       hintText: 'Add a new operational task or tick item...',
                       filled: true,
-                      fillColor: isDark ? Colors.white.withOpacity(0.05) : Colors.black.withOpacity(0.04),
+                      fillColor: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.04),
                       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
@@ -238,7 +236,7 @@ class _TasksViewState extends State<TasksView> {
             Expanded(
               child: ListView.separated(
                 itemCount: _tasks.length,
-                separatorBuilder: (_, __) => const SizedBox(height: 10),
+                separatorBuilder: (_, _) => const SizedBox(height: 10),
                 itemBuilder: (context, index) {
                   final task = _tasks[index];
                   final isDone = task.isCompleted;
@@ -308,7 +306,7 @@ class _TasksViewState extends State<TasksView> {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
                           decoration: BoxDecoration(
-                            color: _priorityColor(task.priority).withOpacity(0.12),
+                            color: _priorityColor(task.priority).withValues(alpha: 0.12),
                             borderRadius: BorderRadius.circular(6),
                           ),
                           child: Text(

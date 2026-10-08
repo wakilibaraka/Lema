@@ -18,26 +18,26 @@ class AppleTheme {
   static const double radiusXl = 24.0;
 
   // Blur standards
-  static const double blurCard = 20.0;
-  static const double blurModal = 30.0;
+  static const double blurCard = 24.0;
+  static const double blurModal = 32.0;
 
-  // Light Mode Colors
-  static const Color lightBg = Color(0xFFF2F2F7);
+  // Light Mode Colors - Soft Apple Canvas
+  static const Color lightBg = Color(0xFFF5F5F8);
   static const Color lightSurface = Color(0xFFFFFFFF);
-  static const Color lightGlass = Color(0xCCFFFFFF); // 80% opacity
-  static const Color lightBorder = Color(0x14000000); // 8% black
+  static const Color lightGlass = Color(0xEEFFFFFF);
+  static const Color lightBorder = Color(0x10000000); // 6% black
 
-  // Dark Mode Colors
-  static const Color darkBg = Color(0xFF000000);
-  static const Color darkSurface = Color(0xFF1C1C1E);
-  static const Color darkGlass = Color(0xCC1C1C1E); // 80% opacity
-  static const Color darkBorder = Color(0x1FFFFFFF); // 12% white
+  // Dark Mode Colors - Deep Titanium
+  static const Color darkBg = Color(0xFF0C0C0F);
+  static const Color darkSurface = Color(0xFF18181D);
+  static const Color darkGlass = Color(0xDD18181D);
+  static const Color darkBorder = Color(0x18FFFFFF); // 9% white
 
   static Color cardBg(bool isDark) =>
-      isDark ? const Color(0xFF1C1C1E).withAlpha(190) : Colors.white.withAlpha(220);
+      isDark ? const Color(0xFF16161B).withAlpha(220) : Colors.white.withAlpha(235);
 
   static Color cardBorder(bool isDark) =>
-      isDark ? Colors.white.withAlpha(25) : Colors.black.withAlpha(18);
+      isDark ? Colors.white.withAlpha(22) : Colors.black.withAlpha(14);
 
   static ThemeData lightTheme = ThemeData(
     useMaterial3: true,
@@ -56,6 +56,11 @@ class AppleTheme {
         borderRadius: BorderRadius.circular(16),
         side: const BorderSide(color: lightBorder),
       ),
+    ),
+    dividerTheme: const DividerThemeData(
+      color: lightBorder,
+      thickness: 1,
+      space: 1,
     ),
   );
 
@@ -76,6 +81,11 @@ class AppleTheme {
         borderRadius: BorderRadius.circular(16),
         side: const BorderSide(color: darkBorder),
       ),
+    ),
+    dividerTheme: const DividerThemeData(
+      color: darkBorder,
+      thickness: 1,
+      space: 1,
     ),
   );
 }

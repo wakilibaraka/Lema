@@ -217,7 +217,7 @@ class _MediaPickerDialogState extends State<MediaPickerDialog> {
                   shrinkWrap: true,
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                   itemCount: _sampleMedia.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 6),
+                  separatorBuilder: (_, _) => const SizedBox(height: 6),
                   itemBuilder: (context, index) {
                     final item = _sampleMedia[index];
                     return InkWell(
