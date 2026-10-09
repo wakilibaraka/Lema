@@ -27,14 +27,36 @@ class LemaGridView extends StatefulWidget {
   State<LemaGridView> createState() => _LemaGridViewState();
 }
 
-class _LemaGridViewState extends State<LemaGridView> {
+class _LemaGridViewState extends State<LemaGridView>
+    with SingleTickerProviderStateMixin {
   String _platformFilter = 'all'; // all | instagram | tiktok | youtube | facebook
   String _statusFilter = 'all'; // all | scheduled | draft | published
   String _formatFilter = 'all'; // all | video | image
   int _heroIndex = 0;
   final Set<String> _expandedDays = {};
+  bool _timelineSeeded = false;
   String? _draggingId;
   int _gridColumns = 3; // Slice 4: 3-col (3:4) or 4-col (1:1)
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Slice 6: default-open the first timeline day (plus today) once.
+    // Runs before first build; later user collapses are respected.
+    if (!_timelineSeeded) {
+      final all = context.read<PostsProvider>().posts;
+      final groups = _groupByDay(_filtered(all));
+      if (groups.isNotEmpty) {
+        _timelineSeeded = true;
+        _expandedDays.add(groups.keys.first);
+        final todayKey =
+            DateFormat('yyyy-MM-dd').format(DateTime.now());
+        if (groups.containsKey(todayKey)) {
+          _expandedDays.add(todayKey);
+        }
+      }
+    }
+  }
 
   static const _lime = Color(0xFFD3E157);
 
@@ -1270,24 +1292,101 @@ class _LemaGridViewState extends State<LemaGridView> {
                 ),
               ),
             ),
-            if (expanded) ...[
-              Divider(
-                  height: 1,
-                  color: isDark
-                      ? Colors.white12
-                      : Colors.black.withAlpha(8)),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(14, 10, 14, 14),
-                child: Column(
-                  children: [
-                    for (final p in sorted)
-                      _slotRow(context, isDark, p),
-                  ],
-                ),
+            // Slice 6: animated expand + slot grouping.
+            ClipRect(
+              child: AnimatedSize(
+                duration: const Duration(milliseconds: 280),
+                curve: Curves.easeInOut,
+                alignment: Alignment.topCenter,
+                child: expanded
+                    ? Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Divider(
+                              height: 1,
+                              color: isDark
+                                  ? Colors.white12
+                                  : Colors.black.withAlpha(8)),
+                          Padding(
+                            padding:
+                                const EdgeInsets.fromLTRB(14, 10, 14, 14),
+                            child: Column(
+                              children: [
+                                ..._groupedSlots(
+                                    context, isDark, sorted),
+                              ],
+                            ),
+                          ),
+                        ],
+                      )
+                    : const SizedBox.shrink(),
               ),
-            ],
+            ),
           ],
         ),
+      ),
+    );
+  }
+
+  /// Slice 6: bucket a day's posts into Morning / Afternoon / Evening.
+  /// Empty buckets are omitted — no hollow headers.
+  List<Widget> _groupedSlots(
+      BuildContext context, bool isDark, List<PostModel> sorted) {
+    final buckets = <String, List<PostModel>>{
+      'Morning': [],
+      'Afternoon': [],
+      'Evening': [],
+    };
+    for (final p in sorted) {
+      final hour = p.scheduledTime.hour;
+      buckets[hour < 12
+              ? 'Morning'
+              : (hour < 17 ? 'Afternoon' : 'Evening')]!
+          .add(p);
+    }
+    final widgets = <Widget>[];
+    for (final entry in buckets.entries) {
+      if (entry.value.isEmpty) continue;
+      widgets.add(_slotGroupDivider(isDark, entry.key, entry.value.length));
+      for (final p in entry.value) {
+        widgets.add(_slotRow(context, isDark, p));
+      }
+    }
+    return widgets;
+  }
+
+  Widget _slotGroupDivider(bool isDark, String label, int count) {
+    final muted = isDark ? Colors.white38 : Colors.black38;
+    return Padding(
+      padding: const EdgeInsets.only(top: 4, bottom: 8),
+      child: Row(
+        children: [
+          Text(
+            label.toUpperCase(),
+            style: TextStyle(
+              fontSize: 10,
+              fontWeight: FontWeight.w800,
+              letterSpacing: 1.0,
+              color: muted,
+            ),
+          ),
+          const SizedBox(width: 6),
+          Text(
+            '· $count',
+            style: TextStyle(
+              fontSize: 10,
+              fontWeight: FontWeight.w600,
+              color: muted,
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Container(
+              height: 1,
+              color: isDark ? Colors.white12 : Colors.black.withAlpha(8),
+            ),
+          ),
+        ],
       ),
     );
   }
