@@ -61,6 +61,28 @@ Observations from the live screenshot, ranked:
 9. **[Dark mode]** Katikati verified light-only. Fix: full dark pass on 18 Pro with dark appearance.
 10. **[Hygiene]** No widget tests; `flutter analyze` must stay clean every slice.
 
+## 2b. Gap closure addendum (refinement pass)
+
+Visual language from the new refs (photo-gallery + art-auction apps) is now binding:
+
+- **Face/name pills** (gallery `Ralph`/`Selene` tags) → creator chip on hero meta pill + avatar dots on grid tiles.
+- **`Live` status pills** (auction cards) → status pills on tiles: `SCHEDULED` (blue) / `DRAFT` (amber) / `LIVE` = published (green).
+- **Category pills + avatar row** (auction) → already covered by filter pills; add platform avatar dots (16px, max 3, platform brand color ring).
+- **Countdown card** (`Auction ending in 22:52:34`) → `Posts in 45m` countdown chip in hero sheet (Slice 6).
+- **Stacked album cards** (gallery) → draft-stack visual for the Drafts filter empty/pending state (Slice 5).
+- **Viewer filmstrip + circular action bar** (photo viewer) → reuse SimulatorView's post filmstrip pattern for hero shuffle; sheet keeps 3-action row (Edit / Duplicate / Delete) in v2 (Slice 7).
+
+### Density rules (binding for all slices)
+
+1. **Platform indicators**: every `_gridTile` shows up to 3 platform dots (16px, brand-color ring, overflow `+n`); every `_slotRow` leads with its platform icon chip. Cross-platform strategy must read at a glance — no tap required.
+2. **Aspect ratio policy**: uniform tiles, `BoxFit.cover` center-crop. Grid 3-col = 3:4, 4-col = 1:1. No masonry (keeps drag math + at-a-glance scanning). Hero = cover-fill, no letterbox.
+3. **Status badging**: frosted pill top-left of tile: `DRAFT` amber / `QUEUED` blue / `LIVE` green. Status text never relies on color alone.
+4. **Media scrims**: video tiles always show glass play badge (top-left under status pill) + `VIDEO`/`REEL` duration pill bottom-right when duration unknown. Image tiles show nothing.
+5. **Transient feedback**: `lib/widgets/katikati_toast.dart` (new) — frosted toast, three variants (`Saved`/`Moved`/`Error`), 2.5s, single instance. Every `updatePost`/`reorderPosts`/`publishNow` from Katikati surfaces one. No silent writes, no blocking spinners for <500ms ops.
+6. **Undo reorder**: provider keeps pre-move snapshot; toast carries an **Undo** action for 5s. Accidental drops are one tap from recovery.
+7. **Error states**: JSON parse/sync failure → frosted on-brand error card in place of the grid (off-white canvas, retry button). Raw Flutter red screens are a ship-blocker.
+8. **Dynamic Type**: Katikati subtree wraps `MediaQuery` with `textScaler` clamped to max 1.2x. Clamped titles (Slice 2) and dense slot rows (Slice 6) must survive max accessibility sizes without overflow.
+
 ## 3. Slices (commit + push after EACH)
 
 ### Slice 1 — Top app bar (mobile)
@@ -82,14 +104,17 @@ Observations from the live screenshot, ranked:
 - Commit: `feat(katikati): floating glass tab bar`
 
 ### Slice 4 — Grid density + drag feel
-- Scope: `_buildDragGrid` / `_gridTile` + toolbar toggle.
-- 3/4-col toggle persisted in-memory; haptic on lift; blue placeholder gap at drop index; `reorderPosts` unchanged.
-- Accept: reorder persists across restart (storage); GIF/screenshot of drag state.
-- Commit: `feat(katikati): grid density toggle + drag affordance`
+- Scope: `_buildDragGrid` / `_gridTile` + toolbar toggle + NEW `lib/widgets/katikati_toast.dart`.
+- 3/4-col toggle persisted in-memory (3:4 tiles at 3-col, 1:1 at 4-col per aspect policy); haptic on lift; blue placeholder gap at drop index; `reorderPosts` unchanged.
+- Tile upgrades (density rules §1–4): platform dots (16px, max 3, `+n`), status pill (DRAFT amber / QUEUED blue / LIVE green), video glass play badge + media pill.
+- Toast infra + reorder Undo: provider snapshot + `undoLastReorder()`; `Moved` toast with Undo (5s).
+- Accept: reorder persists across restart (storage); Undo restores order; screenshot of drag state; no overflow at 402pt.
+- Commit: `feat(katikati): grid density + drag affordance + undo`
 
 ### Slice 5 — Draft seeds + empty states
 - Scope: `lib/models/post_model.dart` seeds (+ provider filter already exists).
-- 3 draft seeds (image + video mix); stats pill shows drafts; Drafts filter + all-empty state screenshotted.
+- 3 draft seeds (image + video mix, multi-platform to exercise dots); stats pill shows drafts; Drafts filter + all-empty state screenshotted.
+- Draft-stack visual (gallery stacked-album language) for pending drafts; status pills verified on every tile.
 - Accept: `N queued · 3 drafts`; each filter combination renders intentionally.
 - Commit: `feat(katikati): draft seeds + empty states`
 
@@ -101,8 +126,8 @@ Observations from the live screenshot, ranked:
 
 ### Slice 7 — Quick-edit sheet v2
 - Scope: `_QuickEditSheet` only.
-- Time stepper (±15 min, updates `scheduledTime`); platform multi-toggle chips; Save persists + hot UI update.
-- Accept: edit caption + time + platform, verify in grid + timeline same session.
+- Time stepper (±15 min, updates `scheduledTime`); platform multi-toggle chips; Save persists + hot UI update + `Saved` toast (viewer 3-action language: primary Save, secondary Duplicate/Delete ok).
+- Accept: edit caption + time + platform, verify in grid + timeline same session; toast visible in screenshot.
 - Commit: `feat(katikati): quick-edit time stepper + platform toggle`
 
 ### Slice 8 — Dark-mode pass
@@ -113,9 +138,18 @@ Observations from the live screenshot, ranked:
 
 ### Slice 9 — Tests + hygiene
 - Scope: `test/katikati_grid_test.dart` (new).
-- Widget tests: filter logic, hashtag count, `reorderPosts` index mapping, day grouping; `flutter analyze` + `flutter test` green.
+- Widget tests: filter logic, hashtag count, `reorderPosts` index mapping, day grouping, undo restore, toast dispatch; `flutter analyze` + `flutter test` green.
 - Accept: CI-equivalent green locally; screenshot final light+dark.
 - Commit: `test(katikati): grid logic + provider reorder tests`
+
+### Slice 10 — Polish pass (airtight sign-off)
+- Scope: `_gridTile` badges audit + error states + text-scale bound. No new features.
+- Badge audit: 16px platform dots legible at 4-col; video pills present on every video tile; status pill contrast on light + dark.
+- Error states: corrupt `lema_posts` JSON → frosted on-brand error card with Retry (kill red screen); sync failure → `Error` toast variant.
+- Text-scale bound: `MediaQuery.textScaler.clamp(maxScaleFactor: 1.2)` around Katikati subtree; verify at max accessibility size, no overflow in hero/title/slot rows.
+- Countdown chip: `Posts in 45m` (auction-countdown language) in hero sheet when a post is due within 2h.
+- Accept: fault-injection screenshots (corrupt JSON, max text size); light + dark badge set.
+- Commit: `feat(katikati): polish pass — badges, errors, text-scale`
 
 ## 4. Out of scope (parked)
 
@@ -126,5 +160,6 @@ Observations from the live screenshot, ranked:
 
 1. `flutter analyze` clean on touched files.
 2. iPhone 18 Pro debug screenshot attached to the commit message body (save under `/tmp`, reference by name).
-3. No `RenderFlex overflow` in run log (`grep -i overflow /tmp/katikati_18pro.log`).
-4. `git push origin main` succeeds; local mirror re-synced.
+3. No `RenderFlex overflow` in run log (`grep -i overflow` on the run log).
+4. Density rules (§2b) respected: platform dots, status pill, media badge, toast on writes (from Slice 4 onward).
+5. `git push origin main` succeeds; local mirror re-synced.
