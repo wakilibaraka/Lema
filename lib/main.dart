@@ -15,6 +15,7 @@ import 'views/settings_view.dart';
 import 'views/simulator_view.dart';
 import 'views/tasks_view.dart';
 import 'widgets/dynamic_capsule.dart';
+import 'widgets/floating_tab_bar.dart';
 import 'widgets/sidebar_navigation.dart';
 import 'widgets/window_title_bar.dart';
 
@@ -135,8 +136,10 @@ class _MainLayoutScreenState extends State<MainLayoutScreen> {
     }
 
     // Mobile Layout (< 768px) with Drawer & Top Capsule Bar
+    // extendBody lets content scroll visibly beneath the floating bar (Slice 3).
     return Scaffold(
       key: _scaffoldKey,
+      extendBody: true,
       drawer: Drawer(
         child: SafeArea(
           child: SidebarNavigation(
@@ -187,32 +190,10 @@ class _MainLayoutScreenState extends State<MainLayoutScreen> {
         ),
       ),
       body: _views[app.selectedNavIndex],
-      bottomNavigationBar: CupertinoTabBar(
+      // Floating glass pill (Slice 3) replaces the docked CupertinoTabBar.
+      bottomNavigationBar: FloatingTabBar(
         currentIndex: app.selectedNavIndex < 5 ? app.selectedNavIndex : 0,
-        activeColor: AppleTheme.systemBlue,
         onTap: (index) => app.setNavIndex(index),
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(CupertinoIcons.square_grid_2x2_fill),
-            label: 'Katikati',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(CupertinoIcons.device_phone_portrait),
-            label: 'Simulator',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(CupertinoIcons.layers_alt),
-            label: 'Queue',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(CupertinoIcons.calendar),
-            label: 'Calendar',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(CupertinoIcons.sparkles),
-            label: 'AI Studio',
-          ),
-        ],
       ),
     );
   }

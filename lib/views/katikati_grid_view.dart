@@ -138,7 +138,7 @@ class _KatikatiGridViewState extends State<KatikatiGridView> {
               childCount: _groupByDay(filtered).keys.length,
             ),
           ),
-          const SliverToBoxAdapter(child: SizedBox(height: 110)),
+          const SliverToBoxAdapter(child: SizedBox(height: 140)),
         ],
       ),
     );
