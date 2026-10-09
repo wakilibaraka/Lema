@@ -1,6 +1,6 @@
-import 'package:file_picker/file_picker.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import '../services/media_upload_service.dart';
 import '../theme/apple_theme.dart';
 
 class MediaPickerResult {
@@ -32,6 +32,9 @@ class MediaPickerDialog extends StatefulWidget {
 
 class _MediaPickerDialogState extends State<MediaPickerDialog> {
   final TextEditingController _urlController = TextEditingController();
+  bool _isUploading = false;
+  String _uploadStatus = '';
+  List<UploadedMediaItem> _recentUploads = [];
 
   final List<MediaPickerResult> _sampleMedia = [
     MediaPickerResult(
@@ -61,35 +64,55 @@ class _MediaPickerDialogState extends State<MediaPickerDialog> {
     ),
   ];
 
-  Future<void> _pickLocalFile() async {
+  @override
+  void initState() {
+    super.initState();
+    _loadRecents();
+  }
+
+  Future<void> _loadRecents() async {
+    final list = await MediaUploadService.getRecentUploads();
+    if (mounted) {
+      setState(() {
+        _recentUploads = list;
+      });
+    }
+  }
+
+  Future<void> _pickAndUpload() async {
+    setState(() {
+      _isUploading = true;
+      _uploadStatus = 'Selecting file...';
+    });
+
     try {
-      final files = await FilePicker.pickFiles(
-        type: FileType.custom,
-        allowedExtensions: ['mp4', 'mov', 'avi', 'mkv', 'png', 'jpg', 'jpeg', 'webp'],
+      final item = await MediaUploadService.pickAndUploadMedia(
+        onProgress: (status) {
+          if (mounted) setState(() => _uploadStatus = status);
+        },
       );
 
-      if (files.isNotEmpty) {
-        final file = files.first;
-        final path = file.path;
-        if (path != null) {
-          final ext = file.extension?.toLowerCase() ?? '';
-          final isVideo = ['mp4', 'mov', 'avi', 'mkv'].contains(ext);
-          if (mounted) {
-            Navigator.of(context).pop(
-              MediaPickerResult(
-                pathOrUrl: path,
-                isVideo: isVideo,
-                name: file.name,
-              ),
-            );
-          }
-        }
+      if (item != null && mounted) {
+        Navigator.of(context).pop(
+          MediaPickerResult(
+            pathOrUrl: item.url,
+            isVideo: item.isVideo,
+            name: item.name,
+          ),
+        );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('File picker error: $e')),
+          SnackBar(content: Text('File upload error: $e')),
         );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isUploading = false;
+          _uploadStatus = '';
+        });
       }
     }
   }
@@ -108,14 +131,15 @@ class _MediaPickerDialogState extends State<MediaPickerDialog> {
       child: Material(
         color: Colors.transparent,
         child: Container(
-          width: 540,
+          width: 580,
           margin: const EdgeInsets.all(20),
+          constraints: const BoxConstraints(maxHeight: 680),
           decoration: BoxDecoration(
             color: isDark ? const Color(0xFF1E1E24) : Colors.white,
             borderRadius: BorderRadius.circular(AppleTheme.radiusXl),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withAlpha(90),
+                color: Colors.black.withAlpha(100),
                 blurRadius: 40,
                 offset: const Offset(0, 10),
               ),
@@ -147,7 +171,7 @@ class _MediaPickerDialogState extends State<MediaPickerDialog> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Add Media for Preview',
+                            'Add Media for Preview & Auto-Post',
                             style: TextStyle(
                               fontSize: 17,
                               fontWeight: FontWeight.w700,
@@ -157,7 +181,7 @@ class _MediaPickerDialogState extends State<MediaPickerDialog> {
                           ),
                           const SizedBox(height: 2),
                           Text(
-                            'Pick real video/image file from device or select Emms sample',
+                            'Upload real MP4/MOV videos, images, or choose brand samples',
                             style: TextStyle(
                               fontSize: 12,
                               color: isDark ? Colors.white70 : Colors.black54,
@@ -176,95 +200,180 @@ class _MediaPickerDialogState extends State<MediaPickerDialog> {
               ),
               const Divider(height: 1),
 
-              // Pick from Local Device Button
+              // Upload Action Area
               Padding(
                 padding: const EdgeInsets.all(16.0),
                 child: CupertinoButton(
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   color: AppleTheme.systemBlue,
                   borderRadius: BorderRadius.circular(AppleTheme.radiusMd),
-                  onPressed: _pickLocalFile,
-                  child: const Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
+                  onPressed: _isUploading ? null : _pickAndUpload,
+                  child: _isUploading
+                      ? Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const CupertinoActivityIndicator(color: Colors.white),
+                            const SizedBox(width: 10),
+                            Text(
+                              _uploadStatus.isNotEmpty ? _uploadStatus : 'Processing file...',
+                              style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: Colors.white),
+                            ),
+                          ],
+                        )
+                      : const Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(CupertinoIcons.cloud_upload_fill, size: 18, color: Colors.white),
+                            SizedBox(width: 8),
+                            Text(
+                              'Upload Custom Video or Photo (MP4, MOV, PNG, JPG)',
+                              style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13.5, color: Colors.white),
+                            ),
+                          ],
+                        ),
+                ),
+              ),
+
+              // Scrollable Sections
+              Flexible(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Icon(CupertinoIcons.folder_badge_plus, size: 18),
-                      SizedBox(width: 8),
+                      // Recent Uploads Section (if any)
+                      if (_recentUploads.isNotEmpty) ...[
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              'MY RECENT UPLOADS',
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                                letterSpacing: 0.8,
+                                color: isDark ? Colors.white38 : Colors.black38,
+                              ),
+                            ),
+                            Text(
+                              '${_recentUploads.length} items',
+                              style: TextStyle(fontSize: 10, color: isDark ? Colors.white38 : Colors.black38),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 6),
+                        ConstrainedBox(
+                          constraints: const BoxConstraints(maxHeight: 140),
+                          child: ListView.separated(
+                            shrinkWrap: true,
+                            itemCount: _recentUploads.length,
+                            separatorBuilder: (_, _) => const SizedBox(height: 6),
+                            itemBuilder: (context, index) {
+                              final u = _recentUploads[index];
+                              final sizeMb = (u.sizeBytes / (1024 * 1024)).toStringAsFixed(1);
+                              return InkWell(
+                                onTap: () => Navigator.of(context).pop(
+                                  MediaPickerResult(pathOrUrl: u.url, isVideo: u.isVideo, name: u.name),
+                                ),
+                                borderRadius: BorderRadius.circular(10),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                  decoration: BoxDecoration(
+                                    color: isDark ? Colors.white.withAlpha(10) : Colors.black.withAlpha(6),
+                                    borderRadius: BorderRadius.circular(10),
+                                    border: Border.all(color: isDark ? Colors.white.withAlpha(15) : Colors.black.withAlpha(10)),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Icon(
+                                        u.isVideo ? CupertinoIcons.film_fill : CupertinoIcons.photo,
+                                        size: 16,
+                                        color: u.isVideo ? AppleTheme.systemPurple : AppleTheme.systemTeal,
+                                      ),
+                                      const SizedBox(width: 10),
+                                      Expanded(
+                                        child: Text(
+                                          u.name,
+                                          style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                      Text(
+                                        '$sizeMb MB',
+                                        style: TextStyle(fontSize: 11, color: isDark ? Colors.white54 : Colors.black45),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      GestureDetector(
+                                        onTap: () async {
+                                          await MediaUploadService.removeRecent(u.id);
+                                          _loadRecents();
+                                        },
+                                        child: const Icon(CupertinoIcons.trash, size: 14, color: Colors.redAccent),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                      ],
+
+                      // Brand Samples
                       Text(
-                        'Browse Device Media (MP4, MOV, PNG, JPG)',
-                        style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+                        'EMMS DIGITAL MEDIA SAMPLES',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 0.8,
+                          color: isDark ? Colors.white38 : Colors.black38,
+                        ),
                       ),
+                      const SizedBox(height: 6),
+                      ..._sampleMedia.map((item) {
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 6),
+                          child: InkWell(
+                            onTap: () => Navigator.of(context).pop(item),
+                            borderRadius: BorderRadius.circular(10),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                              decoration: BoxDecoration(
+                                color: isDark ? Colors.white.withAlpha(10) : Colors.black.withAlpha(6),
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(color: isDark ? Colors.white.withAlpha(15) : Colors.black.withAlpha(10)),
+                              ),
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    item.isVideo ? CupertinoIcons.videocam_fill : CupertinoIcons.photo_fill,
+                                    size: 16,
+                                    color: item.isVideo ? AppleTheme.systemPurple : AppleTheme.systemTeal,
+                                  ),
+                                  const SizedBox(width: 10),
+                                  Expanded(
+                                    child: Text(
+                                      item.name,
+                                      style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w500),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                  const Icon(CupertinoIcons.chevron_right, size: 14, color: Colors.grey),
+                                ],
+                              ),
+                            ),
+                          ),
+                        );
+                      }),
                     ],
                   ),
                 ),
               ),
 
-              // Samples Section
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
-                child: Text(
-                  'OR SELECT REAL EMMS DIGITAL MEDIA SAMPLES',
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 0.8,
-                    color: isDark ? Colors.white38 : Colors.black38,
-                  ),
-                ),
-              ),
-              ConstrainedBox(
-                constraints: const BoxConstraints(maxHeight: 200),
-                child: ListView.separated(
-                  shrinkWrap: true,
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                  itemCount: _sampleMedia.length,
-                  separatorBuilder: (_, _) => const SizedBox(height: 6),
-                  itemBuilder: (context, index) {
-                    final item = _sampleMedia[index];
-                    return InkWell(
-                      onTap: () => Navigator.of(context).pop(item),
-                      borderRadius: BorderRadius.circular(12),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                        decoration: BoxDecoration(
-                          color: isDark ? Colors.white.withAlpha(10) : Colors.black.withAlpha(8),
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
-                            color: isDark ? Colors.white.withAlpha(15) : Colors.black.withAlpha(10),
-                          ),
-                        ),
-                        child: Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.all(6),
-                              decoration: BoxDecoration(
-                                color: (item.isVideo ? AppleTheme.systemPurple : AppleTheme.systemTeal).withAlpha(35),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Icon(
-                                item.isVideo ? CupertinoIcons.videocam_fill : CupertinoIcons.photo_fill,
-                                size: 16,
-                                color: item.isVideo ? AppleTheme.systemPurple : AppleTheme.systemTeal,
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Text(
-                                item.name,
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w500,
-                                  color: isDark ? Colors.white : Colors.black87,
-                                ),
-                              ),
-                            ),
-                            const Icon(CupertinoIcons.chevron_right, size: 14, color: Colors.grey),
-                          ],
-                        ),
-                      ),
-                    );
-                  },
-                ),
-              ),
+              const Divider(height: 1),
 
               // Direct URL Input
               Padding(
@@ -273,7 +382,7 @@ class _MediaPickerDialogState extends State<MediaPickerDialog> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'OR PASTE MEDIA URL',
+                      'OR PASTE MEDIA LINK / CDN URL',
                       style: TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w700,

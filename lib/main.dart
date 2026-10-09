@@ -13,6 +13,7 @@ import 'views/queue_view.dart';
 import 'views/settings_view.dart';
 import 'views/simulator_view.dart';
 import 'views/tasks_view.dart';
+import 'widgets/dynamic_capsule.dart';
 import 'widgets/sidebar_navigation.dart';
 import 'widgets/window_title_bar.dart';
 
@@ -36,7 +37,7 @@ class LemaApp extends StatelessWidget {
       child: Consumer<AppProvider>(
         builder: (context, app, child) {
           return MaterialApp(
-            title: 'Lema - Social Auto-Poster',
+            title: 'Lema - Social Auto-Poster & AI Studio',
             debugShowCheckedModeBanner: false,
             themeMode: app.themeMode,
             theme: AppleTheme.lightTheme,
@@ -57,6 +58,8 @@ class MainLayoutScreen extends StatefulWidget {
 }
 
 class _MainLayoutScreenState extends State<MainLayoutScreen> {
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+
   final List<Widget> _views = const [
     SimulatorView(),
     QueueView(),
@@ -80,9 +83,14 @@ class _MainLayoutScreenState extends State<MainLayoutScreen> {
   @override
   Widget build(BuildContext context) {
     final app = context.watch<AppProvider>();
-    final isDesktop = MediaQuery.of(context).size.width >= 800;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final screenWidth = MediaQuery.of(context).size.width;
 
-    if (isDesktop) {
+    final isMobile = screenWidth < 768;
+    final isTablet = screenWidth >= 768 && screenWidth < 1100;
+
+    // Desktop / Tablet Layout with Adaptive Sidebar
+    if (!isMobile) {
       return Scaffold(
         body: Column(
           children: [
@@ -95,6 +103,7 @@ class _MainLayoutScreenState extends State<MainLayoutScreen> {
                   SidebarNavigation(
                     selectedIndex: app.selectedNavIndex,
                     onDestinationSelected: (index) => app.setNavIndex(index),
+                    isRail: isTablet,
                   ),
                   Expanded(
                     child: AnimatedSwitcher(
@@ -110,11 +119,53 @@ class _MainLayoutScreenState extends State<MainLayoutScreen> {
       );
     }
 
-    // Mobile / Compact Layout
+    // Mobile Layout (< 768px) with Drawer & Top Capsule Bar
     return Scaffold(
-      body: SafeArea(
-        child: _views[app.selectedNavIndex],
+      key: _scaffoldKey,
+      drawer: Drawer(
+        child: SafeArea(
+          child: SidebarNavigation(
+            selectedIndex: app.selectedNavIndex,
+            onDestinationSelected: (index) {
+              app.setNavIndex(index);
+              Navigator.of(context).pop();
+            },
+            isRail: false,
+          ),
+        ),
       ),
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(56),
+        child: Container(
+          decoration: BoxDecoration(
+            color: isDark ? const Color(0xFF131317) : Colors.white,
+            border: Border(bottom: BorderSide(color: isDark ? Colors.white10 : Colors.black12)),
+          ),
+          child: SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 10),
+              child: Row(
+                children: [
+                  IconButton(
+                    icon: const Icon(CupertinoIcons.bars, size: 22),
+                    onPressed: () => _scaffoldKey.currentState?.openDrawer(),
+                  ),
+                  const SizedBox(width: 4),
+                  Expanded(
+                    child: Text(
+                      _viewTitles[app.selectedNavIndex],
+                      style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  const DynamicCapsule(),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+      body: _views[app.selectedNavIndex],
       bottomNavigationBar: CupertinoTabBar(
         currentIndex: app.selectedNavIndex < 5 ? app.selectedNavIndex : 0,
         activeColor: AppleTheme.systemBlue,

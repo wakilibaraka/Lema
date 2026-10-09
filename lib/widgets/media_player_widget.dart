@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -162,6 +163,17 @@ class _UniversalMediaPlayerState extends State<UniversalMediaPlayer> {
         fit: widget.fit,
         errorBuilder: (context, error, stackTrace) => _buildPlaceholder(),
       );
+    } else if (url.startsWith('data:image')) {
+      try {
+        final base64String = url.contains(',') ? url.split(',').last : url;
+        imageWidget = Image.memory(
+          base64Decode(base64String),
+          fit: widget.fit,
+          errorBuilder: (context, error, stackTrace) => _buildPlaceholder(),
+        );
+      } catch (_) {
+        imageWidget = _buildPlaceholder();
+      }
     } else if (url.startsWith('http://') || url.startsWith('https://')) {
       imageWidget = Image.network(
         url,
