@@ -270,8 +270,11 @@ class _QueueViewState extends State<QueueView> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Platform and Schedule Badges
-                    Row(
+                    // Platform and Schedule Badges (Wrap: never overflows narrow cards).
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 6,
+                      crossAxisAlignment: WrapCrossAlignment.center,
                       children: [
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
@@ -288,7 +291,6 @@ class _QueueViewState extends State<QueueView> {
                             ),
                           ),
                         ),
-                        const SizedBox(width: 8),
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                           decoration: BoxDecoration(
@@ -296,6 +298,7 @@ class _QueueViewState extends State<QueueView> {
                             borderRadius: BorderRadius.circular(6),
                           ),
                           child: Row(
+                            mainAxisSize: MainAxisSize.min,
                             children: [
                               Icon(CupertinoIcons.clock, size: 11, color: isDark ? Colors.white60 : Colors.black54),
                               const SizedBox(width: 4),
@@ -310,8 +313,7 @@ class _QueueViewState extends State<QueueView> {
                             ],
                           ),
                         ),
-                        if (post.status == 'published') ...[
-                          const SizedBox(width: 8),
+                        if (post.status == 'published')
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                             decoration: BoxDecoration(
@@ -323,7 +325,6 @@ class _QueueViewState extends State<QueueView> {
                               style: TextStyle(color: AppleTheme.systemGreen, fontSize: 10, fontWeight: FontWeight.w700),
                             ),
                           ),
-                        ],
                       ],
                     ),
 
