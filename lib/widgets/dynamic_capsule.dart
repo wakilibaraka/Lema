@@ -8,7 +8,11 @@ import '../theme/apple_theme.dart';
 class DynamicCapsule extends StatelessWidget {
   final VoidCallback? onTap;
 
-  const DynamicCapsule({super.key, this.onTap});
+  /// Compact mode (Slice 1): dot + handle only, handle ellipsizes.
+  /// Used in the narrow mobile app bar so the route title never truncates.
+  final bool compact;
+
+  const DynamicCapsule({super.key, this.onTap, this.compact = false});
 
   @override
   Widget build(BuildContext context) {
@@ -68,39 +72,45 @@ class DynamicCapsule extends StatelessWidget {
             ),
             const SizedBox(width: 8),
             // Profile & Status
-            Text(
-              profile.instagramHandle,
-              style: const TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.w600,
-                fontSize: 12,
-                letterSpacing: -0.2,
+            Flexible(
+              child: Text(
+                profile.instagramHandle,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 12,
+                  letterSpacing: -0.2,
+                ),
+                overflow: TextOverflow.ellipsis,
+                maxLines: 1,
               ),
             ),
-            const SizedBox(width: 8),
-            Container(
-              width: 1,
-              height: 12,
-              color: Colors.white.withValues(alpha: 0.2),
-            ),
-            const SizedBox(width: 8),
-            Text(
-              isDaemonOnline
-                  ? (isSandbox ? 'SANDBOX ACTIVE' : 'DAEMON 3001')
-                  : 'OFFLINE SYNC',
-              style: TextStyle(
-                color: Colors.white.withValues(alpha: 0.75),
-                fontSize: 10.5,
-                fontWeight: FontWeight.w500,
-                letterSpacing: 0.5,
+            if (!compact) ...[
+              const SizedBox(width: 8),
+              Container(
+                width: 1,
+                height: 12,
+                color: Colors.white.withValues(alpha: 0.2),
               ),
-            ),
-            const SizedBox(width: 4),
-            Icon(
-              CupertinoIcons.chevron_down,
-              color: Colors.white.withValues(alpha: 0.5),
-              size: 11,
-            ),
+              const SizedBox(width: 8),
+              Text(
+                isDaemonOnline
+                    ? (isSandbox ? 'SANDBOX ACTIVE' : 'DAEMON 3001')
+                    : 'OFFLINE SYNC',
+                style: TextStyle(
+                  color: Colors.white.withValues(alpha: 0.75),
+                  fontSize: 10.5,
+                  fontWeight: FontWeight.w500,
+                  letterSpacing: 0.5,
+                ),
+              ),
+              const SizedBox(width: 4),
+              Icon(
+                CupertinoIcons.chevron_down,
+                color: Colors.white.withValues(alpha: 0.5),
+                size: 11,
+              ),
+            ],
           ],
         ),
       ),

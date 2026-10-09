@@ -83,6 +83,18 @@ class _MainLayoutScreenState extends State<MainLayoutScreen> {
     'Daemon & Settings',
   ];
 
+  // Short titles for the narrow mobile app bar (Slice 1: no truncation).
+  final List<String> _viewShortTitles = const [
+    'Katikati',
+    'Simulator',
+    'Queue',
+    'Calendar',
+    'AI Studio',
+    'Hooks',
+    'Daily Tick',
+    'Settings',
+  ];
+
   @override
   Widget build(BuildContext context) {
     final app = context.watch<AppProvider>();
@@ -156,12 +168,18 @@ class _MainLayoutScreenState extends State<MainLayoutScreen> {
                   const SizedBox(width: 4),
                   Expanded(
                     child: Text(
-                      _viewTitles[app.selectedNavIndex],
+                      _viewShortTitles[app.selectedNavIndex],
                       style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
-                  const DynamicCapsule(),
+                  const SizedBox(width: 8),
+                  // Compact capsule: dot + handle only, capped width so the
+                  // title never truncates at 402pt (Slice 1).
+                  ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 190),
+                    child: const DynamicCapsule(compact: true),
+                  ),
                 ],
               ),
             ),
