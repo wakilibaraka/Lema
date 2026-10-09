@@ -24,6 +24,17 @@ class PostsProvider extends ChangeNotifier {
     if (_posts.isEmpty) {
       _posts = List.from(defaultSeedPosts);
       _storage.savePosts(_posts);
+    } else {
+      // Slice 5 seed migration: merge any seed ids missing from storage
+      // (e.g. new draft seeds on existing installs), then persist.
+      var merged = false;
+      for (final seed in defaultSeedPosts) {
+        if (!_posts.any((p) => p.id == seed.id)) {
+          _posts.add(seed);
+          merged = true;
+        }
+      }
+      if (merged) _storage.savePosts(_posts);
     }
     _activeSimulatorPost = _posts.first;
     syncWithBackend();

@@ -892,6 +892,16 @@ class _LemaGridViewState extends State<LemaGridView> {
             blurRadius: isFeedback ? 24 : 14,
             offset: Offset(0, isFeedback ? 12 : 6),
           ),
+          // Slice 5: draft stack backplate (stacked-album language) —
+          // a hard offset shadow doubles as the second card. No structural
+          // change, so the tile bracket balance is untouched.
+          if (!isFeedback &&
+              post.status.toLowerCase() == 'draft')
+            const BoxShadow(
+              color: Color(0x66FF9F0A),
+              blurRadius: 2,
+              offset: Offset(5, 5),
+            ),
         ],
       ),
       child: ClipRRect(
