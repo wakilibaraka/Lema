@@ -37,6 +37,23 @@ xcrun simctl io 130A52D4-A743-4AB1-8A05-2727E3620EF2 screenshot /tmp/live.png &&
 Commit convention: `feat(lema): <slice>`, `fix(lema): <…>`, `docs(lema): <…>`.
 Push after **every** slice: `git push origin main`.
 
+## Progress
+
+- [x] Baseline: Lema drag-and-drop grid planner v1 (`9ec2a23`)
+- [x] Plan doc + gap addendum + Slices 11–15 spec (`b89471d`, `21d2e43`)
+- [x] Slice 1 — mobile top bar (`957bc83`)
+- [x] Slice 2 — hero typography + scrim (`c5dc5c8`)
+- [x] Slice 3 — floating glass tab bar (`705602a`)
+- [x] Rename Lema everywhere + Queue/Tasks/Calendar overflow drive-bys (`da71d52`)
+- [ ] Slice 4 — grid density + drag feel + toast/undo
+- [ ] Slice 5 — draft seeds + empty states
+- [ ] Slice 6 — timeline default-open + slot grouping
+- [ ] Slice 7 — quick-edit time stepper + platform toggle
+- [ ] Slice 8 — dark-mode pass
+- [ ] Slice 9 — tests + hygiene
+- [ ] Slice 10 — polish pass
+- [ ] Slices 11–15 — signature interactions
+
 ## 1. Design tokens (frozen for all slices)
 
 - Canvas light `#F5F5F8`, card white, ink black `#000` / charcoal `#3A3A3C`, muted `black54`.
