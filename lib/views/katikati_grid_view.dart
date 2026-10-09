@@ -294,7 +294,7 @@ class _KatikatiGridViewState extends State<KatikatiGridView> {
           ClipRRect(
             borderRadius: BorderRadius.circular(32),
             child: Container(
-              height: 380,
+              height: 400,
               width: double.infinity,
               decoration: BoxDecoration(
                 color: Colors.black,
@@ -324,11 +324,11 @@ class _KatikatiGridViewState extends State<KatikatiGridView> {
                         end: Alignment.bottomCenter,
                         colors: [
                           Colors.black.withAlpha(70),
-                          Colors.transparent,
-                          Colors.transparent,
-                          Colors.black.withAlpha(190),
+                          Colors.black.withAlpha(30),
+                          Colors.black.withAlpha(120),
+                          Colors.black.withAlpha(200),
                         ],
-                        stops: const [0.0, 0.25, 0.55, 1.0],
+                        stops: const [0.0, 0.32, 0.62, 1.0],
                       ),
                     ),
                   ),
@@ -378,83 +378,84 @@ class _KatikatiGridViewState extends State<KatikatiGridView> {
               ),
             ),
           ),
-          // Title block over image
-          Positioned(
-            left: 22,
-            right: 22,
-            top: 120,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  post.title.isEmpty ? 'Untitled Reel' : post.title,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 30,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: -0.8,
-                    height: 1.05,
-                    shadows: [
-                      Shadow(
-                          color: Colors.black54,
-                          blurRadius: 12,
-                          offset: Offset(0, 2))
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 6),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(14),
-                  child: BackdropFilter(
-                    filter: ImageFilter.blur(sigmaX: 14, sigmaY: 14),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 7),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withAlpha(40),
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                      child: Text(
-                        '${DateFormat('EEE h:mm a').format(post.scheduledTime)} · ${post.isVideo ? 'Reel' : 'Carousel'} · ${_hashtagCount(post.caption)} tags',
-                        style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 11.5,
-                            fontWeight: FontWeight.w600),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          // Bottom WHY THIS PICK glass sheet → WHY THIS POST
+          // Bottom-anchored stack (Slice 2): title + meta pill + glass sheet.
+          // Anchoring the type to the sheet guarantees it never collides
+          // with faces mid-frame, whatever the sheet height.
           Positioned(
             left: 14,
             right: 14,
             bottom: 14,
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(24),
-              child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 24, sigmaY: 24),
-                child: Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: isDark
-                        ? Colors.black.withAlpha(150)
-                        : Colors.white.withAlpha(225),
-                    borderRadius: BorderRadius.circular(24),
-                    border: Border.all(
-                      color: isDark
-                          ? Colors.white.withAlpha(30)
-                          : Colors.white.withAlpha(200),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(8, 0, 8, 8),
+                  child: Text(
+                    post.title.isEmpty ? 'Untitled Reel' : post.title,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 27,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: -0.6,
+                      height: 1.08,
+                      shadows: [
+                        Shadow(
+                            color: Colors.black87,
+                            blurRadius: 16,
+                            offset: Offset(0, 2))
+                      ],
                     ),
                   ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
+                ),
+                Padding(
+                  padding: const EdgeInsets.only(left: 8),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(14),
+                    child: BackdropFilter(
+                      filter: ImageFilter.blur(sigmaX: 14, sigmaY: 14),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 7),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withAlpha(40),
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        child: Text(
+                          '${DateFormat('EEE h:mm a').format(post.scheduledTime)} · ${post.isVideo ? 'Reel' : 'Carousel'} · ${_hashtagCount(post.caption)} tags',
+                          style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 11.5,
+                              fontWeight: FontWeight.w600),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(24),
+                  child: BackdropFilter(
+                    filter: ImageFilter.blur(sigmaX: 24, sigmaY: 24),
+                    child: Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: isDark
+                            ? Colors.black.withAlpha(150)
+                            : Colors.white.withAlpha(225),
+                        borderRadius: BorderRadius.circular(24),
+                        border: Border.all(
+                          color: isDark
+                              ? Colors.white.withAlpha(30)
+                              : Colors.white.withAlpha(200),
+                        ),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
                       Row(
                         children: [
                           Text(
@@ -493,10 +494,11 @@ class _KatikatiGridViewState extends State<KatikatiGridView> {
                         post.hook.isEmpty
                             ? 'High-retention opener verified.'
                             : post.hook,
-                        maxLines: 1,
+                        maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
-                          fontSize: 17,
+                          fontSize: 16,
+                          height: 1.25,
                           fontWeight: FontWeight.w800,
                           letterSpacing: -0.3,
                           color: isDark ? Colors.white : Colors.black,
@@ -571,6 +573,8 @@ class _KatikatiGridViewState extends State<KatikatiGridView> {
                   ),
                 ),
               ),
+            ),
+            ],
             ),
           ),
         ],
