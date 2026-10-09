@@ -155,9 +155,15 @@ class _LemaGridViewState extends State<LemaGridView>
     // Off-white canvas on light mode keeps the travel-ref contrast.
     final canvas = isDark ? null : const Color(0xFFF5F5F8);
 
+    // Slice 10: clamp text scaling so clamped titles survive max sizes.
+    final media = MediaQuery.of(context);
     return Scaffold(
       backgroundColor: canvas ?? Colors.transparent,
-      body: CustomScrollView(
+      body: MediaQuery(
+        data: media.copyWith(
+          textScaler: media.textScaler.clamp(maxScaleFactor: 1.2),
+        ),
+        child: CustomScrollView(
         slivers: [
           SliverToBoxAdapter(child: _buildHeader(isDark, scheduled, drafts)),
           SliverToBoxAdapter(
@@ -215,8 +221,15 @@ class _LemaGridViewState extends State<LemaGridView>
               ),
             ),
           ),
-          _buildDragGrid(isDark, filtered),
-          SliverToBoxAdapter(child: _buildTimelineHeader(isDark)),
+          // Slice 10: error card swaps in for grid + timeline on decode failure.
+          if (postsProvider.loadError)
+            SliverToBoxAdapter(
+              child: _buildErrorCard(context, isDark),
+            ),
+          if (!postsProvider.loadError)
+            _buildDragGrid(isDark, filtered),
+          if (!postsProvider.loadError)
+            SliverToBoxAdapter(child: _buildTimelineHeader(isDark)),
           SliverList(
             delegate: SliverChildBuilderDelegate(
               (ctx, i) {
@@ -225,11 +238,14 @@ class _LemaGridViewState extends State<LemaGridView>
                 return _buildDayAccordion(
                     context, isDark, key, groups[key]!, i);
               },
-              childCount: _groupByDay(filtered).keys.length,
+              childCount: postsProvider.loadError
+                  ? 0
+                  : _groupByDay(filtered).keys.length,
             ),
           ),
           const SliverToBoxAdapter(child: SizedBox(height: 140)),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -548,18 +564,22 @@ class _LemaGridViewState extends State<LemaGridView>
                         children: [
                       Row(
                         children: [
-                          Text(
-                            'WHY THIS POST',
-                            style: TextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.w800,
-                              letterSpacing: 1.0,
-                              color: isDark
-                                  ? Colors.white54
-                                  : Colors.black45,
+                          Expanded(
+                            child: Text(
+                              'WHY THIS POST',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: 1.0,
+                                color: isDark
+                                    ? Colors.white54
+                                    : Colors.black45,
+                              ),
                             ),
                           ),
-                          const Spacer(),
+                          const SizedBox(width: 8),
                           GestureDetector(
                             onTap: () => setState(() => _heroIndex++),
                             child: Row(
@@ -603,6 +623,7 @@ class _LemaGridViewState extends State<LemaGridView>
                               : Colors.black54,
                         ),
                       ),
+                      _countdownChip(pool, isDark),
                       const SizedBox(height: 12),
                       Row(
                         children: [
@@ -893,6 +914,9 @@ class _LemaGridViewState extends State<LemaGridView>
       bool isDark, PostModel post, bool isFeedback, bool isTarget) {
     final tags = _hashtagCount(post.caption);
     final badge = _statusBadge(post);
+    // Slice 10 audit: 14px dots; max 3 at 3-col, max 2 at 4-col so the
+    // timestamp never squeezes out (16px crowds 4-col tiles).
+    final maxDots = _gridColumns == 4 ? 2 : 3;
     return AnimatedContainer(
       duration: const Duration(milliseconds: 180),
       decoration: BoxDecoration(
@@ -1079,13 +1103,14 @@ class _LemaGridViewState extends State<LemaGridView>
                       children: [
                         Row(
                           children: [
-                            // Slice 4: platform dots (16px max 3, brand ring).
+                            // Slice 4/10: platform dots (brand ring).
                             for (int i = 0;
-                                i < post.platforms.length && i < 3;
+                                i < post.platforms.length &&
+                                    i < maxDots;
                                 i++)
                               Container(
-                                width: 12,
-                                height: 12,
+                                width: 14,
+                                height: 14,
                                 margin: const EdgeInsets.only(
                                     right: 3),
                                 decoration: BoxDecoration(
@@ -1102,13 +1127,13 @@ class _LemaGridViewState extends State<LemaGridView>
                                   ),
                                 ),
                               ),
-                            if (post.platforms.length > 3)
-                              const Padding(
+                            if (post.platforms.length > maxDots)
+                              Padding(
                                 padding:
-                                    EdgeInsets.only(right: 3),
+                                    const EdgeInsets.only(right: 3),
                                 child: Text(
-                                  '+',
-                                  style: TextStyle(
+                                  '+${post.platforms.length - maxDots}',
+                                  style: const TextStyle(
                                     color: Colors.white,
                                     fontSize: 9,
                                     fontWeight: FontWeight.w800,
@@ -1148,6 +1173,123 @@ class _LemaGridViewState extends State<LemaGridView>
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  /// Slice 10: auction-countdown language — nearest upcoming post due
+  /// within 2h. Returns an empty box when nothing is imminent.
+  Widget _countdownChip(List<PostModel> pool, bool isDark) {
+    final now = DateTime.now();
+    PostModel? next;
+    for (final p in pool) {
+      if (p.scheduledTime.isAfter(now) &&
+          (next == null ||
+              p.scheduledTime.isBefore(next.scheduledTime))) {
+        next = p;
+      }
+    }
+    if (next == null) return const SizedBox.shrink();
+    final mins = next.scheduledTime.difference(now).inMinutes;
+    if (mins >= 120) return const SizedBox.shrink();
+    final label = mins < 1
+        ? 'any moment'
+        : (mins < 60 ? 'in $mins min' : 'in ${mins ~/ 60}h ${mins % 60}m');
+    final post = next;
+    return Padding(
+      padding: const EdgeInsets.only(top: 6),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(CupertinoIcons.clock_fill,
+              size: 12, color: AppleTheme.systemBlue),
+          const SizedBox(width: 5),
+          Flexible(
+            child: Text(
+              'Next post $label · ${post.platformInfo.name}',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                fontSize: 11.5,
+                fontWeight: FontWeight.w700,
+                color: AppleTheme.systemBlue,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Slice 10: on-brand frosted error card replacing grid + timeline when
+  /// the stored queue failed to decode. Never a red screen.
+  Widget _buildErrorCard(BuildContext context, bool isDark) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(26),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 24, sigmaY: 24),
+          child: Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: isDark
+                  ? const Color(0xFF1C1C22).withAlpha(230)
+                  : Colors.white.withAlpha(240),
+              borderRadius: BorderRadius.circular(26),
+              border: Border.all(
+                color: AppleTheme.systemRed.withAlpha(70),
+                width: 1.2,
+              ),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: AppleTheme.systemRed.withAlpha(25),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    CupertinoIcons.exclamationmark_triangle_fill,
+                    color: AppleTheme.systemRed,
+                    size: 26,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  "Couldn't load your queue",
+                  style: TextStyle(
+                    fontSize: 17,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: -0.3,
+                    color: isDark ? Colors.white : Colors.black,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  'The saved data looks corrupted. Reset to your starter posts — nothing published is affected.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 12.5,
+                    color: isDark ? Colors.white60 : Colors.black54,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                CupertinoButton.filled(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 24, vertical: 12),
+                  borderRadius: BorderRadius.circular(14),
+                  onPressed: () =>
+                      context.read<PostsProvider>().retryLoad(),
+                  child: const Text('Reset to starter posts',
+                      style: TextStyle(fontWeight: FontWeight.w700)),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );

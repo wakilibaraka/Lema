@@ -207,12 +207,17 @@ class _UniversalMediaPlayerState extends State<UniversalMediaPlayer> {
 
   Widget _buildVideoPlayer() {
     if (_hasError) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
+      // Clipped, never scrollable: a failed decode must never overflow,
+      // even inside a 78px grid tile. Large previews show the full card.
+      return ClipRect(
+        child: SingleChildScrollView(
+          physics: const NeverScrollableScrollPhysics(),
+          child: Center(
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
               const Icon(CupertinoIcons.play_rectangle, color: AppleTheme.systemOrange, size: 40),
               const SizedBox(height: 8),
               const Text(
@@ -235,7 +240,9 @@ class _UniversalMediaPlayerState extends State<UniversalMediaPlayer> {
                 onPressed: _initVideo,
                 child: const Text('Retry Decode', style: TextStyle(color: Colors.white, fontSize: 12)),
               ),
-            ],
+                ],
+              ),
+            ),
           ),
         ),
       );

@@ -65,15 +65,23 @@ class StorageService {
   }
 
   // --- Posts ---
+  // Slice 10: decode failures are surfaced (not silently swallowed) so the
+  // UI can show an on-brand error card with a reset action.
+  bool _postsDecodeError = false;
+  bool get hadPostsDecodeError => _postsDecodeError;
+
   List<PostModel> loadPosts() {
     final raw = _prefs.getString(_keyPosts);
     if (raw == null || raw.isEmpty) {
+      _postsDecodeError = false;
       return defaultSeedPosts;
     }
     try {
       final List decoded = jsonDecode(raw);
+      _postsDecodeError = false;
       return decoded.map((e) => PostModel.fromJson(e)).toList();
     } catch (_) {
+      _postsDecodeError = true;
       return defaultSeedPosts;
     }
   }
@@ -81,6 +89,10 @@ class StorageService {
   Future<void> savePosts(List<PostModel> posts) async {
     final encoded = jsonEncode(posts.map((p) => p.toJson()).toList());
     await _prefs.setString(_keyPosts, encoded);
+  }
+
+  Future<void> clearPosts() async {
+    await _prefs.remove(_keyPosts);
   }
 
   // --- Tasks ---

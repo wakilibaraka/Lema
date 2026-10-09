@@ -51,8 +51,8 @@ Push after **every** slice: `git push origin main`.
 - [x] Slice 6 — timeline default-open + slot grouping
 - [x] Slice 7 — quick-edit time stepper + platform toggle
 - [x] Slice 8 — dark-mode pass
-- [ ] Slice 9 — tests + hygiene
-- [ ] Slice 10 — polish pass
+- [x] Slice 9 — tests + hygiene
+- [x] Slice 10 — polish pass
 - [ ] Slices 11–15 — signature interactions
 
 ## 1. Design tokens (frozen for all slices)

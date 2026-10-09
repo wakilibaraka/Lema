@@ -17,6 +17,10 @@ class PostsProvider extends ChangeNotifier {
 
   bool get canUndoReorder => _lastOrderSnapshot != null;
 
+  // Slice 10: surfaced when the stored queue failed to decode.
+  bool _loadError = false;
+  bool get loadError => _loadError;
+
   PostsProvider([StorageService? storage, ApiService? api])
       : _storage = storage ?? StorageService.instance,
         _api = api ?? ApiService.instance {
@@ -36,6 +40,7 @@ class PostsProvider extends ChangeNotifier {
       }
       if (merged) _storage.savePosts(_posts);
     }
+    _loadError = _storage.hadPostsDecodeError;
     _activeSimulatorPost = _posts.first;
     syncWithBackend();
   }
@@ -132,6 +137,15 @@ class PostsProvider extends ChangeNotifier {
     _posts = List<PostModel>.from(_lastOrderSnapshot!);
     _lastOrderSnapshot = null;
     _storage.savePosts(_posts);
+    notifyListeners();
+  }
+
+  /// Slice 10: discards the corrupted cache and restores seed posts.
+  Future<void> retryLoad() async {
+    await _storage.clearPosts();
+    _posts = List.from(defaultSeedPosts);
+    _storage.savePosts(_posts);
+    _loadError = false;
     notifyListeners();
   }
 

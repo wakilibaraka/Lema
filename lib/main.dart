@@ -137,7 +137,14 @@ class _MainLayoutScreenState extends State<MainLayoutScreen> {
 
     // Mobile Layout (< 768px) with Drawer & Top Capsule Bar
     // extendBody lets content scroll visibly beneath the floating bar (Slice 3).
-    return Scaffold(
+    // Slice 10: the whole mobile shell shares the 1.2x text clamp so the
+    // app bar + tab bar survive max accessibility sizes without truncation.
+    final media = MediaQuery.of(context);
+    return MediaQuery(
+      data: media.copyWith(
+        textScaler: media.textScaler.clamp(maxScaleFactor: 1.2),
+      ),
+      child: Scaffold(
       key: _scaffoldKey,
       extendBody: true,
       drawer: Drawer(
@@ -194,6 +201,7 @@ class _MainLayoutScreenState extends State<MainLayoutScreen> {
       bottomNavigationBar: FloatingTabBar(
         currentIndex: app.selectedNavIndex < 5 ? app.selectedNavIndex : 0,
         onTap: (index) => app.setNavIndex(index),
+      ),
       ),
     );
   }
