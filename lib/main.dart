@@ -9,6 +9,7 @@ import 'theme/apple_theme.dart';
 import 'views/ai_studio_view.dart';
 import 'views/calendar_view.dart';
 import 'views/hooks_pipeline_view.dart';
+import 'views/katikati_grid_view.dart';
 import 'views/queue_view.dart';
 import 'views/settings_view.dart';
 import 'views/simulator_view.dart';
@@ -61,6 +62,7 @@ class _MainLayoutScreenState extends State<MainLayoutScreen> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
   final List<Widget> _views = const [
+    KatikatiGridView(),
     SimulatorView(),
     QueueView(),
     CalendarView(),
@@ -71,6 +73,7 @@ class _MainLayoutScreenState extends State<MainLayoutScreen> {
   ];
 
   final List<String> _viewTitles = const [
+    'Katikati Visual Grid',
     'Device Simulator',
     'Publishing Queue',
     'Content Calendar',
@@ -172,6 +175,10 @@ class _MainLayoutScreenState extends State<MainLayoutScreen> {
         onTap: (index) => app.setNavIndex(index),
         items: const [
           BottomNavigationBarItem(
+            icon: Icon(CupertinoIcons.square_grid_2x2_fill),
+            label: 'Katikati',
+          ),
+          BottomNavigationBarItem(
             icon: Icon(CupertinoIcons.device_phone_portrait),
             label: 'Simulator',
           ),
@@ -186,10 +193,6 @@ class _MainLayoutScreenState extends State<MainLayoutScreen> {
           BottomNavigationBarItem(
             icon: Icon(CupertinoIcons.sparkles),
             label: 'AI Studio',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(CupertinoIcons.film),
-            label: 'Hooks',
           ),
         ],
       ),

@@ -74,6 +74,41 @@ class PostsProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Reorder the master queue from a filtered-grid drag.
+  /// [fromFiltered]/[toFiltered] are indices inside the filtered subset
+  /// described by the active Katikati filters, so we map them back to
+  /// master-list indices before moving.
+  void reorderPosts(int fromFiltered, int toFiltered, String platformFilter,
+      String statusFilter, String formatFilter) {
+    List<PostModel> filtered = _posts.where((p) {
+      final platformOk = platformFilter == 'all' ||
+          p.platforms.contains(platformFilter) ||
+          p.primaryPlatform.name == platformFilter;
+      final statusOk =
+          statusFilter == 'all' || p.status.toLowerCase() == statusFilter;
+      final formatOk = formatFilter == 'all' ||
+          (formatFilter == 'video' ? p.isVideo : !p.isVideo);
+      return platformOk && statusOk && formatOk;
+    }).toList();
+    if (fromFiltered < 0 ||
+        fromFiltered >= filtered.length ||
+        toFiltered < 0 ||
+        toFiltered >= filtered.length) {
+      return;
+    }
+    final moved = filtered[fromFiltered];
+    final target = filtered[toFiltered];
+    final fromMaster = _posts.indexWhere((p) => p.id == moved.id);
+    var toMaster = _posts.indexWhere((p) => p.id == target.id);
+    if (fromMaster == -1 || toMaster == -1) return;
+    final item = _posts.removeAt(fromMaster);
+    // Adjust when removal shifts the target left.
+    if (fromMaster < toMaster) toMaster -= 1;
+    _posts.insert(toMaster, item);
+    _storage.savePosts(_posts);
+    notifyListeners();
+  }
+
   Future<void> publishNow(String id) async {
     final idx = _posts.indexWhere((p) => p.id == id);
     if (idx != -1) {
