@@ -76,7 +76,7 @@ class PostsProvider extends ChangeNotifier {
 
   /// Reorder the master queue from a filtered-grid drag.
   /// [fromFiltered]/[toFiltered] are indices inside the filtered subset
-  /// described by the active Katikati filters, so we map them back to
+  /// described by the active Lema filters, so we map them back to
   /// master-list indices before moving.
   void reorderPosts(int fromFiltered, int toFiltered, String platformFilter,
       String statusFilter, String formatFilter) {

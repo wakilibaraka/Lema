@@ -19,7 +19,7 @@ class FloatingTabBar extends StatelessWidget {
   });
 
   static const List<(IconData, String)> _items = [
-    (CupertinoIcons.square_grid_2x2_fill, 'Katikati'),
+    (CupertinoIcons.square_grid_2x2_fill, 'Lema'),
     (CupertinoIcons.device_phone_portrait, 'Simulator'),
     (CupertinoIcons.layers_alt, 'Queue'),
     (CupertinoIcons.calendar, 'Calendar'),

@@ -8,7 +8,7 @@ import '../providers/posts_provider.dart';
 import '../theme/apple_theme.dart';
 import '../widgets/media_player_widget.dart';
 
-/// Katikati Grid — visually-driven drag-and-drop feed planner.
+/// Lema Grid — visually-driven drag-and-drop feed planner.
 ///
 /// Design language lifted directly from the travel reference screenshots:
 ///  * extreme border radii (24–32), soft drop shadows, frosted glassmorphism
@@ -17,14 +17,14 @@ import '../widgets/media_player_widget.dart';
 ///  * floating segmented filter pills (trip-length / climate pattern)
 ///  * vertical accordion day timeline (Day 1 Arrival pattern)
 ///  * floating bottom-sheet quick-edit modal (trip-suggestion sheet pattern)
-class KatikatiGridView extends StatefulWidget {
-  const KatikatiGridView({super.key});
+class LemaGridView extends StatefulWidget {
+  const LemaGridView({super.key});
 
   @override
-  State<KatikatiGridView> createState() => _KatikatiGridViewState();
+  State<LemaGridView> createState() => _LemaGridViewState();
 }
 
-class _KatikatiGridViewState extends State<KatikatiGridView> {
+class _LemaGridViewState extends State<LemaGridView> {
   String _platformFilter = 'all'; // all | instagram | tiktok | youtube | facebook
   String _statusFilter = 'all'; // all | scheduled | draft | published
   String _formatFilter = 'all'; // all | video | image
@@ -152,7 +152,7 @@ class _KatikatiGridViewState extends State<KatikatiGridView> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'KATIKATI GRID',
+            'LEMA',
             style: TextStyle(
               fontSize: 11,
               fontWeight: FontWeight.w800,

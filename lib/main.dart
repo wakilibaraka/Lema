@@ -9,7 +9,7 @@ import 'theme/apple_theme.dart';
 import 'views/ai_studio_view.dart';
 import 'views/calendar_view.dart';
 import 'views/hooks_pipeline_view.dart';
-import 'views/katikati_grid_view.dart';
+import 'views/lema_grid_view.dart';
 import 'views/queue_view.dart';
 import 'views/settings_view.dart';
 import 'views/simulator_view.dart';
@@ -63,7 +63,7 @@ class _MainLayoutScreenState extends State<MainLayoutScreen> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
   final List<Widget> _views = const [
-    KatikatiGridView(),
+    LemaGridView(),
     SimulatorView(),
     QueueView(),
     CalendarView(),
@@ -74,7 +74,7 @@ class _MainLayoutScreenState extends State<MainLayoutScreen> {
   ];
 
   final List<String> _viewTitles = const [
-    'Katikati Visual Grid',
+    'Lema',
     'Device Simulator',
     'Publishing Queue',
     'Content Calendar',
@@ -86,7 +86,7 @@ class _MainLayoutScreenState extends State<MainLayoutScreen> {
 
   // Short titles for the narrow mobile app bar (Slice 1: no truncation).
   final List<String> _viewShortTitles = const [
-    'Katikati',
+    'Lema',
     'Simulator',
     'Queue',
     'Calendar',

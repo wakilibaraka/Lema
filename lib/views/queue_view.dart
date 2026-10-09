@@ -102,32 +102,37 @@ class _QueueViewState extends State<QueueView> {
 
             const SizedBox(height: 20),
 
-            // Segment Control: Queue vs Published
-            Row(
-              children: [
-                CupertinoSlidingSegmentedControl<int>(
-                  groupValue: _selectedSegment,
-                  children: {
-                    0: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-                      child: Text('Scheduled Queue (${scheduledPosts.length})', style: const TextStyle(fontSize: 13)),
-                    ),
-                    1: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-                      child: Text('Published History (${publishedPosts.length})', style: const TextStyle(fontSize: 13)),
-                    ),
-                  },
-                  onValueChanged: (val) {
-                    if (val != null) setState(() => _selectedSegment = val);
-                  },
-                ),
-                const Spacer(),
-                if (_selectedSegment == 0 && scheduledPosts.isNotEmpty)
-                  Text(
-                    'Next post scheduled in approx. 45 mins',
-                    style: TextStyle(fontSize: 12, color: isDark ? Colors.white54 : Colors.black45),
+            // Segment Control: Queue vs Published (scrolls on narrow widths).
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: [
+                  CupertinoSlidingSegmentedControl<int>(
+                    groupValue: _selectedSegment,
+                    children: {
+                      0: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                        child: Text('Scheduled Queue (${scheduledPosts.length})', style: const TextStyle(fontSize: 13)),
+                      ),
+                      1: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                        child: Text('Published History (${publishedPosts.length})', style: const TextStyle(fontSize: 13)),
+                      ),
+                    },
+                    onValueChanged: (val) {
+                      if (val != null) setState(() => _selectedSegment = val);
+                    },
                   ),
-              ],
+                  if (_selectedSegment == 0 && scheduledPosts.isNotEmpty) ...[
+                    const SizedBox(width: 12),
+                    Text(
+                      'Next post scheduled in approx. 45 mins',
+                      style: TextStyle(fontSize: 12, color: isDark ? Colors.white54 : Colors.black45),
+                    ),
+                    const SizedBox(width: 8),
+                  ],
+                ],
+              ),
             ),
 
             const SizedBox(height: 16),
