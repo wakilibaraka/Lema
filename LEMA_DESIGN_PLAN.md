@@ -45,7 +45,7 @@ Push after **every** slice: `git push origin main`.
 - [x] Slice 2 — hero typography + scrim (`c5dc5c8`)
 - [x] Slice 3 — floating glass tab bar (`705602a`)
 - [x] Rename Lema everywhere + Queue/Tasks/Calendar overflow drive-bys (`da71d52`)
-- [ ] Slice 4 — grid density + drag feel + toast/undo
+- [x] Slice 4 — grid density + drag feel + toast/undo
 - [ ] Slice 5 — draft seeds + empty states
 - [ ] Slice 6 — timeline default-open + slot grouping
 - [ ] Slice 7 — quick-edit time stepper + platform toggle

@@ -1,11 +1,14 @@
 import 'dart:ui';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import '../models/platform_info.dart';
 import '../models/post_model.dart';
 import '../providers/posts_provider.dart';
 import '../theme/apple_theme.dart';
+import '../widgets/lema_toast.dart';
 import '../widgets/media_player_widget.dart';
 
 /// Lema Grid — visually-driven drag-and-drop feed planner.
@@ -31,6 +34,7 @@ class _LemaGridViewState extends State<LemaGridView> {
   int _heroIndex = 0;
   final Set<String> _expandedDays = {};
   String? _draggingId;
+  int _gridColumns = 3; // Slice 4: 3-col (3:4) or 4-col (1:1)
 
   static const _lime = Color(0xFFD3E157);
 
@@ -49,6 +53,52 @@ class _LemaGridViewState extends State<LemaGridView> {
 
   int _hashtagCount(String caption) =>
       RegExp(r'#\w+').allMatches(caption).length;
+
+  /// Slice 4: status badge (label + color) for grid tiles.
+  (String, Color) _statusBadge(PostModel post) {
+    switch (post.status.toLowerCase()) {
+      case 'draft':
+        return ('DRAFT', const Color(0xFFFF9F0A));
+      case 'published':
+      case 'posted':
+        return ('LIVE', AppleTheme.systemGreen);
+      case 'failed':
+        return ('FAILED', AppleTheme.systemRed);
+      default:
+        return ('QUEUED', AppleTheme.systemBlue);
+    }
+  }
+
+  Widget _densityBtn(bool isDark, int columns) {
+    final selected = _gridColumns == columns;
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.selectionClick();
+        setState(() => _gridColumns = columns);
+      },
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        padding:
+            const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+        decoration: BoxDecoration(
+          color: selected
+              ? (isDark ? Colors.white : Colors.black)
+              : Colors.transparent,
+          borderRadius: BorderRadius.circular(9),
+        ),
+        child: Text(
+          '$columns',
+          style: TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.w700,
+            color: selected
+                ? (isDark ? Colors.black : Colors.white)
+                : (isDark ? Colors.white54 : Colors.black45),
+          ),
+        ),
+      ),
+    );
+  }
 
   Map<String, List<PostModel>> _groupByDay(List<PostModel> posts) {
     final map = <String, List<PostModel>>{};
@@ -99,22 +149,40 @@ class _LemaGridViewState extends State<LemaGridView> {
               padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
               child: Row(
                 children: [
-                  Text(
-                    'FEED GRID · DRAG TO REORDER',
-                    style: TextStyle(
-                      fontSize: 10.5,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: 1.0,
-                      color: isDark ? Colors.white38 : Colors.black38,
+                  Flexible(
+                    child: Text(
+                      'FEED GRID · DRAG TO REORDER',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 10.5,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 1.0,
+                        color: isDark ? Colors.white38 : Colors.black38,
+                      ),
                     ),
                   ),
-                  const Spacer(),
-                  Icon(CupertinoIcons.move,
-                      size: 12,
-                      color: isDark ? Colors.white38 : Colors.black38),
-                  const SizedBox(width: 4),
+                  const SizedBox(width: 8),
+                  // Slice 4 density toggle: 3-col 3:4 tiles, 4-col 1:1 tiles.
+                  Container(
+                    padding: const EdgeInsets.all(3),
+                    decoration: BoxDecoration(
+                      color: isDark
+                          ? Colors.white.withAlpha(12)
+                          : Colors.black.withAlpha(7),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        _densityBtn(isDark, 3),
+                        _densityBtn(isDark, 4),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 8),
                   Text(
-                    '${filtered.length} assets',
+                    '${filtered.length}',
                     style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w600,
@@ -727,12 +795,12 @@ class _LemaGridViewState extends State<LemaGridView> {
     return SliverPadding(
       padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
       sliver: SliverGrid(
-        gridDelegate:
-            const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 3,
+        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: _gridColumns,
           mainAxisSpacing: 10,
           crossAxisSpacing: 10,
-          childAspectRatio: 0.78,
+          // Slice 4 aspect policy: 3-col 3:4 tiles, 4-col 1:1 tiles.
+          childAspectRatio: _gridColumns == 3 ? 0.75 : 1.0,
         ),
         delegate: SliverChildBuilderDelegate(
           (ctx, index) {
@@ -745,6 +813,18 @@ class _LemaGridViewState extends State<LemaGridView> {
                       .read<PostsProvider>()
                       .reorderPosts(from, index, _platformFilter,
                           _statusFilter, _formatFilter);
+                  // Slice 4: Moved toast carries the Undo action (5s).
+                  if (mounted) {
+                    LemaToast.show(
+                      context,
+                      'Moved to position ${index + 1} of ${posts.length}',
+                      kind: LemaToastKind.moved,
+                      actionLabel: 'Undo',
+                      onAction: () => context
+                          .read<PostsProvider>()
+                          .undoLastReorder(),
+                    );
+                  }
                 }
                 setState(() => _draggingId = null);
               },
@@ -766,8 +846,10 @@ class _LemaGridViewState extends State<LemaGridView> {
                     opacity: 0.3,
                     child: _gridTile(isDark, post, false, false),
                   ),
-                  onDragStarted: () =>
-                      setState(() => _draggingId = post.id),
+                  onDragStarted: () {
+                    HapticFeedback.mediumImpact();
+                    setState(() => _draggingId = post.id);
+                  },
                   onDragEnd: (_) =>
                       setState(() => _draggingId = null),
                   child: GestureDetector(
@@ -788,6 +870,7 @@ class _LemaGridViewState extends State<LemaGridView> {
   Widget _gridTile(
       bool isDark, PostModel post, bool isFeedback, bool isTarget) {
     final tags = _hashtagCount(post.caption);
+    final badge = _statusBadge(post);
     return AnimatedContainer(
       duration: const Duration(milliseconds: 180),
       decoration: BoxDecoration(
@@ -823,6 +906,56 @@ class _LemaGridViewState extends State<LemaGridView> {
               autoPlay: false,
               showControls: false,
             ),
+            // Slice 4: drop-target tint (insertion placeholder feel).
+            if (isTarget)
+              Positioned.fill(
+                child: Container(
+                  color: AppleTheme.systemBlue.withAlpha(55),
+                ),
+              ),
+            // Slice 4: status pill, top-left (never color-alone: label text).
+            Positioned(
+              top: 7,
+              left: 7,
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(10),
+                child: BackdropFilter(
+                  filter:
+                      ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 7, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withAlpha(110),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          width: 5,
+                          height: 5,
+                          decoration: BoxDecoration(
+                            color: badge.$2,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          badge.$1,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 8.5,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: 0.4,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
             // Top-right frosted bookmark
             Positioned(
               top: 7,
@@ -851,12 +984,43 @@ class _LemaGridViewState extends State<LemaGridView> {
                 ),
               ),
             ),
+            // Slice 4: video glass play badge under the status pill.
             if (post.isVideo)
-              const Positioned(
-                top: 7,
+              Positioned(
+                top: 36,
                 left: 7,
-                child: Icon(CupertinoIcons.play_circle_fill,
-                    color: Colors.white, size: 18),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: BackdropFilter(
+                    filter:
+                        ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 7, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withAlpha(110),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(CupertinoIcons.play_fill,
+                              color: Colors.white, size: 9),
+                          SizedBox(width: 3),
+                          Text(
+                            'REEL',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 8.5,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: 0.4,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
               ),
             // Bottom frosted meta strip — dense but uncluttered
             Positioned(
@@ -883,16 +1047,42 @@ class _LemaGridViewState extends State<LemaGridView> {
                       children: [
                         Row(
                           children: [
-                            Container(
-                              width: 6,
-                              height: 6,
-                              decoration: BoxDecoration(
-                                color: post
-                                    .platformInfo.color,
-                                shape: BoxShape.circle,
+                            // Slice 4: platform dots (16px max 3, brand ring).
+                            for (int i = 0;
+                                i < post.platforms.length && i < 3;
+                                i++)
+                              Container(
+                                width: 12,
+                                height: 12,
+                                margin: const EdgeInsets.only(
+                                    right: 3),
+                                decoration: BoxDecoration(
+                                  color: platformsMap[post
+                                              .platforms[i]
+                                              .toLowerCase()]
+                                          ?.accentColor ??
+                                      Colors.grey,
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                    color: Colors.white
+                                        .withAlpha(220),
+                                    width: 1.5,
+                                  ),
+                                ),
                               ),
-                            ),
-                            const SizedBox(width: 4),
+                            if (post.platforms.length > 3)
+                              const Padding(
+                                padding:
+                                    EdgeInsets.only(right: 3),
+                                child: Text(
+                                  '+',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 9,
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                ),
+                              ),
                             Expanded(
                               child: Text(
                                 DateFormat('h:mm a').format(
@@ -1386,6 +1576,12 @@ class _QuickEditSheetState extends State<_QuickEditSheet> {
                                 status: _status,
                               ));
                           Navigator.of(context).pop();
+                          // Slice 4: every write surfaces a toast.
+                          LemaToast.show(
+                            context,
+                            'Changes saved to queue',
+                            kind: LemaToastKind.saved,
+                          );
                         },
                         child: const Text('Save changes',
                             style: TextStyle(

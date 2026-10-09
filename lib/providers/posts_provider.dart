@@ -12,6 +12,11 @@ class PostsProvider extends ChangeNotifier {
   final List<QueueSlotModel> _queueSlots = defaultQueueSlots;
   PostModel? _activeSimulatorPost;
 
+  // Slice 4: pre-move snapshot for one-tap undo of grid reorders.
+  List<PostModel>? _lastOrderSnapshot;
+
+  bool get canUndoReorder => _lastOrderSnapshot != null;
+
   PostsProvider([StorageService? storage, ApiService? api])
       : _storage = storage ?? StorageService.instance,
         _api = api ?? ApiService.instance {
@@ -101,10 +106,20 @@ class PostsProvider extends ChangeNotifier {
     final fromMaster = _posts.indexWhere((p) => p.id == moved.id);
     var toMaster = _posts.indexWhere((p) => p.id == target.id);
     if (fromMaster == -1 || toMaster == -1) return;
+    _lastOrderSnapshot = List<PostModel>.from(_posts);
     final item = _posts.removeAt(fromMaster);
     // Adjust when removal shifts the target left.
     if (fromMaster < toMaster) toMaster -= 1;
     _posts.insert(toMaster, item);
+    _storage.savePosts(_posts);
+    notifyListeners();
+  }
+
+  /// Restores the order snapshotted before the last [reorderPosts].
+  void undoLastReorder() {
+    if (_lastOrderSnapshot == null) return;
+    _posts = List<PostModel>.from(_lastOrderSnapshot!);
+    _lastOrderSnapshot = null;
     _storage.savePosts(_posts);
     notifyListeners();
   }
