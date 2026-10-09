@@ -49,7 +49,7 @@ Push after **every** slice: `git push origin main`.
 - [x] Slice 5 — draft seeds + empty states
 - [x] Mobile unblock: Calendar stacked layout + Queue badge wrap (`e85db53`)
 - [x] Slice 6 — timeline default-open + slot grouping
-- [ ] Slice 7 — quick-edit time stepper + platform toggle
+- [x] Slice 7 — quick-edit time stepper + platform toggle
 - [ ] Slice 8 — dark-mode pass
 - [ ] Slice 9 — tests + hygiene
 - [ ] Slice 10 — polish pass

@@ -1489,18 +1489,142 @@ class _QuickEditSheet extends StatefulWidget {
 class _QuickEditSheetState extends State<_QuickEditSheet> {
   late TextEditingController _caption;
   late String _status;
+  // Slice 7: editable publish time + platform set.
+  late DateTime _time;
+  late Set<String> _platforms;
 
   @override
   void initState() {
     super.initState();
     _caption = TextEditingController(text: widget.post.caption);
     _status = widget.post.status;
+    _time = widget.post.scheduledTime;
+    _platforms = widget.post.platforms.toSet();
+    if (_platforms.isEmpty) _platforms = {'instagram'};
   }
 
   @override
   void dispose() {
     _caption.dispose();
     super.dispose();
+  }
+
+  String _platformSummary() {
+    if (_platforms.isEmpty) return 'No platform';
+    final names = _platforms
+        .map((p) => PlatformInfo.fromString(p).name)
+        .toList();
+    return names.length == 1
+        ? names.first
+        : '${names.first} +${names.length - 1}';
+  }
+
+  void _duplicate() {
+    final copy = widget.post.copyWith(
+      id: 'copy_${DateTime.now().millisecondsSinceEpoch}',
+      title: '${widget.post.title} (copy)',
+      caption: _caption.text.trim().isEmpty
+          ? widget.post.caption
+          : _caption.text.trim(),
+      status: 'draft',
+      scheduledTime: _time.add(const Duration(days: 1)),
+      scheduledDate:
+          DateFormat('yyyy-MM-dd').format(_time.add(const Duration(days: 1))),
+      platforms: _platforms.toList(),
+    );
+    context.read<PostsProvider>().addPost(copy);
+    Navigator.of(context).pop();
+    LemaToast.show(context, 'Duplicated as draft',
+        kind: LemaToastKind.saved);
+  }
+
+  void _delete() {
+    context.read<PostsProvider>().deletePost(widget.post.id);
+    Navigator.of(context).pop();
+    LemaToast.show(context, 'Post deleted',
+        kind: LemaToastKind.saved);
+  }
+
+  Widget _stepBtn(bool isDark, IconData icon, VoidCallback onTap) {
+    return CupertinoButton(
+      padding: const EdgeInsets.all(10),
+      color: isDark
+          ? Colors.white.withAlpha(12)
+          : Colors.black.withAlpha(7),
+      borderRadius: BorderRadius.circular(12),
+      onPressed: () {
+        HapticFeedback.selectionClick();
+        onTap();
+      },
+      child: Icon(
+        icon,
+        size: 16,
+        color: isDark ? Colors.white : Colors.black87,
+      ),
+    );
+  }
+
+  Widget _platformToggle(bool isDark, SocialPlatform platform) {
+    final info = PlatformInfo.fromPlatform(platform);
+    final selected = _platforms.contains(platform.name);
+    return GestureDetector(
+      onTap: () {
+        // Min-1 guard: a post can never be platform-less.
+        if (selected && _platforms.length == 1) return;
+        HapticFeedback.selectionClick();
+        setState(() {
+          if (selected) {
+            _platforms.remove(platform.name);
+          } else {
+            _platforms.add(platform.name);
+          }
+        });
+      },
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        padding:
+            const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: selected
+              ? info.accentColor.withAlpha(isDark ? 55 : 30)
+              : (isDark
+                  ? Colors.white.withAlpha(8)
+                  : Colors.black.withAlpha(5)),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: selected
+                ? info.accentColor
+                : (isDark
+                    ? Colors.white.withAlpha(14)
+                    : Colors.black.withAlpha(8)),
+            width: selected ? 1.5 : 1.0,
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 7,
+              height: 7,
+              decoration: BoxDecoration(
+                color: info.accentColor,
+                shape: BoxShape.circle,
+              ),
+            ),
+            const SizedBox(width: 6),
+            Text(
+              info.name,
+              style: TextStyle(
+                fontSize: 11.5,
+                fontWeight:
+                    selected ? FontWeight.w700 : FontWeight.w500,
+                color: isDark ? Colors.white : Colors.black87,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   @override
@@ -1576,7 +1700,8 @@ class _QuickEditSheetState extends State<_QuickEditSheet> {
                                       ? Colors.white
                                       : Colors.black)),
                           Text(
-                            '${DateFormat('EEE, MMM d · h:mm a').format(widget.post.scheduledTime)} · ${widget.post.platformInfo.name}',
+                            // Slice 7: live summary of stepped time + platforms.
+                            '${DateFormat('EEE, MMM d · h:mm a').format(_time)} · ${_platformSummary()}',
                             style: TextStyle(
                                 fontSize: 11.5,
                                 color: isDark
@@ -1620,6 +1745,55 @@ class _QuickEditSheetState extends State<_QuickEditSheet> {
                       borderSide: BorderSide.none,
                     ),
                   ),
+                ),
+                const SizedBox(height: 12),
+                // Slice 7: time stepper (±15 min, live summary above).
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 6, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: isDark
+                        ? Colors.white.withAlpha(8)
+                        : Colors.black.withAlpha(5),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Row(
+                    children: [
+                      _stepBtn(
+                        isDark,
+                        CupertinoIcons.minus,
+                        () => setState(() => _time = _time.subtract(
+                            const Duration(minutes: 15))),
+                      ),
+                      Expanded(
+                        child: Text(
+                          DateFormat('EEE, MMM d · h:mm a')
+                              .format(_time),
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                      _stepBtn(
+                        isDark,
+                        CupertinoIcons.plus,
+                        () => setState(() => _time = _time.add(
+                            const Duration(minutes: 15))),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 12),
+                // Slice 7: platform multi-toggle (min 1 selected).
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    for (final p in SocialPlatform.values)
+                      _platformToggle(isDark, p),
+                  ],
                 ),
                 const SizedBox(height: 12),
                 Row(
@@ -1683,6 +1857,13 @@ class _QuickEditSheetState extends State<_QuickEditSheet> {
                                     ? widget.post.caption
                                     : _caption.text.trim(),
                                 status: _status,
+                                // Slice 7: write both halves of the
+                                // date/time duality.
+                                scheduledTime: _time,
+                                scheduledDate:
+                                    DateFormat('yyyy-MM-dd')
+                                        .format(_time),
+                                platforms: _platforms.toList(),
                               ));
                           Navigator.of(context).pop();
                           // Slice 4: every write surfaces a toast.
@@ -1696,6 +1877,54 @@ class _QuickEditSheetState extends State<_QuickEditSheet> {
                             style: TextStyle(
                                 fontWeight:
                                     FontWeight.w700)),
+                      ),
+                    ),
+                  ],
+                ),
+                // Slice 7: tertiary viewer actions.
+                const SizedBox(height: 4),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    CupertinoButton(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 8),
+                      onPressed: _duplicate,
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            CupertinoIcons.doc_on_doc,
+                            size: 13,
+                            color: isDark
+                                ? Colors.white60
+                                : Colors.black54,
+                          ),
+                          const SizedBox(width: 5),
+                          Text(
+                            'Duplicate',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: isDark
+                                  ? Colors.white60
+                                  : Colors.black54,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    CupertinoButton(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 8),
+                      onPressed: _delete,
+                      child: const Text(
+                        'Delete',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: AppleTheme.systemRed,
+                        ),
                       ),
                     ),
                   ],
