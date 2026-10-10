@@ -14,6 +14,7 @@ import 'package:lema/views/lema_grid_view.dart';
 import 'package:lema/widgets/floating_tab_bar.dart';
 import 'package:lema/widgets/lema_toast.dart';
 import 'package:lema/widgets/morph_pill_menu.dart';
+import 'package:lema/widgets/page_flip_day.dart';
 import 'package:lema/widgets/showcase_carousel.dart';
 
 /// Slice 9: Lema grid logic + provider coverage.
@@ -519,6 +520,90 @@ void main() {
       await tester.pump();
       await tester.pump(const Duration(seconds: 1));
       expect(find.text('open'), findsOneWidget);
+    });
+  });
+
+  group('Day page-flip calendar (Slice 15)', () {
+    Widget host(DateTime day, {bool reduceMotion = false}) => MaterialApp(
+          home: MediaQuery(
+            data: MediaQueryData(disableAnimations: reduceMotion),
+            child: Scaffold(
+              body: DayFlipHeader(day: day, isDark: false),
+            ),
+          ),
+        );
+
+    testWidgets('renders digits, month, weekday and three indicators',
+        (tester) async {
+      await tester.pumpWidget(host(DateTime(2026, 8, 11)));
+      await tester.pump(const Duration(seconds: 1));
+
+      expect(find.text('11'), findsOneWidget);
+      expect(find.text('August 2026'), findsOneWidget);
+      expect(find.text('Tuesday'), findsOneWidget);
+      expect(find.byType(TearLine), findsOneWidget);
+      // Lunar / moon / fortune chips.
+      expect(find.byIcon(CupertinoIcons.moon_stars), findsWidgets);
+      expect(find.byIcon(CupertinoIcons.sparkles), findsOneWidget);
+    });
+
+    testWidgets('advancing the day page-flips the digits', (tester) async {
+      await tester.pumpWidget(host(DateTime(2026, 8, 11)));
+      await tester.pump(const Duration(seconds: 1));
+      expect(find.text('11'), findsOneWidget);
+
+      await tester.pumpWidget(host(DateTime(2026, 8, 12)));
+      await tester.pump(); // start the swap
+      await tester.pump(const Duration(milliseconds: 120));
+      expect(find.byType(PageFlipSwap), findsWidgets);
+
+      await tester.pump(const Duration(seconds: 1));
+      expect(find.text('12'), findsOneWidget);
+      expect(find.text('Wednesday'), findsOneWidget);
+    });
+
+    testWidgets('crosses a month boundary without clipping digits',
+        (tester) async {
+      tester.view.physicalSize = const Size(1206, 2622);
+      tester.view.devicePixelRatio = 3;
+      addTearDown(tester.view.reset);
+
+      await tester.pumpWidget(host(DateTime(2026, 7, 31)));
+      await tester.pump(const Duration(seconds: 1));
+      expect(find.text('31'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+
+      // July red → August blue.
+      await tester.pumpWidget(host(DateTime(2026, 8, 1)));
+      await tester.pump();
+      await tester.pump(const Duration(seconds: 1));
+      expect(find.text('1'), findsOneWidget);
+      expect(find.text('August 2026'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+
+      // July starts red and rolls to blue; the boundary itself is continuous,
+      // so Aug 1 lands on (almost exactly) Jul 31's colour.
+      final jul1 = LemaMonthAccent.resolve(DateTime(2026, 7, 1));
+      final jul31 = LemaMonthAccent.resolve(DateTime(2026, 7, 31));
+      final aug1 = LemaMonthAccent.resolve(DateTime(2026, 8, 1));
+
+      expect(jul1.r, greaterThan(jul1.b)); // red-dominant
+      expect(aug1.b, greaterThan(aug1.r)); // blue-dominant
+      final boundaryGap =
+          ((jul31.r - aug1.r).abs() + (jul31.b - aug1.b).abs());
+      expect(boundaryGap, lessThan(0.02));
+    });
+
+    testWidgets('reduced motion falls back to a crossfade', (tester) async {
+      await tester.pumpWidget(host(DateTime(2026, 8, 11), reduceMotion: true));
+      await tester.pump(const Duration(seconds: 1));
+      expect(find.text('11'), findsOneWidget);
+
+      await tester.pumpWidget(host(DateTime(2026, 8, 12), reduceMotion: true));
+      await tester.pump();
+      await tester.pump(const Duration(seconds: 1));
+      expect(find.text('12'), findsOneWidget);
+      expect(tester.takeException(), isNull);
     });
   });
 

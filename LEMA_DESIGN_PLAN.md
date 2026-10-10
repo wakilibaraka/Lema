@@ -57,7 +57,7 @@ Push after **every** slice: `git push origin main`.
 - [x] Slice 12 — poster reflection on bottom tabs
 - [x] Slice 13 — intro swipe camera-click showcase
 - [x] Slice 14 — virtual card morph slide-up
-- [ ] Slice 15 — daily page-flip calendar
+- [x] Slice 15 — daily page-flip calendar
 
 ## 1. Design tokens (frozen for all slices)
 
