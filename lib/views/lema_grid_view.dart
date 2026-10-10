@@ -10,6 +10,7 @@ import '../providers/posts_provider.dart';
 import '../theme/apple_theme.dart';
 import '../widgets/lema_toast.dart';
 import '../widgets/media_player_widget.dart';
+import '../widgets/morph_pill_menu.dart';
 
 /// Lema Grid — visually-driven drag-and-drop feed planner.
 ///
@@ -171,7 +172,7 @@ class _LemaGridViewState extends State<LemaGridView>
           if (heroPost != null)
             SliverToBoxAdapter(
                 child: _buildHeroPreview(context, isDark, heroPost, filtered)),
-          SliverToBoxAdapter(child: _buildFilterPills(isDark)),
+          SliverToBoxAdapter(child: _buildFilterPills(isDark, all.length)),
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
@@ -694,12 +695,258 @@ class _LemaGridViewState extends State<LemaGridView>
   }
 
   // ── Floating filter pills (trip-length / climate pattern) ─────────────
-  Widget _buildFilterPills(bool isDark) {
-    Widget pill(String label, bool selected, VoidCallback onTap,
-        {Color? dot}) {
+  /// Slice 11: stable anchor keys so the morph card can measure its pill.
+  final Map<String, GlobalKey> _pillKeys = {};
+
+  GlobalKey _pillKey(String id) =>
+      _pillKeys.putIfAbsent(id, () => GlobalKey());
+
+  /// Slice 11 — channel hub specs for the morphing menu.
+  MorphPillMenuSpec _platformHub(String id, String title, IconData icon,
+      Color accent, int total, int matching) {
+    final counts = '$matching of $total posts';
+    switch (id) {
+      case 'instagram':
+        return MorphPillMenuSpec(
+          title: 'Instagram Channel',
+          subtitle: counts,
+          icon: icon,
+          accent: accent,
+          items: [
+            MorphPillMenuItem(
+              icon: CupertinoIcons.camera_fill,
+              label: 'Instagram only',
+              detail: 'Reels, feed and carousels',
+              selected: _platformFilter == 'instagram',
+              onTap: () => setState(() => _platformFilter = 'instagram'),
+            ),
+            MorphPillMenuItem(
+              icon: CupertinoIcons.play_rectangle_fill,
+              label: 'Vertical video only',
+              detail: '9:16 reels and Shorts',
+              selected: _formatFilter == 'video',
+              onTap: () => setState(() {
+                _platformFilter = 'instagram';
+                _formatFilter = 'video';
+              }),
+            ),
+            MorphPillMenuItem(
+              icon: CupertinoIcons.square_grid_2x2,
+              label: 'Square feed only',
+              detail: '1:1 carousels',
+              selected: _formatFilter == 'image',
+              onTap: () => setState(() {
+                _platformFilter = 'instagram';
+                _formatFilter = 'image';
+              }),
+            ),
+          ],
+        );
+      case 'tiktok':
+        return MorphPillMenuSpec(
+          title: 'TikTok Channel',
+          subtitle: counts,
+          icon: icon,
+          accent: accent,
+          items: [
+            MorphPillMenuItem(
+              icon: CupertinoIcons.music_note_2,
+              label: 'TikTok only',
+              detail: 'Full-screen vertical video',
+              selected: _platformFilter == 'tiktok',
+              onTap: () => setState(() => _platformFilter = 'tiktok'),
+            ),
+            MorphPillMenuItem(
+              icon: CupertinoIcons.arrow_2_squarepath,
+              label: 'Cross-post to Instagram',
+              detail: 'Share the same asset to IG',
+              onTap: () => setState(() {
+                _platformFilter = 'all';
+                _formatFilter = 'video';
+              }),
+            ),
+          ],
+        );
+      case 'youtube':
+        return MorphPillMenuSpec(
+          title: 'YouTube Shorts',
+          subtitle: counts,
+          icon: icon,
+          accent: accent,
+          items: [
+            MorphPillMenuItem(
+              icon: CupertinoIcons.play_rectangle_fill,
+              label: 'Shorts only',
+              detail: 'Vertical video up to 60s',
+              selected: _platformFilter == 'youtube',
+              onTap: () => setState(() => _platformFilter = 'youtube'),
+            ),
+            MorphPillMenuItem(
+              icon: CupertinoIcons.slowmo,
+              label: 'Include drafts',
+              detail: 'Show unpublished shorts ideas',
+              selected: _statusFilter == 'draft',
+              onTap: () => setState(() => _statusFilter = 'draft'),
+            ),
+          ],
+        );
+      case 'facebook':
+        return MorphPillMenuSpec(
+          title: 'Facebook Feed',
+          subtitle: counts,
+          icon: icon,
+          accent: accent,
+          items: [
+            MorphPillMenuItem(
+              icon: CupertinoIcons.bubble_left_bubble_right_fill,
+              label: 'Facebook only',
+              detail: 'Feed posts and link previews',
+              selected: _platformFilter == 'facebook',
+              onTap: () => setState(() => _platformFilter = 'facebook'),
+            ),
+            MorphPillMenuItem(
+              icon: CupertinoIcons.photo_fill,
+              label: 'Static images only',
+              detail: 'Skip video assets',
+              selected: _formatFilter == 'image',
+              onTap: () => setState(() => _formatFilter = 'image'),
+            ),
+          ],
+        );
+      default:
+        return MorphPillMenuSpec(
+          title: 'All Channels',
+          subtitle: counts,
+          icon: icon,
+          accent: accent,
+          items: [
+            MorphPillMenuItem(
+              icon: CupertinoIcons.square_grid_2x2_fill,
+              label: 'Every channel',
+              detail: 'No platform filter',
+              selected: _platformFilter == 'all',
+              onTap: () => setState(() => _platformFilter = 'all'),
+            ),
+            MorphPillMenuItem(
+              icon: CupertinoIcons.videocam_fill,
+              label: 'Video assets',
+              detail: 'Reels, Shorts and TikTok',
+              selected: _formatFilter == 'video',
+              onTap: () => setState(() => _formatFilter = 'video'),
+            ),
+            MorphPillMenuItem(
+              icon: CupertinoIcons.photo_fill,
+              label: 'Image assets',
+              detail: 'Carousels and static posts',
+              selected: _formatFilter == 'image',
+              onTap: () => setState(() => _formatFilter = 'image'),
+            ),
+          ],
+        );
+    }
+  }
+
+  /// Slice 11 — status hub specs for the morphing menu.
+  MorphPillMenuSpec _statusHub(String id, String title, IconData icon,
+      Color accent, int total, int matching) {
+    final counts = '$matching of $total posts';
+    return MorphPillMenuSpec(
+      title: title,
+      subtitle: counts,
+      icon: icon,
+      accent: accent,
+      items: [
+        MorphPillMenuItem(
+          icon: CupertinoIcons.clock_fill,
+          label: 'Scheduled',
+          detail: 'Queued for auto-publish',
+          selected: _statusFilter == 'scheduled',
+          onTap: () => setState(() => _statusFilter = 'scheduled'),
+        ),
+        MorphPillMenuItem(
+          icon: CupertinoIcons.pencil_outline,
+          label: 'Drafts',
+          detail: 'Ideas not yet queued',
+          selected: _statusFilter == 'draft',
+          onTap: () => setState(() => _statusFilter = 'draft'),
+        ),
+        MorphPillMenuItem(
+          icon: CupertinoIcons.checkmark_alt_circle_fill,
+          label: 'Published',
+          detail: 'Already dispatched',
+          selected: _statusFilter == 'published',
+          onTap: () => setState(() => _statusFilter = 'published'),
+        ),
+        MorphPillMenuItem(
+          icon: CupertinoIcons.arrow_counterclockwise,
+          label: 'Clear status filter',
+          detail: 'Show every post',
+          selected: _statusFilter == 'all',
+          onTap: () => setState(() => _statusFilter = 'all'),
+        ),
+      ],
+    );
+  }
+
+  /// Slice 11 — format hub specs for the morphing menu.
+  MorphPillMenuSpec _formatHub(
+      String title, IconData icon, Color accent, int total, int matching) {
+    return MorphPillMenuSpec(
+      title: title,
+      subtitle: '$matching of $total posts',
+      icon: icon,
+      accent: accent,
+      items: [
+        MorphPillMenuItem(
+          icon: CupertinoIcons.videocam_fill,
+          label: 'Video only',
+          detail: 'Reels, Shorts, TikTok',
+          selected: _formatFilter == 'video',
+          onTap: () => setState(() => _formatFilter = 'video'),
+        ),
+        MorphPillMenuItem(
+          icon: CupertinoIcons.photo_fill,
+          label: 'Images only',
+          detail: 'Carousels and statics',
+          selected: _formatFilter == 'image',
+          onTap: () => setState(() => _formatFilter = 'image'),
+        ),
+        MorphPillMenuItem(
+          icon: CupertinoIcons.square_grid_2x2_fill,
+          label: 'Any format',
+          detail: 'Show everything',
+          selected: _formatFilter == 'all',
+          onTap: () => setState(() => _formatFilter = 'all'),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildFilterPills(bool isDark, int total) {
+    final matching = context.read<PostsProvider>().posts.length;
+
+    // Slice 11: tapping an ACTIVE pill (or long-pressing any pill) morphs it
+    // into its hub card; tapping an inactive pill still filters instantly.
+    Widget pill(String id, String label, bool selected, VoidCallback onSelect,
+        {Color? dot, MorphPillMenuSpec? hub}) {
+      final key = hub != null ? _pillKey(id) : null;
+      void openHub() {
+        if (hub == null) return;
+        HapticFeedback.mediumImpact();
+        MorphPillMenu.show(context, anchorKey: key!, spec: hub);
+      }
+
       return GestureDetector(
-        onTap: onTap,
+        onTap: () {
+          if (selected && hub != null) {
+            openHub();
+          } else {
+            onSelect();
+          }
+        },
+        onLongPress: hub != null ? openHub : null,
         child: AnimatedContainer(
+          key: key,
           duration: const Duration(milliseconds: 180),
           padding:
               const EdgeInsets.symmetric(horizontal: 16, vertical: 9),
@@ -763,24 +1010,63 @@ class _LemaGridViewState extends State<LemaGridView>
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: 16),
             children: [
-              pill('All', _platformFilter == 'all',
-                  () => setState(() => _platformFilter = 'all')),
+              pill(
+                'all',
+                'All',
+                _platformFilter == 'all',
+                () => setState(() => _platformFilter = 'all'),
+                hub: _platformHub(
+                    'all',
+                    'All Channels',
+                    CupertinoIcons.square_grid_2x2_fill,
+                    AppleTheme.systemBlue,
+                    total,
+                    matching),
+              ),
               const SizedBox(width: 8),
-              pill('Instagram', _platformFilter == 'instagram',
-                  () => setState(() => _platformFilter = 'instagram'),
-                  dot: const Color(0xFFF56040)),
+              pill(
+                'instagram',
+                'Instagram',
+                _platformFilter == 'instagram',
+                () => setState(() => _platformFilter = 'instagram'),
+                dot: const Color(0xFFF56040),
+                hub: _platformHub('instagram', 'Instagram',
+                    CupertinoIcons.camera_fill, const Color(0xFFF56040),
+                    total, matching),
+              ),
               const SizedBox(width: 8),
-              pill('TikTok', _platformFilter == 'tiktok',
-                  () => setState(() => _platformFilter = 'tiktok'),
-                  dot: const Color(0xFFFE2C55)),
+              pill(
+                'tiktok',
+                'TikTok',
+                _platformFilter == 'tiktok',
+                () => setState(() => _platformFilter = 'tiktok'),
+                dot: const Color(0xFFFE2C55),
+                hub: _platformHub('tiktok', 'TikTok',
+                    CupertinoIcons.music_note_2, const Color(0xFFFE2C55),
+                    total, matching),
+              ),
               const SizedBox(width: 8),
-              pill('Shorts', _platformFilter == 'youtube',
-                  () => setState(() => _platformFilter = 'youtube'),
-                  dot: Colors.red),
+              pill(
+                'youtube',
+                'Shorts',
+                _platformFilter == 'youtube',
+                () => setState(() => _platformFilter = 'youtube'),
+                dot: Colors.red,
+                hub: _platformHub('youtube', 'YouTube Shorts',
+                    CupertinoIcons.play_rectangle_fill, Colors.red,
+                    total, matching),
+              ),
               const SizedBox(width: 8),
-              pill('Facebook', _platformFilter == 'facebook',
-                  () => setState(() => _platformFilter = 'facebook'),
-                  dot: const Color(0xFF1877F2)),
+              pill(
+                'facebook',
+                'Facebook',
+                _platformFilter == 'facebook',
+                () => setState(() => _platformFilter = 'facebook'),
+                dot: const Color(0xFF1877F2),
+                hub: _platformHub('facebook', 'Facebook',
+                    CupertinoIcons.bubble_left_bubble_right_fill,
+                    const Color(0xFF1877F2), total, matching),
+              ),
             ],
           ),
         ),
@@ -790,23 +1076,82 @@ class _LemaGridViewState extends State<LemaGridView>
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: 16),
             children: [
-              pill('All statuses', _statusFilter == 'all',
-                  () => setState(() => _statusFilter = 'all')),
+              pill(
+                'status-all',
+                'All statuses',
+                _statusFilter == 'all',
+                () => setState(() => _statusFilter = 'all'),
+                hub: _statusHub(
+                    'status-all',
+                    'Post Status',
+                    CupertinoIcons.layers_alt_fill,
+                    AppleTheme.systemIndigo,
+                    total,
+                    matching),
+              ),
               const SizedBox(width: 8),
-              pill('Scheduled', _statusFilter == 'scheduled',
-                  () => setState(() => _statusFilter = 'scheduled')),
+              pill(
+                'status-scheduled',
+                'Scheduled',
+                _statusFilter == 'scheduled',
+                () => setState(() => _statusFilter = 'scheduled'),
+                hub: _statusHub(
+                    'status-scheduled',
+                    'Scheduled',
+                    CupertinoIcons.clock_fill,
+                    AppleTheme.systemBlue,
+                    total,
+                    matching),
+              ),
               const SizedBox(width: 8),
-              pill('Drafts', _statusFilter == 'draft',
-                  () => setState(() => _statusFilter = 'draft')),
+              pill(
+                'status-draft',
+                'Drafts',
+                _statusFilter == 'draft',
+                () => setState(() => _statusFilter = 'draft'),
+                hub: _statusHub(
+                    'status-draft',
+                    'Draft Ideas',
+                    CupertinoIcons.pencil_outline,
+                    const Color(0xFFFF9F0A),
+                    total,
+                    matching),
+              ),
               const SizedBox(width: 8),
-              pill('Published', _statusFilter == 'published',
-                  () => setState(() => _statusFilter = 'published')),
+              pill(
+                'status-published',
+                'Published',
+                _statusFilter == 'published',
+                () => setState(() => _statusFilter = 'published'),
+                hub: _statusHub(
+                    'status-published',
+                    'Published',
+                    CupertinoIcons.checkmark_alt_circle_fill,
+                    AppleTheme.systemGreen,
+                    total,
+                    matching),
+              ),
               const SizedBox(width: 8),
-              pill('Video only', _formatFilter == 'video',
-                  () => setState(() => _formatFilter = _formatFilter == 'video' ? 'all' : 'video')),
+              pill(
+                'format-video',
+                'Video only',
+                _formatFilter == 'video',
+                () => setState(() =>
+                    _formatFilter = _formatFilter == 'video' ? 'all' : 'video'),
+                hub: _formatHub('Video Format',
+                    CupertinoIcons.videocam_fill, AppleTheme.systemPurple,
+                    total, matching),
+              ),
               const SizedBox(width: 8),
-              pill('Images', _formatFilter == 'image',
-                  () => setState(() => _formatFilter = _formatFilter == 'image' ? 'all' : 'image')),
+              pill(
+                'format-image',
+                'Images',
+                _formatFilter == 'image',
+                () => setState(() =>
+                    _formatFilter = _formatFilter == 'image' ? 'all' : 'image'),
+                hub: _formatHub('Image Format', CupertinoIcons.photo_fill,
+                    AppleTheme.systemTeal, total, matching),
+              ),
             ],
           ),
         ),

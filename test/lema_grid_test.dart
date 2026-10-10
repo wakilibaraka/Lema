@@ -11,6 +11,7 @@ import 'package:lema/providers/posts_provider.dart';
 import 'package:lema/services/storage_service.dart';
 import 'package:lema/views/lema_grid_view.dart';
 import 'package:lema/widgets/lema_toast.dart';
+import 'package:lema/widgets/morph_pill_menu.dart';
 
 /// Slice 9: Lema grid logic + provider coverage.
 ///
@@ -251,6 +252,93 @@ void main() {
       await tester.pump(const Duration(milliseconds: 500));
       expect(find.text("Couldn't load your queue"), findsNothing);
       expect(find.text('QUEUED'), findsWidgets);
+    });
+  });
+
+  group('Morph pill menu (Slice 11)', () {
+    MorphPillMenuSpec specFor(void Function() onPick) => MorphPillMenuSpec(
+          title: 'Instagram Channel',
+          subtitle: '3 of 8 posts',
+          icon: CupertinoIcons.camera_fill,
+          accent: const Color(0xFFF56040),
+          items: [
+            MorphPillMenuItem(
+              icon: CupertinoIcons.camera_fill,
+              label: 'Instagram only',
+              detail: 'Reels, feed and carousels',
+              onTap: onPick,
+              selected: true,
+            ),
+            MorphPillMenuItem(
+              icon: CupertinoIcons.play_rectangle_fill,
+              label: 'Vertical video only',
+              detail: '9:16 reels and Shorts',
+              onTap: onPick,
+            ),
+          ],
+        );
+
+    Future<GlobalKey> pumpAnchor(WidgetTester tester) async {
+      final anchor = GlobalKey();
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: Center(
+              child: Container(
+                key: anchor,
+                width: 120,
+                height: 40,
+                color: Colors.black,
+              ),
+            ),
+          ),
+        ),
+      );
+      return anchor;
+    }
+
+    testWidgets('opens from the pill rect, then dismisses on tap',
+        (tester) async {
+      var picked = false;
+      final anchor = await pumpAnchor(tester);
+      final ctx = tester.element(find.byKey(anchor));
+
+      MorphPillMenu.show(ctx, anchorKey: anchor, spec: specFor(() => picked = true));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 500));
+
+      expect(find.text('Instagram Channel'), findsOneWidget);
+      expect(find.text('Instagram only'), findsOneWidget);
+      expect(find.text('Vertical video only'), findsOneWidget);
+      // Selected row shows a checkmark affordance.
+      expect(find.byIcon(CupertinoIcons.checkmark_alt), findsOneWidget);
+
+      await tester.tap(find.text('Instagram only'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+
+      expect(picked, isTrue);
+      expect(find.text('Instagram Channel'), findsNothing);
+    });
+
+    testWidgets('scrim tap dismisses without firing an action',
+        (tester) async {
+      var picked = false;
+      final anchor = await pumpAnchor(tester);
+      final ctx = tester.element(find.byKey(anchor));
+
+      MorphPillMenu.show(ctx, anchorKey: anchor, spec: specFor(() => picked = true));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 500));
+      expect(find.text('Instagram Channel'), findsOneWidget);
+
+      // Tap the scrim, top-left corner (away from the card).
+      await tester.tapAt(const Offset(12, 12));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+
+      expect(find.text('Instagram Channel'), findsNothing);
+      expect(picked, isFalse);
     });
   });
 
