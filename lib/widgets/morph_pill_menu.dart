@@ -2,9 +2,10 @@ import 'dart:ui';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+
 
 import '../theme/apple_theme.dart';
+import '../theme/lema_motion.dart';
 
 /// Slice 11 — Circle menu dropdown morph.
 ///
@@ -102,15 +103,15 @@ class _MorphPillOverlayState extends State<_MorphPillOverlay>
     // didChangeDependencies instead.
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 430),
-      reverseDuration: const Duration(milliseconds: 300),
+      duration: LemaMotion.emphasized,
+      reverseDuration: LemaMotion.reverseEmphasized,
     );
   }
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    _reduceMotion = MediaQuery.disableAnimationsOf(context);
+    _reduceMotion = LemaMotion.reduceMotionOf(context);
     if (_measured) return;
     _measured = true;
 
@@ -145,14 +146,14 @@ class _MorphPillOverlayState extends State<_MorphPillOverlay>
   }
 
   void _dismiss() {
-    HapticFeedback.lightImpact();
+    LemaMotion.impact();
     _controller.reverse().then((_) {
       if (mounted) widget.onClosed();
     });
   }
 
   void _handleItem(MorphPillMenuItem item) {
-    HapticFeedback.selectionClick();
+    LemaMotion.tap();
     item.onTap?.call();
     _dismiss();
   }
@@ -234,12 +235,17 @@ class _MorphPillOverlayState extends State<_MorphPillOverlay>
     final muted = isDark ? Colors.white54 : Colors.black54;
 
     Widget row(MorphPillMenuItem item, int index) {
-      // Slice 11: 40ms cascade, fade + scale per item.
-      final start = (0.28 + index * 0.09).clamp(0.0, 1.0);
+      // Slice 11: staggered cascade, fade + scale per item. The timing now
+      // comes from LemaMotion so every Lema reveal shares one rhythm.
       final itemT = _reduceMotion
           ? t
-          : ((t - start) / (1 - start)).clamp(0.0, 1.0);
-      final eased = Curves.easeOutBack.transform(itemT);
+          : LemaMotion.stagger(
+              t,
+              index,
+              count: widget.spec.items.length,
+              overlap: 0.62,
+            );
+      final eased = _reduceMotion ? itemT : LemaMotion.spring.transform(itemT);
       final color = item.destructive
           ? AppleTheme.systemRed
           : (isDark ? Colors.white : Colors.black87);
@@ -409,5 +415,3 @@ class _MorphPillOverlayState extends State<_MorphPillOverlay>
     );
   }
 }
-
-double lerpDouble(double a, double b, double t) => a + (b - a) * t;
