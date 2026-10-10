@@ -13,6 +13,7 @@ import 'package:lema/views/lema_grid_view.dart';
 import 'package:lema/widgets/floating_tab_bar.dart';
 import 'package:lema/widgets/lema_toast.dart';
 import 'package:lema/widgets/morph_pill_menu.dart';
+import 'package:lema/widgets/showcase_carousel.dart';
 
 /// Slice 9: Lema grid logic + provider coverage.
 ///
@@ -368,6 +369,70 @@ void main() {
       await tester.tap(find.text('Calendar'));
       await tester.pump(const Duration(milliseconds: 300));
       expect(find.text('Calendar'), findsOneWidget);
+    });
+  });
+
+  group('Intro showcase (Slice 13)', () {
+    Future<void> pumpShowcase(WidgetTester tester) => tester.pumpWidget(
+          const MaterialApp(
+            home: Scaffold(body: ShowcaseCarousel(autoPlay: false)),
+          ),
+        );
+
+    testWidgets('renders slide copy, styles, shutter and skip', (tester) async {
+      await pumpShowcase(tester);
+      await tester.pump(const Duration(milliseconds: 400));
+
+      expect(find.text('Shoot once'), findsOneWidget);
+      expect(find.text('Then let AI style it'), findsOneWidget);
+      expect(find.text('Original'), findsOneWidget);
+      expect(find.text('Skip'), findsOneWidget);
+      // 3 style chips on the active slide.
+      expect(find.text('Warm film'), findsOneWidget);
+      expect(find.text('Neon night'), findsOneWidget);
+    });
+
+    testWidgets('shutter runs the shot and advances to slide 2',
+        (tester) async {
+      await pumpShowcase(tester);
+      await tester.pump(const Duration(milliseconds: 400));
+
+      expect(find.text('Shoot once'), findsOneWidget);
+
+      // Tap the floating shutter (the last GestureDetector in the stack).
+      await tester.tap(find.byKey(ShowcaseCarousel.shutterKey));
+      await tester.pump();
+
+      // Blur ramp: the styled frame is layered in with ImageFiltered.
+      expect(find.byType(ImageFiltered), findsWidgets);
+
+      // Complete the shot + the page transition.
+      await tester.pump(const Duration(seconds: 2));
+      await tester.pump(const Duration(milliseconds: 500));
+
+      expect(find.text('Let AI style it'), findsOneWidget);
+    });
+
+    testWidgets('no overflow at 402pt and reduced-motion collapses the shot',
+        (tester) async {
+      tester.view.physicalSize = const Size(1206, 2622);
+      tester.view.devicePixelRatio = 3;
+      addTearDown(tester.view.reset);
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: MediaQuery(
+            data: const MediaQueryData(disableAnimations: true),
+            child: const Scaffold(body: ShowcaseCarousel(autoPlay: false)),
+          ),
+        ),
+      );
+      await tester.pump(const Duration(milliseconds: 200));
+      expect(tester.takeException(), isNull);
+
+      await tester.tap(find.byKey(ShowcaseCarousel.shutterKey));
+      await tester.pump(const Duration(seconds: 2));
+      expect(tester.takeException(), isNull);
     });
   });
 

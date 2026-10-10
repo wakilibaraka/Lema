@@ -17,6 +17,7 @@ import 'views/tasks_view.dart';
 import 'widgets/dynamic_capsule.dart';
 import 'widgets/floating_tab_bar.dart';
 import 'widgets/sidebar_navigation.dart';
+import 'widgets/showcase_carousel.dart';
 import 'widgets/window_title_bar.dart';
 
 void main() async {
@@ -61,6 +62,27 @@ class MainLayoutScreen extends StatefulWidget {
 
 class _MainLayoutScreenState extends State<MainLayoutScreen> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+
+  @override
+  void initState() {
+    super.initState();
+    _maybeShowIntro();
+  }
+
+  /// Slice 13: play the intro showcase once, on the very first cold start.
+  /// Deferred to the first frame so it paints over a ready app rather than
+  /// fighting the initial build.
+  Future<void> _maybeShowIntro() async {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!mounted) return;
+      try {
+        if (StorageService.instance.hasSeenIntroShowcase()) return;
+        await ShowcaseCarousel.present(context);
+      } catch (_) {
+        // Never let a showcase failure block the app from starting.
+      }
+    });
+  }
 
   final List<Widget> _views = const [
     LemaGridView(),

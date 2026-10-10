@@ -6,6 +6,7 @@ import '../providers/app_provider.dart';
 import '../providers/profile_provider.dart';
 import '../theme/apple_theme.dart';
 import '../widgets/apple_glass_card.dart';
+import '../widgets/showcase_carousel.dart';
 
 class SettingsView extends StatefulWidget {
   const SettingsView({super.key});
@@ -74,6 +75,78 @@ class _SettingsViewState extends State<SettingsView> {
                     ],
                   ),
                 ],
+              ),
+
+              const SizedBox(height: 24),
+
+              // Slice 13: replay the intro showcase.
+              AppleGlassCard(
+                padding: const EdgeInsets.all(18),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 44,
+                      height: 44,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(14),
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [
+                            const Color(0xFF6C5CE7),
+                            const Color(0xFFF56040),
+                          ],
+                        ),
+                      ),
+                      child: const Icon(
+                        CupertinoIcons.sparkles,
+                        color: Colors.white,
+                        size: 22,
+                      ),
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Intro showcase',
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w700,
+                              color: isDark ? Colors.white : Colors.black,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            'Replay the swipe-through camera-click tour.',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: isDark
+                                  ? Colors.white60
+                                  : Colors.black54,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    CupertinoButton(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 8),
+                      color: AppleTheme.systemBlue,
+                      borderRadius: BorderRadius.circular(20),
+                      onPressed: () => ShowcaseCarousel.present(context),
+                      child: const Text(
+                        'Replay',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
 
               const SizedBox(height: 24),

@@ -12,6 +12,7 @@ class StorageService {
   static const String _keyTasks = 'lema_tasks';
   static const String _keyScripts = 'lema_scripts';
   static const String _keyThemeMode = 'lema_theme_mode';
+  static const String _keyIntroSeen = 'lema_intro_showcase_seen';
 
   final SharedPreferences _prefs;
   static StorageService? _instance;
@@ -140,5 +141,21 @@ class StorageService {
 
   Future<void> setDarkMode(bool isDark) async {
     await _prefs.setBool(_keyThemeMode, isDark);
+  }
+
+  // --- Intro showcase (Slice 13) ---
+  /// True once the user has dismissed or completed the intro showcase.
+  bool hasSeenIntroShowcase() {
+    return _prefs.getBool(_keyIntroSeen) ?? false;
+  }
+
+  Future<void> setSeenIntroShowcase() async {
+    await _prefs.setBool(_keyIntroSeen, true);
+  }
+
+  /// Clears the flag so the showcase plays again on next cold start.
+  /// Used by the "Replay showcase" row in Settings.
+  Future<void> resetIntroShowcase() async {
+    await _prefs.remove(_keyIntroSeen);
   }
 }

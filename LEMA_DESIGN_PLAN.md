@@ -55,7 +55,7 @@ Push after **every** slice: `git push origin main`.
 - [x] Slice 10 — polish pass
 - [x] Slice 11 — circle menu dropdown morph
 - [x] Slice 12 — poster reflection on bottom tabs
-- [ ] Slice 13 — intro swipe camera-click showcase
+- [x] Slice 13 — intro swipe camera-click showcase
 - [ ] Slice 14 — virtual card morph slide-up
 - [ ] Slice 15 — daily page-flip calendar
 
