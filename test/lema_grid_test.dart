@@ -9,6 +9,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:lema/models/post_model.dart';
 import 'package:lema/providers/posts_provider.dart';
 import 'package:lema/services/storage_service.dart';
+import 'package:lema/views/card_detail_view.dart';
 import 'package:lema/views/lema_grid_view.dart';
 import 'package:lema/widgets/floating_tab_bar.dart';
 import 'package:lema/widgets/lema_toast.dart';
@@ -433,6 +434,91 @@ void main() {
       await tester.tap(find.byKey(ShowcaseCarousel.shutterKey));
       await tester.pump(const Duration(seconds: 2));
       expect(tester.takeException(), isNull);
+    });
+  });
+
+  group('Card detail morph (Slice 14)', () {
+    PostModel samplePost() => PostModel(
+          id: 'p1',
+          caption: 'Northern lights over Tromso',
+          platforms: const ['instagram'],
+          mediaType: 'video',
+          mediaUrl: 'assets/samples/emms_story_features.mp4',
+          scheduledTime: DateTime(2026, 8, 11, 19, 30),
+          status: 'scheduled',
+        );
+
+    testWidgets('morphs in and swipes between virtual and physical',
+        (tester) async {
+      final post = samplePost();
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: Builder(
+              builder: (context) => ElevatedButton(
+                onPressed: () =>
+                    Navigator.of(context).push(CardDetailView.route(post)),
+                child: const Text('open'),
+              ),
+            ),
+          ),
+        ),
+      );
+
+      await tester.tap(find.text('open'));
+      await tester.pump();
+      await tester.pump(const Duration(seconds: 1));
+
+      // Virtual card is the landing state.
+      expect(find.text('Virtual card'), findsOneWidget);
+      expect(find.text('Virtual card · 1080 × 1350'), findsOneWidget);
+      // Title appears twice: the nav bar and the card face itself.
+      expect(find.text('Northern lights over Tromso'), findsNWidgets(2));
+
+      // Swipe to the physical twin.
+      await tester.drag(find.text('Virtual card · 1080 × 1350'),
+          const Offset(-400, 0));
+      await tester.pump();
+      await tester.pump(const Duration(seconds: 1));
+
+      expect(find.text('Physical card · 85 × 55 mm'), findsOneWidget);
+      expect(find.text('85×55'), findsOneWidget);
+
+      // No hero-tag collision: the tag is namespaced per post id.
+      expect(LemaHero.card('p1'), 'lema.card.p1');
+      expect(LemaHero.card('p1'), isNot(LemaHero.card('p2')));
+    });
+
+    testWidgets('back pops the detail view; no overflow at 402pt',
+        (tester) async {
+      tester.view.physicalSize = const Size(1206, 2622);
+      tester.view.devicePixelRatio = 3;
+      addTearDown(tester.view.reset);
+
+      final post = samplePost();
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: Builder(
+              builder: (context) => ElevatedButton(
+                onPressed: () =>
+                    Navigator.of(context).push(CardDetailView.route(post)),
+                child: const Text('open'),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.tap(find.text('open'));
+      await tester.pump();
+      await tester.pump(const Duration(seconds: 1));
+      expect(tester.takeException(), isNull);
+
+      await tester.tap(find.byIcon(CupertinoIcons.chevron_left));
+      await tester.pump();
+      await tester.pump(const Duration(seconds: 1));
+      expect(find.text('open'), findsOneWidget);
     });
   });
 
