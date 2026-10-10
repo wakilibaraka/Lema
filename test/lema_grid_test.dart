@@ -10,6 +10,7 @@ import 'package:lema/models/post_model.dart';
 import 'package:lema/providers/posts_provider.dart';
 import 'package:lema/services/storage_service.dart';
 import 'package:lema/views/lema_grid_view.dart';
+import 'package:lema/widgets/floating_tab_bar.dart';
 import 'package:lema/widgets/lema_toast.dart';
 import 'package:lema/widgets/morph_pill_menu.dart';
 
@@ -50,6 +51,8 @@ Future<PostsProvider> _freshProvider(
   await Future<void>.delayed(const Duration(milliseconds: 100));
   return provider;
 }
+
+void _noop(int _) {}
 
 String _postsJson(List<PostModel> posts) =>
     jsonEncode(posts.map((p) => p.toJson()).toList());
@@ -339,6 +342,32 @@ void main() {
 
       expect(find.text('Instagram Channel'), findsNothing);
       expect(picked, isFalse);
+    });
+  });
+
+  group('Floating tab bar (Slice 12)', () {
+    testWidgets('renders 5 tabs with poster reflections', (tester) async {
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: Scaffold(
+            body: FloatingTabBar(currentIndex: 0, onTap: _noop),
+          ),
+        ),
+      );
+      await tester.pump(const Duration(milliseconds: 300));
+
+      // One mirror per tab = 10 icons (5 base + 5 reflections).
+      expect(find.byType(Icon), findsNWidgets(10));
+      // Every reflection is masked with a vertical alpha gradient.
+      expect(find.byType(ShaderMask), findsNWidgets(5));
+      for (final label in ['Lema', 'Simulator', 'Queue', 'Calendar', 'AI Studio']) {
+        expect(find.text(label), findsOneWidget);
+      }
+
+      // Tab switch reports the tapped index.
+      await tester.tap(find.text('Calendar'));
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(find.text('Calendar'), findsOneWidget);
     });
   });
 
