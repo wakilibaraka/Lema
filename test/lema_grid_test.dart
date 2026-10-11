@@ -8,6 +8,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:lema/models/post_model.dart';
 import 'package:lema/providers/posts_provider.dart';
+import 'package:lema/providers/profile_provider.dart';
+import 'package:lema/views/ai_studio_view.dart';
 import 'package:lema/services/storage_service.dart';
 import 'package:lema/views/card_detail_view.dart';
 import 'package:lema/views/lema_grid_view.dart';
@@ -816,6 +818,78 @@ void main() {
       expect(provider.scheduledPosts.length, 4);
       expect(provider.publishedPosts.length, 1);
       expect(find.textContaining('Dispatched to'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+  });
+
+  group('AI Studio mobile (Slice 19)', () {
+    // NOTE: same fake-async rule as Queue — no real Future.delayed here.
+    Future<PostsProvider> pumpStudio(WidgetTester tester) async {
+      tester.view.physicalSize = const Size(1206, 2622);
+      tester.view.devicePixelRatio = 3;
+      addTearDown(tester.view.reset);
+      SharedPreferences.setMockInitialValues({});
+      final prefs = await SharedPreferences.getInstance();
+      StorageService(prefs);
+      final posts = PostsProvider();
+      await tester.pumpWidget(
+        MaterialApp(
+          home: MultiProvider(
+            providers: [
+              ChangeNotifierProvider.value(value: posts),
+              ChangeNotifierProvider(create: (_) => ProfileProvider()),
+            ],
+            child: const AiStudioView(),
+          ),
+        ),
+      );
+      await tester.pump(const Duration(milliseconds: 400));
+      return posts;
+    }
+
+    testWidgets('stacked layout renders without overflow at 402pt',
+        (tester) async {
+      await pumpStudio(tester);
+      expect(tester.takeException(), isNull);
+
+      expect(find.text('AI STUDIO'), findsOneWidget);
+      expect(find.text('AI Studio'), findsOneWidget);
+      expect(find.text('TARGET NETWORK'), findsOneWidget);
+      expect(find.text('TONE OF VOICE'), findsOneWidget);
+      expect(find.text('TOPIC / HOOK CONCEPT'), findsOneWidget);
+      expect(find.text('Generate Single Post'), findsOneWidget);
+      expect(find.text('Generate 7-Day Plan'), findsOneWidget);
+      expect(find.text('AI Output Preview'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('generate runs offline and queues the result', (tester) async {
+      final posts = await pumpStudio(tester);
+      expect(posts.posts.length, 8);
+
+      final generateBtn =
+          find.widgetWithText(CupertinoButton, 'Generate Single Post');
+      expect(generateBtn, findsOneWidget);
+      // The button sits below the fold on phones: scroll it into the
+      // hit-testable viewport first (bare taps silently miss off-screen).
+      await tester.ensureVisible(generateBtn);
+      await tester.pump(const Duration(milliseconds: 300));
+
+      await tester.tap(generateBtn);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 500));
+
+      // The heuristic engine always produces content, even offline (it
+      // resolves inside the pump, so no loading frame is observable here).
+      await tester.pump(const Duration(seconds: 2));
+      expect(tester.takeException(), isNull);
+      // The heuristic engine always produces content, even offline.
+      expect(find.text('Add to Queue'), findsOneWidget);
+
+      await tester.tap(find.text('Add to Queue'));
+      await tester.pump(const Duration(milliseconds: 500));
+      expect(posts.posts.length, 9);
+      expect(find.textContaining('Added AI Generated Post'), findsOneWidget);
       expect(tester.takeException(), isNull);
     });
   });

@@ -61,6 +61,7 @@ Push after **every** slice: `git push origin main`.
 - [x] Slice 16 — Home rename + symmetry pass
 - [x] Slice 17 — Home dedup pass
 - [x] Slice 18 — Queue render + dispatch states
+- [x] Slice 19 — AI Studio mobile + copy
 
 ## 1. Design tokens (frozen for all slices)
 
@@ -234,6 +235,13 @@ Shared motion spec for all five: spring curves (`Curves.easeOutBack` / `spring` 
 - Item card restructured: details row on top, full-width actions below (side buttons starved the middle column to ~80pt); asset filename clamped; date line bounded with ellipsis.
 - Dispatch states fronting the parked daemon: Queued → Sending (spinner) → Sent via real `publishNow`, Failed → Retry only on real errors.
 - Accept: 402pt overflow assertions, segment switching, Sending→Published flow.
+
+## 10. AI Studio mobile + copy (Slice 19)
+
+- Phones (< 700pt, same breakpoint as Calendar) stack controls above output in one scroll; desktop keeps the side-by-side editor. Panes extracted into shared builders so both layouts stay identical.
+- Product copy replaces the ported-engine subtitle; empty state says Tap; generate buttons stack full-width on narrow; output header title bounded with ellipsis.
+- Failures render as an in-place error card with Retry (graceful offline); avatar falls back to an initials monogram when the bundled asset is missing.
+- Accept: 402pt overflow assertions, offline generate→queue flow, no overflow in run log.
 
 ## 4. Out of scope (parked)
 

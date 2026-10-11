@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/platform_info.dart';
 import '../models/post_model.dart';
+import '../models/profile_model.dart';
 import '../providers/posts_provider.dart';
 import '../providers/profile_provider.dart';
 import '../services/ai_service.dart';
@@ -23,6 +24,11 @@ class _AiStudioViewState extends State<AiStudioView> {
   bool _isLoading = false;
   String? _generatedContent;
   List<Map<String, dynamic>>? _generatedBatch;
+
+  /// Slice 19: failures render as an in-place error card with Retry instead
+  /// of a transient snackbar, so the studio degrades gracefully offline.
+  String? _error;
+  Future<void> Function()? _lastAction;
 
   final List<String> _tones = [
     'Storytelling & Emotional',
@@ -51,6 +57,8 @@ class _AiStudioViewState extends State<AiStudioView> {
       _isLoading = true;
       _generatedContent = null;
       _generatedBatch = null;
+      _error = null;
+      _lastAction = _generatePost;
     });
 
     try {
@@ -60,12 +68,13 @@ class _AiStudioViewState extends State<AiStudioView> {
         platform: _platform.name,
       );
 
+      if (!mounted) return;
       setState(() {
         _generatedContent = result;
       });
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Generation error: $e')));
+        setState(() => _error = e.toString());
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -79,6 +88,8 @@ class _AiStudioViewState extends State<AiStudioView> {
       _isLoading = true;
       _generatedContent = null;
       _generatedBatch = null;
+      _error = null;
+      _lastAction = _generate7DayPlan;
     });
 
     try {
@@ -89,12 +100,13 @@ class _AiStudioViewState extends State<AiStudioView> {
         profile: profile,
       );
 
+      if (!mounted) return;
       setState(() {
         _generatedBatch = batch;
       });
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Plan generation error: $e')));
+        setState(() => _error = e.toString());
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -121,6 +133,28 @@ class _AiStudioViewState extends State<AiStudioView> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final profile = context.watch<ProfileProvider>().activeProfile;
+    // Slice 19: phones (< 700pt, same breakpoint as Calendar) stack the
+    // controls above the output in one scroll; desktop keeps side-by-side.
+    final isNarrow = MediaQuery.of(context).size.width < 700;
+
+    if (isNarrow) {
+      return Scaffold(
+        backgroundColor: Colors.transparent,
+        body: SingleChildScrollView(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _buildPageHeader(isDark, compact: true),
+              const SizedBox(height: 16),
+              _buildControls(isDark, profile, compact: true),
+              const SizedBox(height: 16),
+              _buildOutputCard(isDark, fixedHeight: true),
+            ],
+          ),
+        ),
+      );
+    }
 
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -129,34 +163,7 @@ class _AiStudioViewState extends State<AiStudioView> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Top Bar
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'AI Studio & Content Planner',
-                      style: TextStyle(
-                        fontSize: 26,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: -0.5,
-                        color: isDark ? Colors.white : Colors.black,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Ported from Content_AI engine with Gemini LLM & Persona-driven generation.',
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: isDark ? Colors.white60 : Colors.black54,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
+            _buildPageHeader(isDark, compact: false),
 
             const SizedBox(height: 20),
 
@@ -169,164 +176,7 @@ class _AiStudioViewState extends State<AiStudioView> {
                   Expanded(
                     flex: 5,
                     child: SingleChildScrollView(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          // Active Persona Summary
-                          AppleGlassCard(
-                            padding: const EdgeInsets.all(16),
-                            child: Row(
-                              children: [
-                                const CircleAvatar(
-                                  radius: 20,
-                                  backgroundImage: AssetImage('assets/emms_avatar.png'),
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        'AI Persona: ${profile.name}',
-                                        style: TextStyle(
-                                          fontWeight: FontWeight.w700,
-                                          fontSize: 13.5,
-                                          color: isDark ? Colors.white : Colors.black,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 2),
-                                      Text(
-                                        'Target Audience: African businesses, brand owners & agencies',
-                                        style: TextStyle(fontSize: 11, color: isDark ? Colors.white60 : Colors.black54),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                                  decoration: BoxDecoration(
-                                    color: AppleTheme.systemPurple.withValues(alpha: 0.15),
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  child: const Text('GEMINI 1.5 PRO', style: TextStyle(color: AppleTheme.systemPurple, fontSize: 10, fontWeight: FontWeight.w700)),
-                                ),
-                              ],
-                            ),
-                          ),
-
-                          const SizedBox(height: 16),
-
-                          // Target Platform selection
-                          Text(
-                            'TARGET NETWORK',
-                            style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, letterSpacing: 0.8, color: isDark ? Colors.white38 : Colors.black38),
-                          ),
-                          const SizedBox(height: 8),
-                          Wrap(
-                            spacing: 8,
-                            children: SocialPlatform.values.map((p) {
-                              final isSel = _platform == p;
-                              final info = PlatformInfo.fromPlatform(p);
-                              return ChoiceChip(
-                                label: Text(info.name),
-                                selected: isSel,
-                                selectedColor: info.color,
-                                onSelected: (sel) {
-                                  if (sel) setState(() => _platform = p);
-                                },
-                              );
-                            }).toList(),
-                          ),
-
-                          const SizedBox(height: 16),
-
-                          // Tone Selection
-                          Text(
-                            'TONE OF VOICE',
-                            style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, letterSpacing: 0.8, color: isDark ? Colors.white38 : Colors.black38),
-                          ),
-                          const SizedBox(height: 8),
-                          Wrap(
-                            spacing: 8,
-                            runSpacing: 6,
-                            children: _tones.map((t) {
-                              final isSel = _selectedTone == t;
-                              return ChoiceChip(
-                                label: Text(t, style: const TextStyle(fontSize: 12)),
-                                selected: isSel,
-                                selectedColor: AppleTheme.systemBlue,
-                                onSelected: (sel) {
-                                  if (sel) setState(() => _selectedTone = t);
-                                },
-                              );
-                            }).toList(),
-                          ),
-
-                          const SizedBox(height: 16),
-
-                          // Prompt Input
-                          Text(
-                            'TOPIC / HOOK CONCEPT',
-                            style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, letterSpacing: 0.8, color: isDark ? Colors.white38 : Colors.black38),
-                          ),
-                          const SizedBox(height: 8),
-                          TextField(
-                            controller: _promptController,
-                            maxLines: 4,
-                            decoration: InputDecoration(
-                              hintText: 'Describe your topic, hook idea, or campaign goal...',
-                              filled: true,
-                              fillColor: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.04),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                borderSide: BorderSide.none,
-                              ),
-                            ),
-                          ),
-
-                          const SizedBox(height: 20),
-
-                          // Action Buttons
-                          Row(
-                            children: [
-                              Expanded(
-                                child: CupertinoButton.filled(
-                                  padding: const EdgeInsets.symmetric(vertical: 14),
-                                  borderRadius: BorderRadius.circular(12),
-                                  onPressed: _isLoading ? null : _generatePost,
-                                  child: _isLoading
-                                      ? const CupertinoActivityIndicator(color: Colors.white)
-                                      : const Row(
-                                          mainAxisAlignment: MainAxisAlignment.center,
-                                          children: [
-                                            Icon(CupertinoIcons.sparkles, size: 16),
-                                            SizedBox(width: 8),
-                                            Text('Generate Single Post', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
-                                          ],
-                                        ),
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: CupertinoButton(
-                                  padding: const EdgeInsets.symmetric(vertical: 14),
-                                  color: AppleTheme.systemPurple,
-                                  borderRadius: BorderRadius.circular(12),
-                                  onPressed: _isLoading ? null : _generate7DayPlan,
-                                  child: const Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Icon(CupertinoIcons.calendar_badge_plus, size: 16, color: Colors.white),
-                                      SizedBox(width: 8),
-                                      Text('Generate 7-Day Plan', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: Colors.white)),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
+                      child: _buildControls(isDark, profile, compact: false),
                     ),
                   ),
 
@@ -335,39 +185,7 @@ class _AiStudioViewState extends State<AiStudioView> {
                   // Right: Output Area
                   Expanded(
                     flex: 6,
-                    child: AppleGlassCard(
-                      padding: const EdgeInsets.all(20),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                'AI Output Preview',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w700,
-                                  color: isDark ? Colors.white : Colors.black,
-                                ),
-                              ),
-                              if (_generatedContent != null)
-                                CupertinoButton(
-                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                                  color: AppleTheme.systemBlue,
-                                  borderRadius: BorderRadius.circular(8),
-                                  onPressed: () => _addGeneratedToQueue(_generatedContent!),
-                                  child: const Text('Add to Queue', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600)),
-                                ),
-                            ],
-                          ),
-                          const Divider(height: 20),
-                          Expanded(
-                            child: _buildOutputBody(isDark),
-                          ),
-                        ],
-                      ),
-                    ),
+                    child: _buildOutputCard(isDark, fixedHeight: false),
                   ),
                 ],
               ),
@@ -375,6 +193,316 @@ class _AiStudioViewState extends State<AiStudioView> {
           ],
         ),
       ),
+    );
+  }
+
+  /// Slice 19: page header shared by both layouts. The compact variant uses
+  /// the short product title so it fits 402pt; both carry product copy
+  /// instead of the old ported-engine subtitle (§4 AI Studio copy).
+  Widget _buildPageHeader(bool isDark, {required bool compact}) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'AI STUDIO',
+          style: TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.w800,
+            letterSpacing: 1.6,
+            color: isDark ? Colors.white54 : Colors.black54,
+          ),
+        ),
+        const SizedBox(height: 6),
+        Text(
+          compact ? 'AI Studio' : 'AI Studio & Content Planner',
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: TextStyle(
+            fontSize: 26,
+            fontWeight: FontWeight.w800,
+            letterSpacing: -0.5,
+            color: isDark ? Colors.white : Colors.black,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          'Describe a topic and get scroll-stopping captions, hooks and a full 7-day plan — tuned to your voice.',
+          maxLines: 3,
+          overflow: TextOverflow.ellipsis,
+          style: TextStyle(
+            fontSize: 13,
+            color: isDark ? Colors.white60 : Colors.black54,
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// Slice 19: generation controls shared by both layouts. Compact stacks
+  /// the two generate actions full-width (they overflow side-by-side at
+  /// 402pt); desktop keeps them side by side.
+  Widget _buildControls(bool isDark, ProfileModel profile,
+      {required bool compact}) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        // Active Persona Summary
+        AppleGlassCard(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: [
+              _buildAvatar(isDark, profile),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'AI Persona: ${profile.name}',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 13.5,
+                        color: isDark ? Colors.white : Colors.black,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'Target Audience: African businesses, brand owners & agencies',
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(fontSize: 11, color: isDark ? Colors.white60 : Colors.black54),
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: AppleTheme.systemPurple.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Text('GEMINI 1.5 PRO', style: TextStyle(color: AppleTheme.systemPurple, fontSize: 10, fontWeight: FontWeight.w700)),
+              ),
+            ],
+          ),
+        ),
+
+        const SizedBox(height: 16),
+
+        // Target Platform selection
+        Text(
+          'TARGET NETWORK',
+          style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, letterSpacing: 0.8, color: isDark ? Colors.white38 : Colors.black38),
+        ),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 8,
+          children: SocialPlatform.values.map((p) {
+            final isSel = _platform == p;
+            final info = PlatformInfo.fromPlatform(p);
+            return ChoiceChip(
+              label: Text(info.name),
+              selected: isSel,
+              selectedColor: info.color,
+              onSelected: (sel) {
+                if (sel) setState(() => _platform = p);
+              },
+            );
+          }).toList(),
+        ),
+
+        const SizedBox(height: 16),
+
+        // Tone Selection
+        Text(
+          'TONE OF VOICE',
+          style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, letterSpacing: 0.8, color: isDark ? Colors.white38 : Colors.black38),
+        ),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 8,
+          runSpacing: 6,
+          children: _tones.map((t) {
+            final isSel = _selectedTone == t;
+            return ChoiceChip(
+              label: Text(t, style: const TextStyle(fontSize: 12)),
+              selected: isSel,
+              selectedColor: AppleTheme.systemBlue,
+              onSelected: (sel) {
+                if (sel) setState(() => _selectedTone = t);
+              },
+            );
+          }).toList(),
+        ),
+
+        const SizedBox(height: 16),
+
+        // Prompt Input
+        Text(
+          'TOPIC / HOOK CONCEPT',
+          style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, letterSpacing: 0.8, color: isDark ? Colors.white38 : Colors.black38),
+        ),
+        const SizedBox(height: 8),
+        TextField(
+          controller: _promptController,
+          maxLines: 4,
+          decoration: InputDecoration(
+            hintText: 'Describe your topic, hook idea, or campaign goal...',
+            filled: true,
+            fillColor: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.04),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide.none,
+            ),
+          ),
+        ),
+
+        const SizedBox(height: 20),
+
+        // Action Buttons
+        if (compact) ...[
+          _generatePostButton(isDark),
+          const SizedBox(height: 10),
+          _generatePlanButton(isDark),
+        ] else
+          Row(
+            children: [
+              Expanded(child: _generatePostButton(isDark)),
+              const SizedBox(width: 12),
+              Expanded(child: _generatePlanButton(isDark)),
+            ],
+          ),
+      ],
+    );
+  }
+
+  Widget _generatePostButton(bool isDark) {
+    return CupertinoButton.filled(
+      padding: const EdgeInsets.symmetric(vertical: 14),
+      borderRadius: BorderRadius.circular(12),
+      onPressed: _isLoading ? null : _generatePost,
+      child: _isLoading
+          ? const CupertinoActivityIndicator(color: Colors.white)
+          : const Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(CupertinoIcons.sparkles, size: 16),
+                SizedBox(width: 8),
+                Flexible(
+                  child: Text('Generate Single Post',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                          fontWeight: FontWeight.w700, fontSize: 13)),
+                ),
+              ],
+            ),
+    );
+  }
+
+  Widget _generatePlanButton(bool isDark) {
+    return CupertinoButton(
+      padding: const EdgeInsets.symmetric(vertical: 14),
+      color: AppleTheme.systemPurple,
+      borderRadius: BorderRadius.circular(12),
+      onPressed: _isLoading ? null : _generate7DayPlan,
+      child: const Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(CupertinoIcons.calendar_badge_plus,
+              size: 16, color: Colors.white),
+          SizedBox(width: 8),
+          Flexible(
+            child: Text('Generate 7-Day Plan',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 13,
+                    color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Slice 19: persona avatar with an initials fallback so a missing bundled
+  /// asset degrades to a monogram instead of an error box.
+  Widget _buildAvatar(bool isDark, ProfileModel profile) {
+    final initial =
+        profile.name.isNotEmpty ? profile.name.characters.first : 'E';
+    return ClipOval(
+      child: SizedBox(
+        width: 40,
+        height: 40,
+        child: Image.asset(
+          'assets/emms_avatar.png',
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) => Container(
+            color: AppleTheme.systemPurple.withValues(alpha: 0.2),
+            alignment: Alignment.center,
+            child: Text(
+              initial,
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w800,
+                color: AppleTheme.systemPurple,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Slice 19: output card shared by both layouts. On phones the body gets a
+  /// fixed height so the empty/loading states center and batch lists scroll
+  /// internally instead of overflowing.
+  Widget _buildOutputCard(bool isDark, {required bool fixedHeight}) {
+    final body = Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Expanded(
+              child: Text(
+                'AI Output Preview',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  color: isDark ? Colors.white : Colors.black,
+                ),
+              ),
+            ),
+            if (_generatedContent != null)
+              CupertinoButton(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                color: AppleTheme.systemBlue,
+                borderRadius: BorderRadius.circular(8),
+                onPressed: () => _addGeneratedToQueue(_generatedContent!),
+                child: const Text('Add to Queue', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600)),
+              ),
+          ],
+        ),
+        const Divider(height: 20),
+        fixedHeight
+            ? SizedBox(height: 400, child: _buildOutputBody(isDark))
+            : Expanded(
+                child: _buildOutputBody(isDark),
+              ),
+      ],
+    );
+
+    return AppleGlassCard(
+      padding: const EdgeInsets.all(20),
+      child: body,
     );
   }
 
@@ -387,6 +515,49 @@ class _AiStudioViewState extends State<AiStudioView> {
             CupertinoActivityIndicator(radius: 16),
             SizedBox(height: 14),
             Text('Generating AI Content with Gemini...', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+          ],
+        ),
+      );
+    }
+
+    // Slice 19: failures render in place with Retry (graceful offline).
+    if (_error != null) {
+      return Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(CupertinoIcons.exclamationmark_triangle,
+                size: 36, color: isDark ? Colors.white24 : Colors.black26),
+            const SizedBox(height: 10),
+            Text(
+              'Generation hit a snag.',
+              style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                  color: isDark ? Colors.white : Colors.black),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Check your connection and try again.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                  fontSize: 12,
+                  color: isDark ? Colors.white60 : Colors.black54),
+            ),
+            const SizedBox(height: 14),
+            CupertinoButton.filled(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+              borderRadius: BorderRadius.circular(12),
+              onPressed: _lastAction == null
+                  ? null
+                  : () {
+                      final action = _lastAction;
+                      if (action != null) action();
+                    },
+              child: const Text('Retry',
+                  style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
+            ),
           ],
         ),
       );
@@ -481,7 +652,8 @@ class _AiStudioViewState extends State<AiStudioView> {
           Icon(CupertinoIcons.sparkles, size: 40, color: isDark ? Colors.white24 : Colors.black26),
           const SizedBox(height: 10),
           Text(
-            'Click "Generate Single Post" or "Generate 7-Day Plan" to begin.',
+            'Tap "Generate Single Post" or "Generate 7-Day Plan" to begin.',
+            textAlign: TextAlign.center,
             style: TextStyle(fontSize: 13, color: isDark ? Colors.white54 : Colors.black45),
           ),
         ],
