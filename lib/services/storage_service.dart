@@ -13,6 +13,7 @@ class StorageService {
   static const String _keyScripts = 'lema_scripts';
   static const String _keyThemeMode = 'lema_theme_mode';
   static const String _keyIntroSeen = 'lema_intro_showcase_seen';
+  static const String _keyAutoplay = 'lema_video_autoplay';
 
   final SharedPreferences _prefs;
   static StorageService? _instance;
@@ -75,7 +76,9 @@ class StorageService {
     final raw = _prefs.getString(_keyPosts);
     if (raw == null || raw.isEmpty) {
       _postsDecodeError = false;
-      return defaultSeedPosts;
+      // Slice 22 fix: return a COPY — callers mutate the list (add,
+      // reorder, migrate) and must never corrupt the seed template.
+      return List<PostModel>.from(defaultSeedPosts);
     }
     try {
       final List decoded = jsonDecode(raw);
@@ -83,7 +86,7 @@ class StorageService {
       return decoded.map((e) => PostModel.fromJson(e)).toList();
     } catch (_) {
       _postsDecodeError = true;
-      return defaultSeedPosts;
+      return List<PostModel>.from(defaultSeedPosts);
     }
   }
 
@@ -100,13 +103,13 @@ class StorageService {
   List<TaskModel> loadTasks() {
     final raw = _prefs.getString(_keyTasks);
     if (raw == null || raw.isEmpty) {
-      return defaultTasksList;
+      return List<TaskModel>.from(defaultTasksList);
     }
     try {
       final List decoded = jsonDecode(raw);
       return decoded.map((e) => TaskModel.fromJson(e)).toList();
     } catch (_) {
-      return defaultTasksList;
+      return List<TaskModel>.from(defaultTasksList);
     }
   }
 
@@ -119,13 +122,13 @@ class StorageService {
   List<ScriptModel> loadScripts() {
     final raw = _prefs.getString(_keyScripts);
     if (raw == null || raw.isEmpty) {
-      return defaultScriptsList;
+      return List<ScriptModel>.from(defaultScriptsList);
     }
     try {
       final List decoded = jsonDecode(raw);
       return decoded.map((e) => ScriptModel.fromJson(e)).toList();
     } catch (_) {
-      return defaultScriptsList;
+      return List<ScriptModel>.from(defaultScriptsList);
     }
   }
 
@@ -157,5 +160,15 @@ class StorageService {
   /// Used by the "Replay showcase" row in Settings.
   Future<void> resetIntroShowcase() async {
     await _prefs.remove(_keyIntroSeen);
+  }
+
+  // --- Video autoplay (Slice 22) ---
+  /// Default OFF: feeds stay silent until the user enables motion.
+  bool autoplayVideos() {
+    return _prefs.getBool(_keyAutoplay) ?? false;
+  }
+
+  Future<void> setAutoplayVideos(bool enabled) async {
+    await _prefs.setBool(_keyAutoplay, enabled);
   }
 }

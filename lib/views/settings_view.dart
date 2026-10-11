@@ -48,31 +48,37 @@ class _SettingsViewState extends State<SettingsView> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Top Bar
+              // Top Bar (Slice 22: bounded — the 26pt title striped at 402pt).
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Daemon & System Settings',
-                        style: TextStyle(
-                          fontSize: 26,
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: -0.5,
-                          color: isDark ? Colors.white : Colors.black,
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Daemon & System Settings',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: -0.5,
+                            color: isDark ? Colors.white : Colors.black,
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'Configure auto-poster daemon, AI engine, and testing environments.',
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: isDark ? Colors.white60 : Colors.black54,
+                        const SizedBox(height: 4),
+                        Text(
+                          'Configure auto-poster daemon, AI engine, and testing environments.',
+                          maxLines: 3,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: isDark ? Colors.white60 : Colors.black54,
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ],
               ),
@@ -178,6 +184,8 @@ class _SettingsViewState extends State<SettingsView> {
                             children: [
                               Text(
                                 'Auto-Poster Backend Daemon',
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
                                 style: TextStyle(
                                   fontSize: 15,
                                   fontWeight: FontWeight.w700,
@@ -189,6 +197,8 @@ class _SettingsViewState extends State<SettingsView> {
                                 app.isDaemonOnline
                                     ? 'Connected to Express daemon on port 3001 (Autonomous scheduler active)'
                                     : 'Standalone mode (Simulating queue executions locally)',
+                                maxLines: 3,
+                                overflow: TextOverflow.ellipsis,
                                 style: TextStyle(
                                   fontSize: 12,
                                   color: isDark ? Colors.white60 : Colors.black54,
@@ -217,32 +227,129 @@ class _SettingsViewState extends State<SettingsView> {
 
                     const Divider(height: 24),
 
-                    // Sandbox Mode Toggle
+                    // Sandbox Mode Toggle (Slice 22: text column bounded —
+                    // the unbounded Column pushed its switch 224px out).
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Sandbox Simulation Mode',
-                              style: TextStyle(
-                                fontSize: 13.5,
-                                fontWeight: FontWeight.w600,
-                                color: isDark ? Colors.white : Colors.black,
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Sandbox Simulation Mode',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontSize: 13.5,
+                                  fontWeight: FontWeight.w600,
+                                  color: isDark ? Colors.white : Colors.black,
+                                ),
                               ),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              'When enabled, posts are simulated safely without making live social media API calls.',
-                              style: TextStyle(fontSize: 11.5, color: isDark ? Colors.white54 : Colors.black45),
-                            ),
-                          ],
+                              const SizedBox(height: 2),
+                              Text(
+                                'When enabled, posts are simulated safely without making live social media API calls.',
+                                maxLines: 3,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(fontSize: 11.5, color: isDark ? Colors.white54 : Colors.black45),
+                              ),
+                            ],
+                          ),
                         ),
+                        const SizedBox(width: 12),
                         CupertinoSwitch(
                           value: app.sandboxMode,
                           activeTrackColor: AppleTheme.systemBlue,
                           onChanged: (_) => app.toggleSandbox(),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 20),
+
+              // Slice 22: Media playback card — video autoplay lives here.
+              AppleGlassCard(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: AppleTheme.systemTeal.withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: const Icon(CupertinoIcons.play_rectangle_fill, color: AppleTheme.systemTeal, size: 20),
+                        ),
+                        const SizedBox(width: 14),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Media Playback',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w700,
+                                  color: isDark ? Colors.white : Colors.black,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                'Auto-play videos across Home and Simulator. Off by default.',
+                                maxLines: 3,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: isDark ? Colors.white60 : Colors.black54,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    const Divider(height: 24),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Video autoplay',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontSize: 13.5,
+                                  fontWeight: FontWeight.w600,
+                                  color: isDark ? Colors.white : Colors.black,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                'When off, videos stay paused until you press play.',
+                                maxLines: 3,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(fontSize: 11.5, color: isDark ? Colors.white54 : Colors.black45),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        CupertinoSwitch(
+                          key: const ValueKey('autoplay_switch'),
+                          value: app.autoplayVideos,
+                          activeTrackColor: AppleTheme.systemBlue,
+                          onChanged: (_) => app.toggleAutoplay(),
                         ),
                       ],
                     ),
@@ -275,6 +382,8 @@ class _SettingsViewState extends State<SettingsView> {
                             children: [
                               Text(
                                 'Gemini AI Logic Engine (Content_AI)',
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
                                 style: TextStyle(
                                   fontSize: 15,
                                   fontWeight: FontWeight.w700,
@@ -284,6 +393,8 @@ class _SettingsViewState extends State<SettingsView> {
                               const SizedBox(height: 2),
                               Text(
                                 'Powers viral caption generation, storytelling hooks, and 7-day campaigns.',
+                                maxLines: 3,
+                                overflow: TextOverflow.ellipsis,
                                 style: TextStyle(
                                   fontSize: 12,
                                   color: isDark ? Colors.white60 : Colors.black54,
@@ -336,12 +447,16 @@ class _SettingsViewState extends State<SettingsView> {
                             children: [
                               Row(
                                 children: [
-                                  Text(
-                                    profile.name,
-                                    style: TextStyle(
-                                      fontSize: 15,
-                                      fontWeight: FontWeight.w700,
-                                      color: isDark ? Colors.white : Colors.black,
+                                  Flexible(
+                                    child: Text(
+                                      profile.name,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.w700,
+                                        color: isDark ? Colors.white : Colors.black,
+                                      ),
                                     ),
                                   ),
                                   const SizedBox(width: 6),
@@ -414,6 +529,8 @@ class _SettingsViewState extends State<SettingsView> {
                         children: [
                           Text(
                             'GitHub Repository: wakilibaraka/Lema',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                             style: TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w700,

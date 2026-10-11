@@ -11,12 +11,14 @@ class AppProvider extends ChangeNotifier {
   String _selectedChannelFilter = 'all';
   bool _isDarkMode = false;
   bool _sandboxMode = true;
+  bool _autoplayVideos = false;
   String _daemonStatus = 'ONLINE';
 
   AppProvider([StorageService? storage, ApiService? api])
       : _storage = storage ?? StorageService.instance,
         _api = api ?? ApiService.instance {
     _isDarkMode = _storage.isDarkMode();
+    _autoplayVideos = _storage.autoplayVideos();
     _checkDaemon();
   }
 
@@ -25,6 +27,7 @@ class AppProvider extends ChangeNotifier {
   String get selectedChannelFilter => _selectedChannelFilter;
   bool get isDarkMode => _isDarkMode;
   bool get sandboxMode => _sandboxMode;
+  bool get autoplayVideos => _autoplayVideos;
   String get daemonStatus => _daemonStatus;
   bool get isDaemonOnline => _daemonStatus == 'ONLINE';
   ThemeMode get themeMode => _isDarkMode ? ThemeMode.dark : ThemeMode.light;
@@ -56,6 +59,13 @@ class AppProvider extends ChangeNotifier {
 
   void toggleSandbox() {
     _sandboxMode = !_sandboxMode;
+    notifyListeners();
+  }
+
+  /// Slice 22: video autoplay, persisted. Default OFF.
+  void toggleAutoplay() {
+    _autoplayVideos = !_autoplayVideos;
+    _storage.setAutoplayVideos(_autoplayVideos);
     notifyListeners();
   }
 

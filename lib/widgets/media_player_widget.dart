@@ -2,8 +2,10 @@ import 'dart:convert';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:video_player/video_player.dart';
 import 'dart:io' show File;
+import '../providers/app_provider.dart';
 import '../theme/apple_theme.dart';
 
 class UniversalMediaPlayer extends StatefulWidget {
@@ -97,7 +99,9 @@ class _UniversalMediaPlayerState extends State<UniversalMediaPlayer> {
       await _controller!.initialize();
       _controller!.setLooping(true);
       _controller!.setVolume(_isMuted ? 0.0 : 1.0);
-      if (widget.autoPlay) {
+      // Slice 22: explicit autoPlay means *eligible*; the Settings toggle
+      // has the final word (read without watching — initState-safe).
+      if (widget.autoPlay && _autoplayAllowed()) {
         await _controller!.play();
       }
       _controller!.addListener(_onControllerUpdate);
@@ -123,6 +127,16 @@ class _UniversalMediaPlayerState extends State<UniversalMediaPlayer> {
     super.dispose();
   }
 
+  /// Slice 22: Settings toggle read without registering a dependency
+  /// (initState-safe). Missing provider degrades to the old behavior.
+  bool _autoplayAllowed() {
+    try {
+      return Provider.of<AppProvider>(context, listen: false).autoplayVideos;
+    } catch (_) {
+      return true;
+    }
+  }
+
   void _togglePlayPause() {
     if (_controller == null || !_isInitialized) return;
     if (_controller!.value.isPlaying) {
@@ -142,6 +156,22 @@ class _UniversalMediaPlayerState extends State<UniversalMediaPlayer> {
 
   @override
   Widget build(BuildContext context) {
+    // Slice 22: live-sync playback with the Settings toggle, so flipping it
+    // stops (or starts) already-mounted videos on the next frame.
+    if (widget.isVideo) {
+      final shouldPlay =
+          widget.autoPlay && context.watch<AppProvider>().autoplayVideos;
+      if (_controller != null && _isInitialized && !_hasError) {
+        final playing = _controller!.value.isPlaying;
+        if (shouldPlay && !playing) {
+          WidgetsBinding.instance
+              .addPostFrameCallback((_) => _controller?.play());
+        } else if (!shouldPlay && playing) {
+          WidgetsBinding.instance
+              .addPostFrameCallback((_) => _controller?.pause());
+        }
+      }
+    }
     return Container(
       width: widget.width,
       height: widget.height,

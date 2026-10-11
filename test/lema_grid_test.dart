@@ -7,14 +7,17 @@ import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:lema/models/post_model.dart';
+import 'package:lema/providers/app_provider.dart';
 import 'package:lema/providers/posts_provider.dart';
 import 'package:lema/providers/profile_provider.dart';
 import 'package:lema/views/ai_studio_view.dart';
 import 'package:lema/views/hooks_pipeline_view.dart';
+import 'package:lema/services/api_service.dart';
 import 'package:lema/services/storage_service.dart';
 import 'package:lema/views/card_detail_view.dart';
 import 'package:lema/views/lema_grid_view.dart';
 import 'package:lema/views/queue_view.dart';
+import 'package:lema/views/settings_view.dart';
 import 'package:lema/widgets/floating_tab_bar.dart';
 import 'package:lema/widgets/lema_toast.dart';
 import 'package:lema/widgets/morph_pill_menu.dart';
@@ -90,6 +93,17 @@ void main() {
       final tiktok = provider.filterPostsByChannel('tiktok');
       expect(tiktok, isNotEmpty);
       expect(tiktok.every((p) => p.platforms.contains('tiktok')), isTrue);
+    });
+
+    test('mutation guard: writes never corrupt the seed template', () async {
+      final provider = await _freshProvider();
+      provider.addPost(_tPost('x', status: 'draft'));
+      provider.reorderPosts(0, 2, 'all', 'all', 'all');
+      provider.deletePost('x');
+      // A brand-new provider over empty storage must see pristine seeds.
+      final fresh = await _freshProvider();
+      expect(fresh.posts.length, 8);
+      expect(fresh.posts.where((p) => p.status == 'draft').length, 3);
     });
   });
 
@@ -200,10 +214,17 @@ void main() {
       SharedPreferences.setMockInitialValues({});
       final prefs = await SharedPreferences.getInstance();
       StorageService(prefs);
+      // Slice 22: media players watch AppProvider (autoplay toggle), so it
+      // must be above every pumped view. Created before pumpWidget so its
+      // constructor-time notify has no listeners yet.
+      final app = AppProvider();
       await tester.pumpWidget(
         MaterialApp(
-          home: ChangeNotifierProvider(
-            create: (_) => PostsProvider(),
+          home: MultiProvider(
+            providers: [
+              ChangeNotifierProvider.value(value: app),
+              ChangeNotifierProvider(create: (_) => PostsProvider()),
+            ],
             child: const LemaGridView(),
           ),
         ),
@@ -278,10 +299,14 @@ void main() {
           {'lema_posts': '[[corrupt'});
       final prefs = await SharedPreferences.getInstance();
       StorageService(prefs);
+      final app = AppProvider();
       await tester.pumpWidget(
         MaterialApp(
-          home: ChangeNotifierProvider(
-            create: (_) => PostsProvider(),
+          home: MultiProvider(
+            providers: [
+              ChangeNotifierProvider.value(value: app),
+              ChangeNotifierProvider(create: (_) => PostsProvider()),
+            ],
             child: const LemaGridView(),
           ),
         ),
@@ -792,10 +817,14 @@ void main() {
       final prefs = await SharedPreferences.getInstance();
       StorageService(prefs);
       final provider = PostsProvider();
+      final app = AppProvider();
       await tester.pumpWidget(
         MaterialApp(
-          home: ChangeNotifierProvider.value(
-            value: provider,
+          home: MultiProvider(
+            providers: [
+              ChangeNotifierProvider.value(value: app),
+              ChangeNotifierProvider.value(value: provider),
+            ],
             child: const QueueView(),
           ),
         ),
@@ -860,10 +889,12 @@ void main() {
       final prefs = await SharedPreferences.getInstance();
       StorageService(prefs);
       final posts = PostsProvider();
+      final app = AppProvider();
       await tester.pumpWidget(
         MaterialApp(
           home: MultiProvider(
             providers: [
+              ChangeNotifierProvider.value(value: app),
               ChangeNotifierProvider.value(value: posts),
               ChangeNotifierProvider(create: (_) => ProfileProvider()),
             ],
@@ -932,10 +963,14 @@ void main() {
       final prefs = await SharedPreferences.getInstance();
       StorageService(prefs);
       final posts = PostsProvider();
+      final app = AppProvider();
       await tester.pumpWidget(
         MaterialApp(
-          home: ChangeNotifierProvider.value(
-            value: posts,
+          home: MultiProvider(
+            providers: [
+              ChangeNotifierProvider.value(value: app),
+              ChangeNotifierProvider.value(value: posts),
+            ],
             child: const HooksPipelineView(),
           ),
         ),
@@ -974,6 +1009,78 @@ void main() {
       await tester.pump(const Duration(milliseconds: 500));
       expect(posts.posts.length, 9);
       expect(find.textContaining('into Publishing Queue'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+  });
+
+  group('Settings autoplay (Slice 22)', () {
+    test('autoplay defaults off and persists', () async {
+      SharedPreferences.setMockInitialValues({});
+      final storage =
+          StorageService(await SharedPreferences.getInstance());
+      expect(storage.autoplayVideos(), isFalse);
+
+      final app = AppProvider(storage, const ApiService());
+      expect(app.autoplayVideos, isFalse);
+
+      app.toggleAutoplay();
+      expect(app.autoplayVideos, isTrue);
+      expect(storage.autoplayVideos(), isTrue);
+
+      app.toggleAutoplay();
+      expect(app.autoplayVideos, isFalse);
+      expect(storage.autoplayVideos(), isFalse);
+    });
+
+    // NOTE: same fake-async rule — no real Future.delayed here.
+    Future<StorageService> pumpSettings(WidgetTester tester) async {
+      tester.view.physicalSize = const Size(1206, 2622);
+      tester.view.devicePixelRatio = 3;
+      addTearDown(tester.view.reset);
+      SharedPreferences.setMockInitialValues({});
+      final prefs = await SharedPreferences.getInstance();
+      final storage = StorageService(prefs);
+      final app = AppProvider(storage, const ApiService());
+      await tester.pumpWidget(
+        MaterialApp(
+          home: MultiProvider(
+            providers: [
+              ChangeNotifierProvider.value(value: app),
+              ChangeNotifierProvider(create: (_) => ProfileProvider()),
+            ],
+            child: const SettingsView(),
+          ),
+        ),
+      );
+      await tester.pump(const Duration(milliseconds: 400));
+      return storage;
+    }
+
+    testWidgets('settings render without overflow at 402pt', (tester) async {
+      await pumpSettings(tester);
+      expect(tester.takeException(), isNull);
+
+      expect(find.text('Daemon & System Settings'), findsOneWidget);
+      expect(find.text('Media Playback'), findsOneWidget);
+      expect(find.text('Video autoplay'), findsOneWidget);
+      expect(find.byKey(const ValueKey('autoplay_switch')), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('autoplay switch flips and persists', (tester) async {
+      final storage = await pumpSettings(tester);
+      expect(storage.autoplayVideos(), isFalse);
+
+      final sw = find.byKey(const ValueKey('autoplay_switch'));
+      await tester.ensureVisible(sw);
+      await tester.pump(const Duration(milliseconds: 300));
+      await tester.tap(sw);
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(storage.autoplayVideos(), isTrue);
+
+      await tester.tap(sw);
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(storage.autoplayVideos(), isFalse);
       expect(tester.takeException(), isNull);
     });
   });

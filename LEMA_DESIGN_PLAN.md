@@ -64,6 +64,7 @@ Push after **every** slice: `git push origin main`.
 - [x] Slice 19 — AI Studio mobile + copy
 - [x] Slice 20 — Photos-style docked tab bar
 - [x] Slice 21 — Hooks mobile + sheet
+- [x] Slice 22 — Settings fixes + autoplay toggle
 
 ## 1. Design tokens (frozen for all slices)
 
@@ -256,6 +257,12 @@ Shared motion spec for all five: spring curves (`Curves.easeOutBack` / `spring` 
 - Phones (< 700pt) stack full-width script cards; tapping one opens the detail as a bottom sheet (quick-edit pattern, draggable 0.5–0.95). Desktop keeps master-detail. Both share card/detail builders.
 - Compact in-page H1 on narrow ("Hooks"); all card type clamped (stage chip, 3-line title, 2-line hook); section labels bounded with ellipsis.
 - Accept: 402pt overflow assertions, card→sheet→queue flow, no overflow in run log.
+
+## 13. Settings fixes + autoplay toggle (Slice 22)
+
+- Compact 22pt settings H1; daemon/Sandbox/AI/persona/repo rows bounded with clamps; new Media Playback card with the Video autoplay toggle (persisted, default OFF), gating every `UniversalMediaPlayer` with live play/pause sync.
+- Real bug fixed: `loadPosts/loadTasks/loadScripts` returned the global seed lists by reference, so writes mutated the seed template (masked in prod, leaked across tests). All three return copies now, with a mutation-guard regression test.
+- Accept: toggle persistence + default-off tests, 402pt overflow assertions, no overflow in run log.
 
 ## 4. Out of scope (parked)
 
