@@ -220,6 +220,23 @@ void main() {
       expect(find.text("Today's timeline"), findsOneWidget);
     });
 
+    testWidgets('stats strip is symmetric with shuffle on the divider',
+        (tester) async {
+      await pumpGrid(tester);
+
+      // Both stat captions are center-aligned in equal cells.
+      for (final caption in ['Queued posts', 'Draft ideas']) {
+        final text = tester.widget<Text>(find.text(caption));
+        expect(text.textAlign, TextAlign.center);
+      }
+
+      // The shuffle control sits exactly on the horizontal center axis.
+      final shuffle = find.byKey(const ValueKey('home_stats_shuffle'));
+      expect(shuffle, findsOneWidget);
+      final center = tester.getCenter(shuffle);
+      expect(center.dx, moreOrLessEquals(1170 / 3 / 2, epsilon: 1));
+    });
+
     testWidgets('Drafts filter narrows grid to draft tiles', (tester) async {
       await pumpGrid(tester);
       // Huge test surface lays out all slivers; ensureVisible scrolls the
@@ -363,7 +380,7 @@ void main() {
       expect(find.byType(Icon), findsNWidgets(10));
       // Every reflection is masked with a vertical alpha gradient.
       expect(find.byType(ShaderMask), findsNWidgets(5));
-      for (final label in ['Lema', 'Simulator', 'Queue', 'Calendar', 'AI Studio']) {
+      for (final label in ['Home', 'Simulator', 'Queue', 'Calendar', 'AI Studio']) {
         expect(find.text(label), findsOneWidget);
       }
 

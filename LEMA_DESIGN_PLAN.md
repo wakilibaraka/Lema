@@ -58,6 +58,7 @@ Push after **every** slice: `git push origin main`.
 - [x] Slice 13 — intro swipe camera-click showcase
 - [x] Slice 14 — virtual card morph slide-up
 - [x] Slice 15 — daily page-flip calendar
+- [x] Slice 16 — Home rename + symmetry pass
 
 ## 1. Design tokens (frozen for all slices)
 
@@ -211,6 +212,12 @@ Shared motion spec for all five: spring curves (`Curves.easeOutBack` / `spring` 
 - Implementation: `AnimatedSwitcher` with custom 3D `Matrix4.rotationY` transition; accent derived from focused month; lunar data stubbed locally (no backend).
 - Accept: recording crossing a month boundary; flip never clips digits at 402pt; reduced-motion = crossfade.
 - Commit: `feat(lema): daily page-flip calendar`
+
+## 7. Home refinement (Slice 16)
+
+- Rename the Lema page to Home: app-bar titles, tab label + house icon, sidebar entry. Desktop window breadcrumb keeps the Lema brand mark, as does the in-page `LEMA` eyebrow.
+- Symmetry pass on the TripGlide reference: stats strip becomes a mirror-symmetric 2-cell card (centered content, shuffle circle sitting exactly on the divider); header gaps normalized to a uniform 8pt rhythm; status pill row gets a trailing edge fade so mid-scroll rows never end in a hard-clipped chip.
+- Accept: light screenshot on 18 Pro, no overflow in run log, geometric symmetry test (shuffle centered, captions center-aligned).
 
 ## 4. Out of scope (parked)
 

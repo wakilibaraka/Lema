@@ -268,7 +268,7 @@ class _LemaGridViewState extends State<LemaGridView>
               color: isDark ? Colors.white54 : Colors.black54,
             ),
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 8),
           Text(
             'Good morning, Emms',
             style: TextStyle(
@@ -277,7 +277,7 @@ class _LemaGridViewState extends State<LemaGridView>
               color: isDark ? Colors.white70 : const Color(0xFF3A3A3C),
             ),
           ),
-          const SizedBox(height: 2),
+          const SizedBox(height: 8),
           Text(
             'Where should we\npost today?',
             style: TextStyle(
@@ -288,7 +288,7 @@ class _LemaGridViewState extends State<LemaGridView>
               color: isDark ? Colors.white : Colors.black,
             ),
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 8),
           Text(
             '$scheduled queued posts · $drafts drafts ready. Tap, drag, ship.',
             style: TextStyle(
@@ -301,9 +301,39 @@ class _LemaGridViewState extends State<LemaGridView>
     );
   }
 
-  // ── Overlapping stat pill (6 Saved places / 3 Surprise routes) ────────
+  // ── Symmetric stat card (Queued | Drafts) ─────────────────────────────
+  // Slice 16: two equal cells with centered content and the shuffle control
+  // sitting exactly on the divider, so the card is mirror-symmetric. The
+  // hero sheet keeps its own "Shuffle again" affordance.
   Widget _buildStatsStrip(
       BuildContext context, bool isDark, int scheduled, int drafts) {
+    final dividerColor = isDark ? Colors.white12 : Colors.black12;
+
+    Widget cell(String value, String caption) {
+      return Expanded(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Text(value,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                      fontSize: 28,
+                      fontWeight: FontWeight.w900,
+                      color: isDark ? Colors.white : Colors.black)),
+              const SizedBox(height: 2),
+              Text(caption,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                      fontSize: 11.5,
+                      color: isDark ? Colors.white54 : Colors.black54)),
+            ],
+          ),
+        ),
+      );
+    }
+
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 14, 20, 0),
       child: Container(
@@ -321,72 +351,44 @@ class _LemaGridViewState extends State<LemaGridView>
             ),
           ],
         ),
-        child: Row(
-          children: [
-            Expanded(
-              child: Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+        child: IntrinsicHeight(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              cell('$scheduled', 'Queued posts'),
+              // Divider column: the shuffle circle interrupts the rule at
+              // the exact vertical center of the card.
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 12),
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('$scheduled',
-                        style: TextStyle(
-                            fontSize: 28,
-                            fontWeight: FontWeight.w900,
-                            color: isDark ? Colors.white : Colors.black)),
-                    const SizedBox(height: 2),
-                    Text('Queued posts',
-                        style: TextStyle(
-                            fontSize: 11.5,
-                            color:
-                                isDark ? Colors.white54 : Colors.black54)),
+                    Expanded(
+                        child:
+                            Container(width: 1, color: dividerColor)),
+                    GestureDetector(
+                      key: const ValueKey('home_stats_shuffle'),
+                      onTap: () => setState(() => _heroIndex++),
+                      child: Container(
+                        width: 44,
+                        height: 44,
+                        decoration: BoxDecoration(
+                          color: isDark
+                              ? Colors.white.withAlpha(14)
+                              : const Color(0xFFE8E8F0),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(CupertinoIcons.shuffle, size: 18),
+                      ),
+                    ),
+                    Expanded(
+                        child:
+                            Container(width: 1, color: dividerColor)),
                   ],
                 ),
               ),
-            ),
-            Container(width: 1, height: 44,
-                color: isDark ? Colors.white12 : Colors.black12),
-            Expanded(
-              child: Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('$drafts',
-                        style: TextStyle(
-                            fontSize: 28,
-                            fontWeight: FontWeight.w900,
-                            color: isDark ? Colors.white : Colors.black)),
-                    const SizedBox(height: 2),
-                    Text('Draft ideas',
-                        style: TextStyle(
-                            fontSize: 11.5,
-                            color:
-                                isDark ? Colors.white54 : Colors.black54)),
-                  ],
-                ),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.only(right: 12),
-              child: GestureDetector(
-                onTap: () => setState(() => _heroIndex++),
-                child: Container(
-                  width: 44,
-                  height: 44,
-                  decoration: BoxDecoration(
-                    color: isDark
-                        ? Colors.white.withAlpha(14)
-                        : const Color(0xFFE8E8F0),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(CupertinoIcons.shuffle, size: 18),
-                ),
-              ),
-            ),
-          ],
+              cell('$drafts', 'Draft ideas'),
+            ],
+          ),
         ),
       ),
     );
@@ -801,10 +803,20 @@ class _LemaGridViewState extends State<LemaGridView>
         ),
         SizedBox(
           height: 44,
-          child: ListView(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            children: [
+          // Slice 16: trailing edge fade so a mid-scroll row never ends in a
+          // hard-clipped chip ("Publishe…").
+          child: ShaderMask(
+            shaderCallback: (rect) => const LinearGradient(
+              begin: Alignment.centerLeft,
+              end: Alignment.centerRight,
+              colors: [Colors.white, Colors.white, Colors.transparent],
+              stops: [0.0, 0.92, 1.0],
+            ).createShader(rect),
+            blendMode: BlendMode.dstIn,
+            child: ListView(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              children: [
               pill('All statuses', _statusFilter == 'all',
                   () => setState(() => _statusFilter = 'all')),
               const SizedBox(width: 8),
@@ -823,6 +835,7 @@ class _LemaGridViewState extends State<LemaGridView>
               pill('Images', _formatFilter == 'image',
                   () => setState(() => _formatFilter = _formatFilter == 'image' ? 'all' : 'image')),
             ],
+            ),
           ),
         ),
       ],

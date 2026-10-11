@@ -96,7 +96,7 @@ class _MainLayoutScreenState extends State<MainLayoutScreen> {
   ];
 
   final List<String> _viewTitles = const [
-    'Lema',
+    'Home',
     'Device Simulator',
     'Publishing Queue',
     'Content Calendar',
@@ -108,7 +108,7 @@ class _MainLayoutScreenState extends State<MainLayoutScreen> {
 
   // Short titles for the narrow mobile app bar (Slice 1: no truncation).
   final List<String> _viewShortTitles = const [
-    'Lema',
+    'Home',
     'Simulator',
     'Queue',
     'Calendar',

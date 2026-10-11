@@ -26,7 +26,7 @@ class SidebarNavigation extends StatelessWidget {
     final profile = profileProvider.activeProfile;
 
     final navItems = [
-      {'icon': CupertinoIcons.square_grid_2x2_fill, 'label': 'Lema Grid', 'badge': 'New'},
+      {'icon': CupertinoIcons.house_fill, 'label': 'Home', 'badge': 'New'},
       {'icon': CupertinoIcons.device_phone_portrait, 'label': 'Device Simulator', 'badge': 'Live'},
       {'icon': CupertinoIcons.layers_alt, 'label': 'Publish Queue', 'badge': 'Buffer'},
       {'icon': CupertinoIcons.calendar, 'label': 'Content Calendar', 'badge': null},
