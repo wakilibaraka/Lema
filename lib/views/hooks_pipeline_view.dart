@@ -91,6 +91,10 @@ class _HooksPipelineViewState extends State<HooksPipelineView> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    // Slice 21: phones (< 700pt, same breakpoint as Calendar/AI Studio)
+    // stack full-width script cards; tapping one opens the detail sheet.
+    // Desktop keeps the master-detail split. Both share the same builders.
+    final isNarrow = MediaQuery.of(context).size.width < 700;
 
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -99,192 +103,301 @@ class _HooksPipelineViewState extends State<HooksPipelineView> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Top Bar
+            _buildPageHeader(isDark, compact: isNarrow),
+
+            const SizedBox(height: 20),
+
+            if (isNarrow)
+              Expanded(
+                child: ListView.separated(
+                  itemCount: _scripts.length,
+                  separatorBuilder: (_, _) => const SizedBox(height: 12),
+                  itemBuilder: (context, index) {
+                    final script = _scripts[index];
+                    return _scriptCard(
+                      script,
+                      isDark,
+                      selected: script.id == _activeScript?.id,
+                      onTap: () {
+                        setState(() => _activeScript = script);
+                        _openDetailSheet(context, script, isDark);
+                      },
+                    );
+                  },
+                ),
+              )
+            else
+              // Master-Detail Layout
+              Expanded(
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    // Scripts List
+                    Expanded(
+                      flex: 4,
+                      child: ListView.separated(
+                        itemCount: _scripts.length,
+                        separatorBuilder: (_, _) => const SizedBox(height: 12),
+                        itemBuilder: (context, index) {
+                          final script = _scripts[index];
+                          final isSelected = script.id == _activeScript?.id;
+
+                          return _scriptCard(
+                            script,
+                            isDark,
+                            selected: isSelected,
+                            onTap: () =>
+                                setState(() => _activeScript = script),
+                          );
+                        },
+                      ),
+                    ),
+
+                    const SizedBox(width: 20),
+
+                    // Detail & Teleprompter Card
+                    Expanded(
+                      flex: 6,
+                      child: _activeScript == null
+                          ? const Center(child: Text('Select a script'))
+                          : _scriptDetail(_activeScript!, isDark),
+                    ),
+                  ],
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Slice 21: page header shared by both layouts. Compact uses the short
+  /// title so it fits 402pt.
+  Widget _buildPageHeader(bool isDark, {required bool compact}) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'HOOKS & SCRIPTS',
+          style: TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.w800,
+            letterSpacing: 1.6,
+            color: isDark ? Colors.white54 : Colors.black54,
+          ),
+        ),
+        const SizedBox(height: 6),
+        Text(
+          compact ? 'Hooks' : 'Hooks & Video Scripts Pipeline',
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: TextStyle(
+            fontSize: 26,
+            fontWeight: FontWeight.w800,
+            letterSpacing: -0.5,
+            color: isDark ? Colors.white : Colors.black,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          'High-converting 60-second storytelling scripts engineered for viral client acquisition.',
+          maxLines: 3,
+          overflow: TextOverflow.ellipsis,
+          style: TextStyle(
+            fontSize: 13,
+            color: isDark ? Colors.white60 : Colors.black54,
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// Slice 21: script card shared by the mobile list and the desktop pane.
+  /// All type is clamped so narrow columns degrade with ellipsis, never
+  /// with overflow stripes.
+  Widget _scriptCard(
+    ScriptModel script,
+    bool isDark, {
+    required bool selected,
+    required VoidCallback onTap,
+  }) {
+    return AppleGlassCard(
+      padding: const EdgeInsets.all(14),
+      customBorder: selected
+          ? Border.all(color: AppleTheme.systemBlue, width: 1.5)
+          : null,
+      onTap: onTap,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Flexible(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: _getStageColor(script.stage).withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Text(
+                    script.stageName,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: _getStageColor(script.stage),
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Icon(
+                script.mediaAsset.endsWith('.mp4') ? CupertinoIcons.videocam_fill : CupertinoIcons.photo_fill,
+                size: 14,
+                color: isDark ? Colors.white54 : Colors.black45,
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            script.title,
+            maxLines: 3,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13.5),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            script.hook,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontSize: 12,
+              color: isDark ? Colors.white60 : Colors.black54,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Slice 21: detail + teleprompter, shared by the desktop pane and the
+  /// mobile bottom sheet.
+  Widget _scriptDetail(ScriptModel script, bool isDark) {
+    return AppleGlassCard(
+      padding: const EdgeInsets.all(22),
+      child: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // Detail Header
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Hooks & Video Scripts Pipeline',
-                      style: TextStyle(
-                        fontSize: 26,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: -0.5,
-                        color: isDark ? Colors.white : Colors.black,
-                      ),
+                Expanded(
+                  child: Text(
+                    script.title,
+                    maxLines: 3,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w800,
+                      color: isDark ? Colors.white : Colors.black,
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'High-converting 60-second storytelling scripts engineered for viral client acquisition.',
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: isDark ? Colors.white60 : Colors.black54,
-                      ),
-                    ),
-                  ],
+                  ),
+                ),
+                const SizedBox(width: 8),
+                CupertinoButton(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                  color: AppleTheme.systemBlue,
+                  borderRadius: BorderRadius.circular(10),
+                  onPressed: () => _pushToQueue(script),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(CupertinoIcons.arrow_right_circle_fill, size: 14),
+                      SizedBox(width: 6),
+                      Text('Send to Queue', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+                    ],
+                  ),
                 ),
               ],
             ),
 
+            const Divider(height: 24),
+
+            // Teleprompter Script Blocks
+            _buildScriptSection('1. 3-SECOND HOOK (STOP SCROLL)', script.hook, AppleTheme.systemRed, isDark),
+            const SizedBox(height: 14),
+            _buildScriptSection('2. THE CORE PROBLEM (RELATABLE PAIN)', script.problem, AppleTheme.systemOrange, isDark),
+            const SizedBox(height: 14),
+            _buildScriptSection('3. TRANSFORMATION & FRAMEWORK', script.solution, AppleTheme.systemGreen, isDark),
+            const SizedBox(height: 14),
+            _buildScriptSection('4. CALL TO ACTION (CTA)', script.cta, AppleTheme.systemBlue, isDark),
+
             const SizedBox(height: 20),
 
-            // Master-Detail Layout
-            Expanded(
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  // Scripts List
-                  Expanded(
-                    flex: 4,
-                    child: ListView.separated(
-                      itemCount: _scripts.length,
-                      separatorBuilder: (_, _) => const SizedBox(height: 12),
-                      itemBuilder: (context, index) {
-                        final script = _scripts[index];
-                        final isSelected = script.id == _activeScript?.id;
-
-                        return AppleGlassCard(
-                          padding: const EdgeInsets.all(14),
-                          customBorder: isSelected
-                              ? Border.all(color: AppleTheme.systemBlue, width: 1.5)
-                              : null,
-                          onTap: () => setState(() => _activeScript = script),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                children: [
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-                                    decoration: BoxDecoration(
-                                      color: _getStageColor(script.stage).withValues(alpha: 0.15),
-                                      borderRadius: BorderRadius.circular(6),
-                                    ),
-                                    child: Text(
-                                      script.stageName,
-                                      style: TextStyle(
-                                        color: _getStageColor(script.stage),
-                                        fontSize: 10,
-                                        fontWeight: FontWeight.w700,
-                                      ),
-                                    ),
-                                  ),
-                                  const Spacer(),
-                                  Icon(
-                                    script.mediaAsset.endsWith('.mp4') ? CupertinoIcons.videocam_fill : CupertinoIcons.photo_fill,
-                                    size: 14,
-                                    color: isDark ? Colors.white54 : Colors.black45,
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 8),
-                              Text(
-                                script.title,
-                                style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13.5),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                script.hook,
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: isDark ? Colors.white60 : Colors.black54,
-                                ),
-                              ),
-                            ],
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-
-                  const SizedBox(width: 20),
-
-                  // Detail & Teleprompter Card
-                  Expanded(
-                    flex: 6,
-                    child: _activeScript == null
-                        ? const Center(child: Text('Select a script'))
-                        : AppleGlassCard(
-                            padding: const EdgeInsets.all(22),
-                            child: SingleChildScrollView(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.stretch,
-                                children: [
-                                  // Detail Header
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      Expanded(
-                                        child: Text(
-                                          _activeScript!.title,
-                                          style: TextStyle(
-                                            fontSize: 18,
-                                            fontWeight: FontWeight.w800,
-                                            color: isDark ? Colors.white : Colors.black,
-                                          ),
-                                        ),
-                                      ),
-                                      CupertinoButton(
-                                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                                        color: AppleTheme.systemBlue,
-                                        borderRadius: BorderRadius.circular(10),
-                                        onPressed: () => _pushToQueue(_activeScript!),
-                                        child: const Row(
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: [
-                                            Icon(CupertinoIcons.arrow_right_circle_fill, size: 14),
-                                            SizedBox(width: 6),
-                                            Text('Send to Queue', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
-                                          ],
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-
-                                  const Divider(height: 24),
-
-                                  // Teleprompter Script Blocks
-                                  _buildScriptSection('1. 3-SECOND HOOK (STOP SCROLL)', _activeScript!.hook, AppleTheme.systemRed, isDark),
-                                  const SizedBox(height: 14),
-                                  _buildScriptSection('2. THE CORE PROBLEM (RELATABLE PAIN)', _activeScript!.problem, AppleTheme.systemOrange, isDark),
-                                  const SizedBox(height: 14),
-                                  _buildScriptSection('3. TRANSFORMATION & FRAMEWORK', _activeScript!.solution, AppleTheme.systemGreen, isDark),
-                                  const SizedBox(height: 14),
-                                  _buildScriptSection('4. CALL TO ACTION (CTA)', _activeScript!.cta, AppleTheme.systemBlue, isDark),
-
-                                  const SizedBox(height: 20),
-
-                                  // Attached Reel Preview
-                                  Text(
-                                    'ATTACHED PRODUCTION MEDIA',
-                                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, letterSpacing: 0.8, color: isDark ? Colors.white38 : Colors.black38),
-                                  ),
-                                  const SizedBox(height: 10),
-                                  ClipRRect(
-                                    borderRadius: BorderRadius.circular(14),
-                                    child: SizedBox(
-                                      height: 180,
-                                      child: UniversalMediaPlayer(
-                                        mediaUrl: _activeScript!.mediaAsset,
-                                        isVideo: _activeScript!.mediaAsset.endsWith('.mp4'),
-                                        autoPlay: false,
-                                        showControls: true,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                  ),
-                ],
+            // Attached Reel Preview
+            Text(
+              'ATTACHED PRODUCTION MEDIA',
+              style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, letterSpacing: 0.8, color: isDark ? Colors.white38 : Colors.black38),
+            ),
+            const SizedBox(height: 10),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(14),
+              child: SizedBox(
+                height: 180,
+                child: UniversalMediaPlayer(
+                  mediaUrl: script.mediaAsset,
+                  isVideo: script.mediaAsset.endsWith('.mp4'),
+                  autoPlay: false,
+                  showControls: true,
+                ),
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  /// Slice 21: mobile detail opens as a bottom sheet (quick-edit pattern).
+  void _openDetailSheet(BuildContext context, ScriptModel script, bool isDark) {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (sheetContext) => DraggableScrollableSheet(
+        expand: false,
+        initialChildSize: 0.88,
+        minChildSize: 0.5,
+        maxChildSize: 0.95,
+        builder: (_, controller) => Container(
+          decoration: BoxDecoration(
+            color: isDark ? const Color(0xFF1C1C22) : Colors.white,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+          ),
+          child: Column(
+            children: [
+              const SizedBox(height: 10),
+              Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(2),
+                  color: isDark ? Colors.white24 : Colors.black26,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Expanded(
+                child: SingleChildScrollView(
+                  controller: controller,
+                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 28),
+                  child: _scriptDetail(script, isDark),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -304,9 +417,15 @@ class _HooksPipelineViewState extends State<HooksPipelineView> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                label,
-                style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: accent, letterSpacing: 0.5),
+              // Slice 21: bounded so long section labels ellipsize instead
+              // of striping at 402pt.
+              Flexible(
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: accent, letterSpacing: 0.5),
+                ),
               ),
               IconButton(
                 padding: EdgeInsets.zero,

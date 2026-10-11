@@ -63,6 +63,7 @@ Push after **every** slice: `git push origin main`.
 - [x] Slice 18 — Queue render + dispatch states
 - [x] Slice 19 — AI Studio mobile + copy
 - [x] Slice 20 — Photos-style docked tab bar
+- [x] Slice 21 — Hooks mobile + sheet
 
 ## 1. Design tokens (frozen for all slices)
 
@@ -249,6 +250,12 @@ Shared motion spec for all five: spring curves (`Curves.easeOutBack` / `spring` 
 - Floating pill becomes a docked full-width frosted bar: rounded top corners only, background extending under the home indicator (inset absorbed inside the frost, no SafeArea gap).
 - Keeps the blue selection bubble, Slice-12 reflections, spring scale, haptics, all 5 tabs and all motion timings — only the footprint changed.
 - Accept: light + dark screenshots, labels intact at 402pt, content scrolling beneath.
+
+## 12. Hooks mobile + sheet (Slice 21)
+
+- Phones (< 700pt) stack full-width script cards; tapping one opens the detail as a bottom sheet (quick-edit pattern, draggable 0.5–0.95). Desktop keeps master-detail. Both share card/detail builders.
+- Compact in-page H1 on narrow ("Hooks"); all card type clamped (stage chip, 3-line title, 2-line hook); section labels bounded with ellipsis.
+- Accept: 402pt overflow assertions, card→sheet→queue flow, no overflow in run log.
 
 ## 4. Out of scope (parked)
 

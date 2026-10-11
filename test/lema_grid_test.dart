@@ -10,6 +10,7 @@ import 'package:lema/models/post_model.dart';
 import 'package:lema/providers/posts_provider.dart';
 import 'package:lema/providers/profile_provider.dart';
 import 'package:lema/views/ai_studio_view.dart';
+import 'package:lema/views/hooks_pipeline_view.dart';
 import 'package:lema/services/storage_service.dart';
 import 'package:lema/views/card_detail_view.dart';
 import 'package:lema/views/lema_grid_view.dart';
@@ -917,6 +918,62 @@ void main() {
       await tester.pump(const Duration(milliseconds: 500));
       expect(posts.posts.length, 9);
       expect(find.textContaining('Added AI Generated Post'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+  });
+
+  group('Hooks mobile (Slice 21)', () {
+    // NOTE: same fake-async rule — no real Future.delayed here.
+    Future<PostsProvider> pumpHooks(WidgetTester tester) async {
+      tester.view.physicalSize = const Size(1206, 2622);
+      tester.view.devicePixelRatio = 3;
+      addTearDown(tester.view.reset);
+      SharedPreferences.setMockInitialValues({});
+      final prefs = await SharedPreferences.getInstance();
+      StorageService(prefs);
+      final posts = PostsProvider();
+      await tester.pumpWidget(
+        MaterialApp(
+          home: ChangeNotifierProvider.value(
+            value: posts,
+            child: const HooksPipelineView(),
+          ),
+        ),
+      );
+      await tester.pump(const Duration(milliseconds: 400));
+      return posts;
+    }
+
+    testWidgets('stacked script cards render without overflow at 402pt',
+        (tester) async {
+      await pumpHooks(tester);
+      expect(tester.takeException(), isNull);
+
+      expect(find.text('HOOKS & SCRIPTS'), findsOneWidget);
+      expect(find.text('Hooks'), findsOneWidget);
+      expect(find.text('Stop Blending In: The 3-Second Rule'), findsOneWidget);
+      expect(find.text('The 30-Minute Case Study Framework'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('tapping a card opens the detail sheet and queues it',
+        (tester) async {
+      final posts = await pumpHooks(tester);
+      expect(posts.posts.length, 8);
+
+      await tester.tap(find.text('Stop Blending In: The 3-Second Rule'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 600));
+
+      // Detail sheet: teleprompter sections, media label, queue action.
+      expect(find.text('ATTACHED PRODUCTION MEDIA'), findsOneWidget);
+      expect(find.text('Send to Queue'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+
+      await tester.tap(find.text('Send to Queue'));
+      await tester.pump(const Duration(milliseconds: 500));
+      expect(posts.posts.length, 9);
+      expect(find.textContaining('into Publishing Queue'), findsOneWidget);
       expect(tester.takeException(), isNull);
     });
   });
