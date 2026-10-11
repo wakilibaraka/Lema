@@ -8,6 +8,7 @@ import '../models/queue_slot_model.dart';
 import '../providers/posts_provider.dart';
 import '../theme/apple_theme.dart';
 import '../widgets/apple_glass_card.dart';
+import '../widgets/lema_pill.dart';
 import '../widgets/media_player_widget.dart';
 import '../widgets/media_picker_dialog.dart';
 
@@ -156,11 +157,23 @@ class _QueueViewState extends State<QueueView> {
                 child: ListView(
                   scrollDirection: Axis.horizontal,
                   children: [
-                    _segmentPill(
-                        'Scheduled (${scheduledPosts.length})', 0, isDark),
+                    LemaPill(
+                      label:
+                          'Scheduled (${scheduledPosts.length})',
+                      selected: _selectedSegment == 0,
+                      onTap: () =>
+                          setState(() => _selectedSegment = 0),
+                      isDark: isDark,
+                    ),
                     const SizedBox(width: 8),
-                    _segmentPill(
-                        'Published (${publishedPosts.length})', 1, isDark),
+                    LemaPill(
+                      label:
+                          'Published (${publishedPosts.length})',
+                      selected: _selectedSegment == 1,
+                      onTap: () =>
+                          setState(() => _selectedSegment = 1),
+                      isDark: isDark,
+                    ),
                     if (_selectedSegment == 0 &&
                         scheduledPosts.isNotEmpty) ...[
                       const SizedBox(width: 12),
@@ -190,46 +203,6 @@ class _QueueViewState extends State<QueueView> {
                   : _buildPostsList(publishedPosts, isDark, isScheduled: false),
             ),
           ],
-        ),
-      ),
-    );
-  }
-
-  /// Slice 18: segment pill in the Home filter-pill language.
-  Widget _segmentPill(String label, int index, bool isDark) {
-    final selected = _selectedSegment == index;
-    return GestureDetector(
-      onTap: () => setState(() => _selectedSegment = index),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 180),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 9),
-        decoration: BoxDecoration(
-          color: selected
-              ? (isDark ? Colors.white : Colors.black)
-              : (isDark
-                  ? Colors.white.withAlpha(12)
-                  : Colors.white),
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: selected
-                ? Colors.transparent
-                : (isDark
-                    ? Colors.white.withAlpha(20)
-                    : Colors.black.withAlpha(10)),
-          ),
-        ),
-        child: Center(
-          child: Text(
-            label,
-            maxLines: 1,
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
-              color: selected
-                  ? (isDark ? Colors.black : Colors.white)
-                  : (isDark ? Colors.white70 : Colors.black87),
-            ),
-          ),
         ),
       ),
     );

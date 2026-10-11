@@ -10,6 +10,7 @@ import '../providers/profile_provider.dart';
 import '../theme/apple_theme.dart';
 import '../widgets/apple_glass_card.dart';
 import '../widgets/device_frames/universal_device_frame.dart';
+import '../widgets/lema_pill.dart';
 import '../widgets/media_player_widget.dart';
 import '../widgets/media_picker_dialog.dart';
 
@@ -77,39 +78,37 @@ class _SimulatorViewState extends State<SimulatorView> {
                 color: isDark ? const Color(0xFF131317) : Colors.white,
                 border: Border(bottom: BorderSide(color: isDark ? Colors.white10 : Colors.black12)),
               ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  CupertinoSegmentedControl<int>(
-                    padding: const EdgeInsets.symmetric(horizontal: 10),
-                    children: const {
-                      0: Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(CupertinoIcons.device_phone_portrait, size: 14),
-                            SizedBox(width: 6),
-                            Text('Device Preview', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
-                          ],
-                        ),
+              // Segmented Switcher for Mobile (Slice 23: scrollable pills —
+              // the fixed CupertinoSegmentedControl striped 146px at 402pt).
+              child: SizedBox(
+                height: 44,
+                child: ShaderMask(
+                  shaderCallback: (rect) => const LinearGradient(
+                    begin: Alignment.centerLeft,
+                    end: Alignment.centerRight,
+                    colors: [Colors.white, Colors.white, Colors.transparent],
+                    stops: [0.0, 0.92, 1.0],
+                  ).createShader(rect),
+                  blendMode: BlendMode.dstIn,
+                  child: ListView(
+                    scrollDirection: Axis.horizontal,
+                    children: [
+                      LemaPill(
+                        label: 'Preview',
+                        selected: _mobileTab == 0,
+                        onTap: () => setState(() => _mobileTab = 0),
+                        isDark: isDark,
                       ),
-                      1: Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(CupertinoIcons.slider_horizontal_3, size: 14),
-                            SizedBox(width: 6),
-                            Text('Controls & Media', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
-                          ],
-                        ),
+                      const SizedBox(width: 8),
+                      LemaPill(
+                        label: 'Controls',
+                        selected: _mobileTab == 1,
+                        onTap: () => setState(() => _mobileTab = 1),
+                        isDark: isDark,
                       ),
-                    },
-                    groupValue: _mobileTab,
-                    onValueChanged: (val) => setState(() => _mobileTab = val),
+                    ],
                   ),
-                ],
+                ),
               ),
             ),
 

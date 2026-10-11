@@ -294,9 +294,9 @@ class _CalendarViewState extends State<CalendarView> {
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceAround,
                             children: [
-                              _buildStatItem('Total Scheduled', '${postsProvider.scheduledPosts.length}', AppleTheme.systemBlue),
+                              _buildStatItem('Scheduled', '${postsProvider.scheduledPosts.length}', AppleTheme.systemBlue),
                               _buildStatItem('Published', '${postsProvider.publishedPosts.length}', AppleTheme.systemGreen),
-                              _buildStatItem('Video Reels', '${allPosts.where((p) => p.isVideo).length}', AppleTheme.systemPurple),
+                              _buildStatItem('Reels', '${allPosts.where((p) => p.isVideo).length}', AppleTheme.systemPurple),
                             ],
                           ),
                         ],
@@ -318,17 +318,21 @@ class _CalendarViewState extends State<CalendarView> {
                             children: [
                               const Icon(CupertinoIcons.calendar_today, size: 18, color: AppleTheme.systemBlue),
                               const SizedBox(width: 8),
-                              Text(
-                                _selectedDay != null
-                                    ? DateFormat('EEEE, MMM d').format(_selectedDay!)
-                                    : 'Selected Day',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w700,
-                                  color: isDark ? Colors.white : Colors.black,
+                              Expanded(
+                                child: Text(
+                                  _selectedDay != null
+                                      ? DateFormat('EEEE, MMM d').format(_selectedDay!)
+                                      : 'Selected Day',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w700,
+                                    color: isDark ? Colors.white : Colors.black,
+                                  ),
                                 ),
                               ),
-                              const Spacer(),
+                              const SizedBox(width: 8),
                               Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                                 decoration: BoxDecoration(
@@ -395,20 +399,28 @@ class _CalendarViewState extends State<CalendarView> {
                                                 children: [
                                                   Row(
                                                     children: [
-                                                      Text(
-                                                        DateFormat('h:mm a').format(post.scheduledTime),
-                                                        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
+                                                      Flexible(
+                                                        child: Text(
+                                                          DateFormat('h:mm a').format(post.scheduledTime),
+                                                          maxLines: 1,
+                                                          overflow: TextOverflow.ellipsis,
+                                                          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
+                                                        ),
                                                       ),
                                                       const SizedBox(width: 8),
-                                                      Container(
-                                                        padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
-                                                        decoration: BoxDecoration(
-                                                          color: post.platformInfo.color.withValues(alpha: 0.15),
-                                                          borderRadius: BorderRadius.circular(4),
-                                                        ),
-                                                        child: Text(
-                                                          post.platformInfo.name,
-                                                          style: TextStyle(color: post.platformInfo.color, fontSize: 9.5, fontWeight: FontWeight.w700),
+                                                      Flexible(
+                                                        child: Container(
+                                                          padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
+                                                          decoration: BoxDecoration(
+                                                            color: post.platformInfo.color.withValues(alpha: 0.15),
+                                                            borderRadius: BorderRadius.circular(4),
+                                                          ),
+                                                          child: Text(
+                                                            post.platformInfo.name,
+                                                            maxLines: 1,
+                                                            overflow: TextOverflow.ellipsis,
+                                                            style: TextStyle(color: post.platformInfo.color, fontSize: 9.5, fontWeight: FontWeight.w700),
+                                                          ),
                                                         ),
                                                       ),
                                                     ],
@@ -596,18 +608,25 @@ class _CalendarViewState extends State<CalendarView> {
   }
 
   Widget _buildStatItem(String label, String value, Color color) {
-    return Column(
-      children: [
-        Text(
-          value,
-          style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: color),
-        ),
-        const SizedBox(height: 2),
-        Text(
-          label,
-          style: const TextStyle(fontSize: 11, color: Colors.grey, fontWeight: FontWeight.w500),
-        ),
-      ],
+    return Expanded(
+      child: Column(
+        children: [
+          Text(
+            value,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: color),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontSize: 11, color: Colors.grey, fontWeight: FontWeight.w500),
+          ),
+        ],
+      ),
     );
   }
 }
