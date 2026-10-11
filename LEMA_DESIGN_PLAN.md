@@ -59,6 +59,7 @@ Push after **every** slice: `git push origin main`.
 - [x] Slice 14 — virtual card morph slide-up
 - [x] Slice 15 — daily page-flip calendar
 - [x] Slice 16 — Home rename + symmetry pass
+- [x] Slice 17 — Home dedup pass
 
 ## 1. Design tokens (frozen for all slices)
 
@@ -218,6 +219,13 @@ Shared motion spec for all five: spring curves (`Curves.easeOutBack` / `spring` 
 - Rename the Lema page to Home: app-bar titles, tab label + house icon, sidebar entry. Desktop window breadcrumb keeps the Lema brand mark, as does the in-page `LEMA` eyebrow.
 - Symmetry pass on the TripGlide reference: stats strip becomes a mirror-symmetric 2-cell card (centered content, shuffle circle sitting exactly on the divider); header gaps normalized to a uniform 8pt rhythm; status pill row gets a trailing edge fade so mid-scroll rows never end in a hard-clipped chip.
 - Accept: light screenshot on 18 Pro, no overflow in run log, geometric symmetry test (shuffle centered, captions center-aligned).
+
+## 8. Home dedup (Slice 17)
+
+- Delete the hero overlay title; the bottom sheet owns the single title (kills the double mid-word truncation and the last face-collision risk). The overlay keeps only the meta pill (time · format · tag count).
+- Delete the sheet's "Shuffle again" text; the stats-divider circle is the single shuffle, with a `Shuffle next post` semantics label.
+- Trim the header subcopy to "Tap, drag, ship." — the stats strip owns the counts, the toolbar owns the live filtered count.
+- Accept: light screenshot on 18 Pro, no overflow in run log, dedup assertions (no "Shuffle again", trimmed subcopy).
 
 ## 4. Out of scope (parked)
 

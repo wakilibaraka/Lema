@@ -290,7 +290,7 @@ class _LemaGridViewState extends State<LemaGridView>
           ),
           const SizedBox(height: 8),
           Text(
-            '$scheduled queued posts · $drafts drafts ready. Tap, drag, ship.',
+            'Tap, drag, ship.',
             style: TextStyle(
               fontSize: 12.5,
               color: isDark ? Colors.white54 : Colors.black54,
@@ -365,19 +365,24 @@ class _LemaGridViewState extends State<LemaGridView>
                     Expanded(
                         child:
                             Container(width: 1, color: dividerColor)),
-                    GestureDetector(
-                      key: const ValueKey('home_stats_shuffle'),
-                      onTap: () => setState(() => _heroIndex++),
-                      child: Container(
-                        width: 44,
-                        height: 44,
-                        decoration: BoxDecoration(
-                          color: isDark
-                              ? Colors.white.withAlpha(14)
-                              : const Color(0xFFE8E8F0),
-                          shape: BoxShape.circle,
+                    Semantics(
+                      button: true,
+                      label: 'Shuffle next post',
+                      child: GestureDetector(
+                        key: const ValueKey('home_stats_shuffle'),
+                        onTap: () => setState(() => _heroIndex++),
+                        child: Container(
+                          width: 44,
+                          height: 44,
+                          decoration: BoxDecoration(
+                            color: isDark
+                                ? Colors.white.withAlpha(14)
+                                : const Color(0xFFE8E8F0),
+                            shape: BoxShape.circle,
+                          ),
+                          child:
+                              const Icon(CupertinoIcons.shuffle, size: 18),
                         ),
-                        child: const Icon(CupertinoIcons.shuffle, size: 18),
                       ),
                     ),
                     Expanded(
@@ -501,9 +506,9 @@ class _LemaGridViewState extends State<LemaGridView>
               ),
             ),
           ),
-          // Bottom-anchored stack (Slice 2): title + meta pill + glass sheet.
-          // Anchoring the type to the sheet guarantees it never collides
-          // with faces mid-frame, whatever the sheet height.
+          // Bottom-anchored stack (Slice 2, deduped Slice 17): the sheet
+          // owns the single title, so the overlay carries only the meta
+          // pill — no doubled title, no face collision, no mid-word clip.
           Positioned(
             left: 14,
             right: 14,
@@ -512,27 +517,6 @@ class _LemaGridViewState extends State<LemaGridView>
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(8, 0, 8, 8),
-                  child: Text(
-                    post.title.isEmpty ? 'Untitled Reel' : post.title,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 27,
-                      fontWeight: FontWeight.w900,
-                      letterSpacing: -0.6,
-                      height: 1.08,
-                      shadows: [
-                        Shadow(
-                            color: Colors.black87,
-                            blurRadius: 16,
-                            offset: Offset(0, 2))
-                      ],
-                    ),
-                  ),
-                ),
                 Padding(
                   padding: const EdgeInsets.only(left: 8),
                   child: ClipRRect(
@@ -581,6 +565,8 @@ class _LemaGridViewState extends State<LemaGridView>
                         children: [
                       Row(
                         children: [
+                          // Slice 17: single shuffle lives on the stats
+                          // divider, so the sheet keeps only its label.
                           Expanded(
                             child: Text(
                               'WHY THIS POST',
@@ -594,24 +580,6 @@ class _LemaGridViewState extends State<LemaGridView>
                                     ? Colors.white54
                                     : Colors.black45,
                               ),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          GestureDetector(
-                            onTap: () => setState(() => _heroIndex++),
-                            child: Row(
-                              children: [
-                                Text('Shuffle again',
-                                    style: TextStyle(
-                                        fontSize: 11.5,
-                                        fontWeight: FontWeight.w600,
-                                        color: isDark
-                                            ? Colors.white70
-                                            : Colors.black54)),
-                                const SizedBox(width: 4),
-                                const Icon(CupertinoIcons.shuffle,
-                                    size: 14),
-                              ],
                             ),
                           ),
                         ],

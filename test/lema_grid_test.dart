@@ -237,6 +237,21 @@ void main() {
       expect(center.dx, moreOrLessEquals(1170 / 3 / 2, epsilon: 1));
     });
 
+    testWidgets('dedup: single shuffle, trimmed subcopy, no overlay title',
+        (tester) async {
+      await pumpGrid(tester);
+
+      // The sheet's "Shuffle again" is gone; the divider circle is the
+      // single shuffle control.
+      expect(find.text('Shuffle again'), findsNothing);
+      expect(
+          find.byKey(const ValueKey('home_stats_shuffle')), findsOneWidget);
+
+      // Header subcopy no longer repeats the stats-strip counts.
+      expect(find.text('Tap, drag, ship.'), findsOneWidget);
+      expect(find.textContaining('queued posts ·'), findsNothing);
+    });
+
     testWidgets('Drafts filter narrows grid to draft tiles', (tester) async {
       await pumpGrid(tester);
       // Huge test surface lays out all slivers; ensureVisible scrolls the
