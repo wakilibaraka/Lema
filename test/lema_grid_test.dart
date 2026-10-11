@@ -18,6 +18,7 @@ import 'package:lema/widgets/floating_tab_bar.dart';
 import 'package:lema/widgets/lema_toast.dart';
 import 'package:lema/widgets/morph_pill_menu.dart';
 import 'package:lema/widgets/page_flip_day.dart';
+import 'package:lema/widgets/poster_reflection.dart';
 import 'package:lema/widgets/showcase_carousel.dart';
 
 /// Slice 9: Lema grid logic + provider coverage.
@@ -406,6 +407,32 @@ void main() {
       await tester.tap(find.text('Calendar'));
       await tester.pump(const Duration(milliseconds: 300));
       expect(find.text('Calendar'), findsOneWidget);
+    });
+
+    testWidgets('Slice 20 docks full-width with rounded top corners only',
+        (tester) async {
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: Scaffold(
+            body: FloatingTabBar(currentIndex: 0, onTap: _noop),
+          ),
+        ),
+      );
+      await tester.pump(const Duration(milliseconds: 300));
+
+      // Photos dock: rounded top, square bottom, edge to edge.
+      final clip = tester.widget<ClipRRect>(find.byType(ClipRRect).first);
+      final radius = clip.borderRadius.resolve(TextDirection.ltr);
+      expect(radius.topLeft, const Radius.circular(28));
+      expect(radius.topRight, const Radius.circular(28));
+      expect(radius.bottomLeft, Radius.zero);
+      expect(radius.bottomRight, Radius.zero);
+      final barWidth = tester.getSize(find.byType(FloatingTabBar)).width;
+      expect(barWidth, moreOrLessEquals(800, epsilon: 1));
+
+      // Selection bubble, reflections and labels all survive the move.
+      expect(find.byType(PosterReflection), findsNWidgets(5));
+      expect(find.text('Home'), findsOneWidget);
     });
   });
 

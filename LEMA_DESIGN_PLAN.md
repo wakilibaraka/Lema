@@ -62,6 +62,7 @@ Push after **every** slice: `git push origin main`.
 - [x] Slice 17 — Home dedup pass
 - [x] Slice 18 — Queue render + dispatch states
 - [x] Slice 19 — AI Studio mobile + copy
+- [x] Slice 20 — Photos-style docked tab bar
 
 ## 1. Design tokens (frozen for all slices)
 
@@ -242,6 +243,12 @@ Shared motion spec for all five: spring curves (`Curves.easeOutBack` / `spring` 
 - Product copy replaces the ported-engine subtitle; empty state says Tap; generate buttons stack full-width on narrow; output header title bounded with ellipsis.
 - Failures render as an in-place error card with Retry (graceful offline); avatar falls back to an initials monogram when the bundled asset is missing.
 - Accept: 402pt overflow assertions, offline generate→queue flow, no overflow in run log.
+
+## 11. Photos-style docked tab bar (Slice 20)
+
+- Floating pill becomes a docked full-width frosted bar: rounded top corners only, background extending under the home indicator (inset absorbed inside the frost, no SafeArea gap).
+- Keeps the blue selection bubble, Slice-12 reflections, spring scale, haptics, all 5 tabs and all motion timings — only the footprint changed.
+- Accept: light + dark screenshots, labels intact at 402pt, content scrolling beneath.
 
 ## 4. Out of scope (parked)
 

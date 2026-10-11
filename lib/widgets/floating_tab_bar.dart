@@ -5,11 +5,13 @@ import 'package:flutter/services.dart';
 import '../theme/lema_motion.dart';
 import 'poster_reflection.dart';
 
-/// Floating glass tab bar (Slice 3) — Apple News / Music loupe language.
+/// Docked glass tab bar (Slice 3 floating pill → Slice 20 Photos dock).
 ///
-/// Frosted pill floating over content (`extendBody: true`), 16pt side
-/// margins, selected tab in a raised blue-tinted bubble. Content scrolls
-/// visibly beneath it.
+/// Apple Photos language: full-width frosted bar, rounded top corners,
+/// background extending under the home indicator (manual bottom inset, no
+/// SafeArea gap). Selected tab keeps the raised blue-tinted bubble, the
+/// Slice-12 poster reflections, and the spring scale — only the footprint
+/// changed. Content scrolls visibly beneath it (`extendBody: true`).
 class FloatingTabBar extends StatelessWidget {
   final int currentIndex;
   final ValueChanged<int> onTap;
@@ -31,53 +33,53 @@ class FloatingTabBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    return SafeArea(
-      top: false,
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(28),
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 24, sigmaY: 24),
-            child: Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-              decoration: BoxDecoration(
-                color: isDark
-                    ? const Color(0xFF1C1C22).withAlpha(215)
-                    : Colors.white.withAlpha(228),
-                borderRadius: BorderRadius.circular(28),
-                border: Border.all(
-                  color: isDark
-                      ? Colors.white.withAlpha(20)
-                      : Colors.black.withAlpha(10),
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withAlpha(isDark ? 80 : 25),
-                    blurRadius: 24,
-                    offset: const Offset(0, 10),
-                  ),
-                ],
-              ),
-              child: Row(
-                children: [
-                  for (int i = 0; i < _items.length; i++)
-                    Expanded(
-                      child: _TabItem(
-                        icon: _items[i].$1,
-                        label: _items[i].$2,
-                        selected: i == currentIndex,
-                        isDark: isDark,
-                        onTap: () {
-                          HapticFeedback.lightImpact();
-                          onTap(i);
-                        },
-                      ),
-                    ),
-                ],
-              ),
+    // Slice 20: extend under the home indicator like Photos — the inset is
+    // absorbed inside the frost instead of a SafeArea gap below the bar.
+    final bottomInset = MediaQuery.of(context).viewPadding.bottom;
+    const radius = BorderRadius.only(
+      topLeft: Radius.circular(28),
+      topRight: Radius.circular(28),
+    );
+    return ClipRRect(
+      borderRadius: radius,
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 24, sigmaY: 24),
+        child: Container(
+          padding: EdgeInsets.fromLTRB(8, 8, 8, 8 + bottomInset),
+          decoration: BoxDecoration(
+            color: isDark
+                ? const Color(0xFF1C1C22).withAlpha(215)
+                : Colors.white.withAlpha(228),
+            borderRadius: radius,
+            border: Border.all(
+              color: isDark
+                  ? Colors.white.withAlpha(20)
+                  : Colors.black.withAlpha(10),
             ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withAlpha(isDark ? 80 : 25),
+                blurRadius: 24,
+                offset: const Offset(0, -10),
+              ),
+            ],
+          ),
+          child: Row(
+            children: [
+              for (int i = 0; i < _items.length; i++)
+                Expanded(
+                  child: _TabItem(
+                    icon: _items[i].$1,
+                    label: _items[i].$2,
+                    selected: i == currentIndex,
+                    isDark: isDark,
+                    onTap: () {
+                      HapticFeedback.lightImpact();
+                      onTap(i);
+                    },
+                  ),
+                ),
+            ],
           ),
         ),
       ),
