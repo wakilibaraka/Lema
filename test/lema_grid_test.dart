@@ -375,9 +375,13 @@ void main() {
   });
 
   group('Intro showcase (Slice 13)', () {
-    Future<void> pumpShowcase(WidgetTester tester) => tester.pumpWidget(
-          const MaterialApp(
-            home: Scaffold(body: ShowcaseCarousel(autoPlay: false)),
+    Future<void> pumpShowcase(WidgetTester tester,
+            {VoidCallback? onFinished}) =>
+        tester.pumpWidget(
+          MaterialApp(
+            home: Scaffold(
+                body: ShowcaseCarousel(
+                    autoPlay: false, onFinished: onFinished)),
           ),
         );
 
@@ -388,7 +392,8 @@ void main() {
       expect(find.text('Shoot once'), findsOneWidget);
       expect(find.text('Then let AI style it'), findsOneWidget);
       expect(find.text('Original'), findsOneWidget);
-      expect(find.text('Skip'), findsOneWidget);
+      expect(find.byKey(ShowcaseCarousel.skipKey), findsOneWidget);
+      expect(find.byKey(ShowcaseCarousel.enterKey), findsNothing);
       // 3 style chips on the active slide.
       expect(find.text('Warm film'), findsOneWidget);
       expect(find.text('Neon night'), findsOneWidget);
@@ -415,25 +420,131 @@ void main() {
       expect(find.text('Let AI style it'), findsOneWidget);
     });
 
-    testWidgets('no overflow at 402pt and reduced-motion collapses the shot',
+    testWidgets('skip is 44pt, finishes, and copy is non-underlined',
+        (tester) async {
+      var finished = false;
+      await pumpShowcase(tester, onFinished: () => finished = true);
+      await tester.pump(const Duration(milliseconds: 400));
+
+      final skip = find.byKey(ShowcaseCarousel.skipKey);
+      expect(skip, findsOneWidget);
+      expect(tester.getSize(skip).height, 44);
+
+      final texts = tester.widgetList<Text>(
+        find.descendant(
+          of: find.byType(ShowcaseCarousel),
+          matching: find.byType(Text),
+        ),
+      );
+      expect(texts, isNotEmpty);
+      for (final text in texts) {
+        expect(text.style?.decoration, TextDecoration.none);
+      }
+
+      await tester.tap(skip);
+      await tester.pump();
+      expect(finished, isTrue);
+    });
+
+    testWidgets('final slide offers Enter Lema and does not loop',
+        (tester) async {
+      var finished = false;
+      await pumpShowcase(tester, onFinished: () => finished = true);
+      await tester.pump(const Duration(milliseconds: 400));
+      expect(find.byKey(ShowcaseCarousel.enterKey), findsNothing);
+
+      for (var i = 0; i < 2; i++) {
+        await tester.drag(find.byType(PageView), const Offset(-500, 0));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 600));
+      }
+
+      expect(find.text('Schedule the drop'), findsOneWidget);
+      expect(find.byKey(ShowcaseCarousel.enterKey), findsOneWidget);
+
+      // The shutter may fire on the final card, but it must not wrap back
+      // to the first slide.
+      await tester.tap(find.byKey(ShowcaseCarousel.shutterKey));
+      await tester.pump(const Duration(seconds: 2));
+      expect(find.text('Schedule the drop'), findsOneWidget);
+
+      await tester.tap(find.byKey(ShowcaseCarousel.enterKey));
+      await tester.pump();
+      expect(finished, isTrue);
+    });
+
+    testWidgets('finishing the presented route persists dismissal',
+        (tester) async {
+      SharedPreferences.setMockInitialValues({});
+      final prefs = await SharedPreferences.getInstance();
+      final storage = StorageService(prefs);
+      expect(storage.hasSeenIntroShowcase(), isFalse);
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: Builder(
+              builder: (context) => FilledButton(
+                onPressed: () => ShowcaseCarousel.present(context),
+                child: const Text('launch tour'),
+              ),
+            ),
+          ),
+        ),
+      );
+
+      await tester.tap(find.text('launch tour'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 600));
+      expect(find.byKey(ShowcaseCarousel.skipKey), findsOneWidget);
+
+      await tester.tap(find.byKey(ShowcaseCarousel.skipKey));
+      await tester.pump();
+      await tester.pump(const Duration(seconds: 1));
+      expect(find.text('launch tour'), findsOneWidget);
+      expect(storage.hasSeenIntroShowcase(), isTrue);
+    });
+
+    testWidgets('safe controls and final completion fit at 402pt',
         (tester) async {
       tester.view.physicalSize = const Size(1206, 2622);
       tester.view.devicePixelRatio = 3;
       addTearDown(tester.view.reset);
 
+      var finished = false;
       await tester.pumpWidget(
         MaterialApp(
           home: MediaQuery(
-            data: const MediaQueryData(disableAnimations: true),
-            child: const Scaffold(body: ShowcaseCarousel(autoPlay: false)),
+            data: const MediaQueryData(
+              size: Size(402, 874),
+              padding: EdgeInsets.only(top: 47, bottom: 34),
+            ),
+            child: Scaffold(
+              body: ShowcaseCarousel(
+                autoPlay: false,
+                onFinished: () => finished = true,
+              ),
+            ),
           ),
         ),
       );
       await tester.pump(const Duration(milliseconds: 200));
       expect(tester.takeException(), isNull);
 
-      await tester.tap(find.byKey(ShowcaseCarousel.shutterKey));
-      await tester.pump(const Duration(seconds: 2));
+      final skipTop =
+          tester.getTopLeft(find.byKey(ShowcaseCarousel.skipKey)).dy;
+      expect(skipTop, greaterThanOrEqualTo(47));
+
+      for (var i = 0; i < 2; i++) {
+        await tester.drag(find.byType(PageView), const Offset(-500, 0));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 600));
+        expect(tester.takeException(), isNull);
+      }
+
+      await tester.tap(find.byKey(ShowcaseCarousel.enterKey));
+      await tester.pump();
+      expect(finished, isTrue);
       expect(tester.takeException(), isNull);
     });
   });

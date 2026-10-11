@@ -169,6 +169,12 @@ class ShowcaseCarousel extends StatefulWidget {
   /// Stable handle on the floating shutter, for tests and automation.
   static const shutterKey = ValueKey('lema_showcase_shutter');
 
+  /// Stable handle on the always-visible onboarding escape control.
+  static const skipKey = ValueKey('lema_showcase_skip');
+
+  /// Stable handle on the final onboarding completion control.
+  static const enterKey = ValueKey('lema_showcase_enter');
+
   final bool autoPlay;
 
   /// Fired once the user has advanced past the final card or hit Skip.
@@ -289,14 +295,15 @@ class ShowcaseCarouselState extends State<ShowcaseCarousel>
 
   void _restartIdle() {
     _idle?.cancel();
-    if (!widget.autoPlay) return;
+    if (!widget.autoPlay || _index >= _count - 1) return;
     _idle = Timer(_dwell, () {
       if (mounted && !_busy) _advance();
     });
   }
 
   void _advance() {
-    final next = (_index + 1) % _count;
+    if (_index >= _count - 1) return;
+    final next = _index + 1;
     _pages.animateToPage(
       next,
       duration: LemaMotion.emphasized,
@@ -304,6 +311,11 @@ class ShowcaseCarouselState extends State<ShowcaseCarousel>
     );
     setState(() => _index = next);
     _restartIdle();
+  }
+
+  void _finish() {
+    _idle?.cancel();
+    widget.onFinished?.call();
   }
 
   // ── The shot ──────────────────────────────────────────────────────────
@@ -332,8 +344,12 @@ class ShowcaseCarouselState extends State<ShowcaseCarousel>
 
     return ColoredBox(
       color: surface,
-      child: Stack(
-        children: [
+      // The whole onboarding route respects the notch, status bar, and home
+      // indicator. Controls are positioned inside this safe region rather
+      // than at raw screen coordinates.
+      child: SafeArea(
+        child: Stack(
+          children: [
           PageView.builder(
             controller: _pages,
             itemCount: _count,
@@ -348,6 +364,7 @@ class ShowcaseCarouselState extends State<ShowcaseCarousel>
                 shoot: _shoot,
                 reduceMotion: _reduceMotion,
                 isLast: i == _count - 1,
+                onFinished: widget.onFinished,
               );
             },
           ),
@@ -395,22 +412,34 @@ class ShowcaseCarouselState extends State<ShowcaseCarousel>
             ),
           ),
           Positioned(
-            top: 8,
+            top: 4,
             right: 12,
-            child: TextButton(
-              onPressed: () {
-                _idle?.cancel();
-                widget.onFinished?.call();
-              },
-              style: TextButton.styleFrom(
-                foregroundColor: isDark ? Colors.white70 : Colors.black54,
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                minimumSize: const Size(64, 36),
+            child: SizedBox(
+              height: 44,
+              child: FilledButton.tonal(
+                key: ShowcaseCarousel.skipKey,
+                onPressed: _finish,
+                style: FilledButton.styleFrom(
+                  minimumSize: const Size(108, 44),
+                  padding: const EdgeInsets.symmetric(horizontal: 18),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(22),
+                  ),
+                  textStyle: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                    decoration: TextDecoration.none,
+                  ),
+                ),
+                child: const Text(
+                  'Skip tour',
+                  style: TextStyle(decoration: TextDecoration.none),
+                ),
               ),
-              child: const Text('Skip'),
             ),
           ),
         ],
+        ),
       ),
     );
   }
@@ -421,12 +450,14 @@ class _Slide extends StatelessWidget {
   final Animation<double> shoot;
   final bool reduceMotion;
   final bool isLast;
+  final VoidCallback? onFinished;
 
   const _Slide({
     required this.slide,
     required this.shoot,
     required this.reduceMotion,
     required this.isLast,
+    this.onFinished,
   });
 
   @override
@@ -560,6 +591,7 @@ class _Slide extends StatelessWidget {
                         fontWeight: FontWeight.w800,
                         letterSpacing: -0.6,
                         color: isDark ? Colors.white : Colors.black,
+                        decoration: TextDecoration.none,
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -572,34 +604,73 @@ class _Slide extends StatelessWidget {
                         fontSize: 14,
                         height: 1.35,
                         color: isDark ? Colors.white60 : Colors.black54,
+                        decoration: TextDecoration.none,
                       ),
                     ),
                     const SizedBox(height: 14),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          isLast
-                              ? CupertinoIcons.sparkles
-                              : CupertinoIcons.arrow_right,
-                          size: 14,
-                          color: slide.tint,
-                        ),
-                        const SizedBox(width: 6),
-                        Flexible(
-                          child: Text(
-                            slide.next,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w700,
-                              color: slide.tint,
+                    if (isLast) ...[
+                      SizedBox(
+                        width: double.infinity,
+                        height: 52,
+                        child: FilledButton(
+                          key: ShowcaseCarousel.enterKey,
+                          onPressed: onFinished,
+                          style: FilledButton.styleFrom(
+                            backgroundColor: slide.tint,
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(26),
+                            ),
+                            textStyle: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w800,
+                              decoration: TextDecoration.none,
                             ),
                           ),
+                          child: const Text(
+                            'Enter Lema',
+                            style: TextStyle(decoration: TextDecoration.none),
+                          ),
                         ),
-                      ],
-                    ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Replay this tour anytime from Settings.',
+                        textAlign: TextAlign.center,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: isDark ? Colors.white60 : Colors.black54,
+                          decoration: TextDecoration.none,
+                        ),
+                      ),
+                    ] else
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            CupertinoIcons.arrow_right,
+                            size: 14,
+                            color: slide.tint,
+                          ),
+                          const SizedBox(width: 6),
+                          Flexible(
+                            child: Text(
+                              slide.next,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w700,
+                                color: slide.tint,
+                                decoration: TextDecoration.none,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                   ],
                 ),
               ),
@@ -708,6 +779,7 @@ class _StyleChip extends StatelessWidget {
           fontSize: 11,
           fontWeight: active ? FontWeight.w800 : FontWeight.w600,
           color: active ? const Color(0xFF14141A) : Colors.white70,
+          decoration: TextDecoration.none,
         ),
       ),
     );
