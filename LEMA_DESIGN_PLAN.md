@@ -60,6 +60,7 @@ Push after **every** slice: `git push origin main`.
 - [x] Slice 15 — daily page-flip calendar
 - [x] Slice 16 — Home rename + symmetry pass
 - [x] Slice 17 — Home dedup pass
+- [x] Slice 18 — Queue render + dispatch states
 
 ## 1. Design tokens (frozen for all slices)
 
@@ -226,6 +227,13 @@ Shared motion spec for all five: spring curves (`Curves.easeOutBack` / `spring` 
 - Delete the sheet's "Shuffle again" text; the stats-divider circle is the single shuffle, with a `Shuffle next post` semantics label.
 - Trim the header subcopy to "Tap, drag, ship." — the stats strip owns the counts, the toolbar owns the live filtered count.
 - Accept: light screenshot on 18 Pro, no overflow in run log, dedup assertions (no "Shuffle again", trimmed subcopy).
+
+## 9. Queue render + dispatch states (Slice 18)
+
+- Compact 22pt in-page H1 (the 26pt title truncated beside Create Post); sliding segment control becomes Home-style scrollable pills with edge fade.
+- Item card restructured: details row on top, full-width actions below (side buttons starved the middle column to ~80pt); asset filename clamped; date line bounded with ellipsis.
+- Dispatch states fronting the parked daemon: Queued → Sending (spinner) → Sent via real `publishNow`, Failed → Retry only on real errors.
+- Accept: 402pt overflow assertions, segment switching, Sending→Published flow.
 
 ## 4. Out of scope (parked)
 

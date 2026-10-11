@@ -11,6 +11,7 @@ import 'package:lema/providers/posts_provider.dart';
 import 'package:lema/services/storage_service.dart';
 import 'package:lema/views/card_detail_view.dart';
 import 'package:lema/views/lema_grid_view.dart';
+import 'package:lema/views/queue_view.dart';
 import 'package:lema/widgets/floating_tab_bar.dart';
 import 'package:lema/widgets/lema_toast.dart';
 import 'package:lema/widgets/morph_pill_menu.dart';
@@ -746,6 +747,75 @@ void main() {
       await tester.pump();
       await tester.pump(const Duration(seconds: 1));
       expect(find.text('12'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+  });
+
+  group('Queue dispatch (Slice 18)', () {
+    // NOTE: widget tests must NOT use _freshProvider — its real
+    // Future.delayed deadlocks under testWidgets' fake async clock.
+    Future<PostsProvider> pumpQueue(WidgetTester tester) async {
+      tester.view.physicalSize = const Size(1206, 2622);
+      tester.view.devicePixelRatio = 3;
+      addTearDown(tester.view.reset);
+      SharedPreferences.setMockInitialValues({});
+      final prefs = await SharedPreferences.getInstance();
+      StorageService(prefs);
+      final provider = PostsProvider();
+      await tester.pumpWidget(
+        MaterialApp(
+          home: ChangeNotifierProvider.value(
+            value: provider,
+            child: const QueueView(),
+          ),
+        ),
+      );
+      await tester.pump(const Duration(milliseconds: 400));
+      return provider;
+    }
+
+    testWidgets('compact header and segment pills render without overflow',
+        (tester) async {
+      await pumpQueue(tester);
+      expect(tester.takeException(), isNull);
+
+      expect(find.text('Publishing Queue'), findsOneWidget);
+      expect(find.text('Scheduled (5)'), findsOneWidget);
+      expect(find.text('Published (0)'), findsOneWidget);
+      expect(find.text('Create Post'), findsOneWidget);
+      // Queue item cards: badges, caption, asset, actions.
+      expect(find.text('Share Now'), findsWidgets);
+      expect(find.text('Remove'), findsWidgets);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('segment pills switch Scheduled and Published', (tester) async {
+      await pumpQueue(tester);
+
+      await tester.tap(find.text('Published (0)'));
+      await tester.pump(const Duration(milliseconds: 400));
+      expect(find.text('No Published Posts Yet'), findsOneWidget);
+
+      await tester.tap(find.text('Scheduled (5)'));
+      await tester.pump(const Duration(milliseconds: 400));
+      expect(find.text('Share Now'), findsWidgets);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('Share Now runs Sending then lands in Published',
+        (tester) async {
+      final provider = await pumpQueue(tester);
+      expect(provider.scheduledPosts.length, 5);
+
+      await tester.tap(find.text('Share Now').first);
+      await tester.pump(const Duration(milliseconds: 150));
+      // Sending state: spinner replaces the button.
+      expect(find.byType(CupertinoActivityIndicator), findsOneWidget);
+
+      await tester.pump(const Duration(seconds: 2));
+      expect(provider.scheduledPosts.length, 4);
+      expect(provider.publishedPosts.length, 1);
+      expect(find.textContaining('Dispatched to'), findsOneWidget);
       expect(tester.takeException(), isNull);
     });
   });

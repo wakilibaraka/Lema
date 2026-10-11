@@ -21,6 +21,42 @@ class QueueView extends StatefulWidget {
 class _QueueViewState extends State<QueueView> {
   int _selectedSegment = 0; // 0: Queue, 1: Published History
 
+  /// Slice 18: local dispatch states. The daemon interface is stubbed for
+  /// the parked backend slice — these states already model Queued →
+  /// Sending → Sent/Failed + Retry honestly (failures surface only from
+  /// real `publishNow` errors, never simulated).
+  final Set<String> _sending = {};
+  final Map<String, String> _failed = {};
+
+  Future<void> _dispatch(PostModel post) async {
+    if (_sending.contains(post.id)) return;
+    setState(() {
+      _sending.add(post.id);
+      _failed.remove(post.id);
+    });
+    // Simulated network beat so Sending is perceivable; the state machine
+    // itself is real and will front the daemon later.
+    await Future.delayed(const Duration(milliseconds: 900));
+    if (!mounted) return;
+    try {
+      context.read<PostsProvider>().publishNow(post.id);
+      if (!mounted) return;
+      setState(() => _sending.remove(post.id));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Dispatched to ${post.platformInfo.name} via Daemon!')),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _sending.remove(post.id);
+        _failed[post.id] = e.toString();
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Dispatch failed: $e')),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -49,7 +85,9 @@ class _QueueViewState extends State<QueueView> {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
-                          fontSize: 26,
+                          // Slice 18: compact 22pt H1 fits beside Create Post
+                          // at 402pt (the 26pt title truncated to "Qu…").
+                          fontSize: 22,
                           fontWeight: FontWeight.w800,
                           letterSpacing: -0.5,
                           color: isDark ? Colors.white : Colors.black,
@@ -102,36 +140,44 @@ class _QueueViewState extends State<QueueView> {
 
             const SizedBox(height: 20),
 
-            // Segment Control: Queue vs Published (scrolls on narrow widths).
-            SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
-                children: [
-                  CupertinoSlidingSegmentedControl<int>(
-                    groupValue: _selectedSegment,
-                    children: {
-                      0: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-                        child: Text('Scheduled Queue (${scheduledPosts.length})', style: const TextStyle(fontSize: 13)),
-                      ),
-                      1: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-                        child: Text('Published History (${publishedPosts.length})', style: const TextStyle(fontSize: 13)),
-                      ),
-                    },
-                    onValueChanged: (val) {
-                      if (val != null) setState(() => _selectedSegment = val);
-                    },
-                  ),
-                  if (_selectedSegment == 0 && scheduledPosts.isNotEmpty) ...[
-                    const SizedBox(width: 12),
-                    Text(
-                      'Next post scheduled in approx. 45 mins',
-                      style: TextStyle(fontSize: 12, color: isDark ? Colors.white54 : Colors.black45),
-                    ),
+            // Segment pills (Slice 18, Home language): the sliding control's
+            // fixed labels clipped at 402pt ("Published History (0…"), so the
+            // segments become scrollable pills with the same edge fade.
+            SizedBox(
+              height: 44,
+              child: ShaderMask(
+                shaderCallback: (rect) => const LinearGradient(
+                  begin: Alignment.centerLeft,
+                  end: Alignment.centerRight,
+                  colors: [Colors.white, Colors.white, Colors.transparent],
+                  stops: [0.0, 0.92, 1.0],
+                ).createShader(rect),
+                blendMode: BlendMode.dstIn,
+                child: ListView(
+                  scrollDirection: Axis.horizontal,
+                  children: [
+                    _segmentPill(
+                        'Scheduled (${scheduledPosts.length})', 0, isDark),
                     const SizedBox(width: 8),
+                    _segmentPill(
+                        'Published (${publishedPosts.length})', 1, isDark),
+                    if (_selectedSegment == 0 &&
+                        scheduledPosts.isNotEmpty) ...[
+                      const SizedBox(width: 12),
+                      Center(
+                        child: Text(
+                          'Next post scheduled in approx. 45 mins',
+                          style: TextStyle(
+                              fontSize: 12,
+                              color: isDark
+                                  ? Colors.white54
+                                  : Colors.black45),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                    ],
                   ],
-                ],
+                ),
               ),
             ),
 
@@ -144,6 +190,46 @@ class _QueueViewState extends State<QueueView> {
                   : _buildPostsList(publishedPosts, isDark, isScheduled: false),
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  /// Slice 18: segment pill in the Home filter-pill language.
+  Widget _segmentPill(String label, int index, bool isDark) {
+    final selected = _selectedSegment == index;
+    return GestureDetector(
+      onTap: () => setState(() => _selectedSegment = index),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 9),
+        decoration: BoxDecoration(
+          color: selected
+              ? (isDark ? Colors.white : Colors.black)
+              : (isDark
+                  ? Colors.white.withAlpha(12)
+                  : Colors.white),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: selected
+                ? Colors.transparent
+                : (isDark
+                    ? Colors.white.withAlpha(20)
+                    : Colors.black.withAlpha(10)),
+          ),
+        ),
+        child: Center(
+          child: Text(
+            label,
+            maxLines: 1,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+              color: selected
+                  ? (isDark ? Colors.black : Colors.white)
+                  : (isDark ? Colors.white70 : Colors.black87),
+            ),
+          ),
         ),
       ),
     );
@@ -228,15 +314,21 @@ class _QueueViewState extends State<QueueView> {
 
         return AppleGlassCard(
           padding: const EdgeInsets.all(16),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          // Slice 18: details row on top, actions span full width below.
+          // Side-by-side actions squeezed the middle column to ~80pt at
+          // 402pt and overflowed; stacked actions have no width pressure.
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Media Preview Box
-              ClipRRect(
-                borderRadius: BorderRadius.circular(12),
-                child: SizedBox(
-                  width: 90,
-                  height: 90,
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Media Preview Box (76pt keeps the details roomy).
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: SizedBox(
+                      width: 76,
+                      height: 76,
                   child: Stack(
                     children: [
                       UniversalMediaPlayer(
@@ -270,11 +362,9 @@ class _QueueViewState extends State<QueueView> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Platform and Schedule Badges (Wrap: never overflows narrow cards).
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 6,
-                      crossAxisAlignment: WrapCrossAlignment.center,
+                    // Platform + status chips (short, fixed-size — never overflow).
+                    // Schedule line below is width-bounded with ellipsis.
+                    Row(
                       children: [
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
@@ -284,6 +374,8 @@ class _QueueViewState extends State<QueueView> {
                           ),
                           child: Text(
                             post.platformInfo.name,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                             style: TextStyle(
                               color: post.platformInfo.color,
                               fontSize: 11,
@@ -291,29 +383,8 @@ class _QueueViewState extends State<QueueView> {
                             ),
                           ),
                         ),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                          decoration: BoxDecoration(
-                            color: isDark ? Colors.white.withValues(alpha: 0.08) : Colors.black.withValues(alpha: 0.05),
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(CupertinoIcons.clock, size: 11, color: isDark ? Colors.white60 : Colors.black54),
-                              const SizedBox(width: 4),
-                              Text(
-                                formattedDate,
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w500,
-                                  color: isDark ? Colors.white70 : Colors.black87,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        if (post.status == 'published')
+                        if (post.status == 'published') ...[
+                          const SizedBox(width: 6),
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                             decoration: BoxDecoration(
@@ -325,6 +396,28 @@ class _QueueViewState extends State<QueueView> {
                               style: TextStyle(color: AppleTheme.systemGreen, fontSize: 10, fontWeight: FontWeight.w700),
                             ),
                           ),
+                        ],
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    // Schedule line: bounded by the Expanded column, so the
+                    // date ellipsizes instead of overflowing narrow cards.
+                    Row(
+                      children: [
+                        Icon(CupertinoIcons.clock, size: 11, color: isDark ? Colors.white60 : Colors.black54),
+                        const SizedBox(width: 4),
+                        Expanded(
+                          child: Text(
+                            formattedDate,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w500,
+                              color: isDark ? Colors.white70 : Colors.black87,
+                            ),
+                          ),
+                        ),
                       ],
                     ),
 
@@ -345,9 +438,12 @@ class _QueueViewState extends State<QueueView> {
 
                     const SizedBox(height: 8),
 
-                    // Media File Info
+                    // Media File Info (Slice 18: clamped — the unclamped
+                    // filename was the 61px right-overflow).
                     Text(
                       'Asset: ${post.mediaUrl.split('/').last}',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                         fontSize: 11,
                         color: isDark ? Colors.white38 : Colors.black38,
@@ -356,34 +452,18 @@ class _QueueViewState extends State<QueueView> {
                   ],
                 ),
               ),
+              ],
+              ),
+              const SizedBox(height: 12),
 
-              const SizedBox(width: 16),
-
-              // Action Buttons
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
+              // Action Buttons (Slice 18: dispatch states — Sending
+              // spinner, Failed → Retry — fronting the parked daemon).
+              // Actions span full width below the details: side-by-side
+              // buttons squeezed the middle column at 402pt.
+              Row(
                 children: [
-                  if (isScheduled)
-                    CupertinoButton(
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                      color: AppleTheme.systemBlue,
-                      borderRadius: BorderRadius.circular(10),
-                      onPressed: () {
-                        context.read<PostsProvider>().publishNow(post.id);
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('Dispatched to ${post.platformInfo.name} via Daemon!')),
-                        );
-                      },
-                      child: const Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(CupertinoIcons.paperplane_fill, size: 13),
-                          SizedBox(width: 6),
-                          Text('Share Now', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
-                        ],
-                      ),
-                    ),
-                  const SizedBox(height: 6),
+                  if (isScheduled) Expanded(child: _dispatchButton(post, isDark)),
+                  if (!isScheduled) const Spacer(),
                   CupertinoButton(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                     onPressed: () {
@@ -404,6 +484,48 @@ class _QueueViewState extends State<QueueView> {
           ),
         );
       },
+    );
+  }
+
+  /// Slice 18: the dispatch button renders Queued → Sending → Sent, and
+  /// Failed → Retry when `publishNow` itself throws.
+  Widget _dispatchButton(PostModel post, bool isDark) {
+    if (_sending.contains(post.id)) {
+      return const CupertinoButton(
+        padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        onPressed: null,
+        child: CupertinoActivityIndicator(radius: 9),
+      );
+    }
+    if (_failed.containsKey(post.id)) {
+      return CupertinoButton(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        color: AppleTheme.systemRed.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(10),
+        onPressed: () => _dispatch(post),
+        child: const Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(CupertinoIcons.refresh, size: 13, color: AppleTheme.systemRed),
+            SizedBox(width: 6),
+            Text('Retry', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppleTheme.systemRed)),
+          ],
+        ),
+      );
+    }
+    return CupertinoButton(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      color: AppleTheme.systemBlue,
+      borderRadius: BorderRadius.circular(10),
+      onPressed: () => _dispatch(post),
+      child: const Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(CupertinoIcons.paperplane_fill, size: 13),
+          SizedBox(width: 6),
+          Text('Share Now', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+        ],
+      ),
     );
   }
 
