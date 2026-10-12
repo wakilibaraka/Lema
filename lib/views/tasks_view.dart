@@ -114,7 +114,7 @@ class _TasksViewState extends State<TasksView> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Daily Operations Tick',
+                        'Daily Tick',
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(

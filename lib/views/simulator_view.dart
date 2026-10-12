@@ -373,7 +373,7 @@ class _SimulatorViewState extends State<SimulatorView> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Device Simulator',
+          'Simulator',
           style: TextStyle(
             fontSize: 19,
             fontWeight: FontWeight.w800,

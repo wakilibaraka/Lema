@@ -83,7 +83,7 @@ class _SimulationViewState extends State<SimulationView> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
-            'Simulation Engine',
+            'Simulation',
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: TextStyle(

@@ -1,10 +1,23 @@
 import 'dart:ui';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+
+import '../models/nav_destination.dart';
 import '../providers/app_provider.dart';
+import '../providers/posts_provider.dart';
 import '../providers/profile_provider.dart';
+import '../services/demo_mode_service.dart';
 import '../theme/apple_theme.dart';
+
+/// A live count on a navigation row.
+class _NavBadge {
+  final String label;
+  final Color color;
+
+  const _NavBadge(this.label, this.color);
+}
 
 class SidebarNavigation extends StatelessWidget {
   final int selectedIndex;
@@ -25,28 +38,39 @@ class SidebarNavigation extends StatelessWidget {
     final profileProvider = context.watch<ProfileProvider>();
     final profile = profileProvider.activeProfile;
 
-    final navItems = [
-      {'icon': CupertinoIcons.house_fill, 'label': 'Home', 'badge': 'New'},
-      {'icon': CupertinoIcons.device_phone_portrait, 'label': 'Device Simulator', 'badge': 'Live'},
-      {'icon': CupertinoIcons.layers_alt, 'label': 'Publish Queue', 'badge': 'Buffer'},
-      {'icon': CupertinoIcons.calendar, 'label': 'Content Calendar', 'badge': null},
-      {'icon': CupertinoIcons.sparkles, 'label': 'AI Studio', 'badge': 'Gemini'},
-      {'icon': CupertinoIcons.pencil_circle, 'label': 'Composer', 'badge': null},
-      {'icon': CupertinoIcons.chart_bar, 'label': 'Analytics', 'badge': null},
-      {'icon': CupertinoIcons.film, 'label': 'Hooks & Scripts', 'badge': '60s'},
-      {'icon': CupertinoIcons.checkmark_circle, 'label': 'Daily Tick', 'badge': null},
-      {'icon': CupertinoIcons.gear_alt, 'label': 'Daemon & Settings', 'badge': null},
-      {'icon': CupertinoIcons.speedometer, 'label': 'Simulation Engine', 'badge': null},
-    ];
+    final navItems = lemaDestinations;
+
+    // Badges are counts, not decoration. They used to be static strings
+    // ('New', 'Live', 'Buffer', 'Gemini', '60s') that said nothing about the
+    // user's actual queue.
+    final posts = context.watch<PostsProvider>();
+    final overdueCount = posts.overduePosts.length;
+    final badges = <int, _NavBadge>{
+      if (posts.scheduledPosts.isNotEmpty)
+        2: _NavBadge('${posts.scheduledPosts.length}', AppleTheme.systemBlue),
+      if (overdueCount > 0)
+        9: _NavBadge('$overdueCount', AppleTheme.systemOrange),
+    };
+
+    // One honest daemon state, shared with Settings.
+    final daemonLabel = app.isDaemonOnline
+        ? 'Daemon on port 3001'
+        : DemoModeService.isEnabled
+        ? 'Demo mode (local publish)'
+        : 'Daemon offline';
 
     if (isRail) {
       return Container(
         width: 76,
         decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF131317).withAlpha(210) : const Color(0xFFF9F9FB).withAlpha(220),
+          color: isDark
+              ? const Color(0xFF131317).withAlpha(210)
+              : const Color(0xFFF9F9FB).withAlpha(220),
           border: Border(
             right: BorderSide(
-              color: isDark ? Colors.white.withAlpha(16) : Colors.black.withAlpha(12),
+              color: isDark
+                  ? Colors.white.withAlpha(16)
+                  : Colors.black.withAlpha(12),
               width: 1,
             ),
           ),
@@ -66,7 +90,9 @@ class SidebarNavigation extends StatelessWidget {
                       ClipRRect(
                         borderRadius: BorderRadius.circular(12),
                         child: Image.asset(
-                          profile.avatarUrl.isNotEmpty ? profile.avatarUrl : 'assets/emms_avatar.png',
+                          profile.avatarUrl.isNotEmpty
+                              ? profile.avatarUrl
+                              : 'assets/emms_avatar.png',
                           width: 36,
                           height: 36,
                           fit: BoxFit.cover,
@@ -74,7 +100,11 @@ class SidebarNavigation extends StatelessWidget {
                             width: 36,
                             height: 36,
                             color: AppleTheme.systemBlue,
-                            child: const Icon(CupertinoIcons.person_fill, color: Colors.white, size: 18),
+                            child: const Icon(
+                              CupertinoIcons.person_fill,
+                              color: Colors.white,
+                              size: 18,
+                            ),
                           ),
                         ),
                       ),
@@ -101,13 +131,14 @@ class SidebarNavigation extends StatelessWidget {
                     itemBuilder: (context, index) {
                       final item = navItems[index];
                       final isSelected = selectedIndex == index;
-                      final iconData = item['icon'] as IconData;
-                      final label = item['label'] as String;
+                      final badge = badges[index];
 
                       return Padding(
                         padding: const EdgeInsets.symmetric(vertical: 4),
                         child: Tooltip(
-                          message: label,
+                          message: badge == null
+                              ? item.label
+                              : '${item.label} · ${badge.label}',
                           child: InkWell(
                             onTap: () => onDestinationSelected(index),
                             borderRadius: BorderRadius.circular(12),
@@ -116,32 +147,41 @@ class SidebarNavigation extends StatelessWidget {
                               height: 48,
                               decoration: BoxDecoration(
                                 color: isSelected
-                                    ? AppleTheme.systemBlue.withAlpha(isDark ? 50 : 30)
+                                    ? AppleTheme.systemBlue.withAlpha(
+                                        isDark ? 50 : 30,
+                                      )
                                     : Colors.transparent,
                                 borderRadius: BorderRadius.circular(12),
                                 border: isSelected
-                                    ? Border.all(color: AppleTheme.systemBlue.withAlpha(80), width: 1)
+                                    ? Border.all(
+                                        color: AppleTheme.systemBlue.withAlpha(
+                                          80,
+                                        ),
+                                        width: 1,
+                                      )
                                     : null,
                               ),
                               child: Stack(
                                 alignment: Alignment.center,
                                 children: [
                                   Icon(
-                                    iconData,
+                                    item.icon,
                                     size: 20,
                                     color: isSelected
                                         ? AppleTheme.systemBlue
-                                        : (isDark ? Colors.white60 : Colors.black54),
+                                        : (isDark
+                                              ? Colors.white60
+                                              : Colors.black54),
                                   ),
-                                  if (item['badge'] != null)
+                                  if (badge != null)
                                     Positioned(
                                       top: 8,
                                       right: 12,
                                       child: Container(
                                         width: 6,
                                         height: 6,
-                                        decoration: const BoxDecoration(
-                                          color: AppleTheme.systemGreen,
+                                        decoration: BoxDecoration(
+                                          color: badge.color,
                                           shape: BoxShape.circle,
                                         ),
                                       ),
@@ -164,21 +204,29 @@ class SidebarNavigation extends StatelessWidget {
                     children: [
                       IconButton(
                         icon: Icon(
-                          isDark ? CupertinoIcons.moon_fill : CupertinoIcons.sun_max_fill,
+                          isDark
+                              ? CupertinoIcons.moon_fill
+                              : CupertinoIcons.sun_max_fill,
                           size: 18,
-                          color: isDark ? AppleTheme.systemIndigo : AppleTheme.systemOrange,
+                          color: isDark
+                              ? AppleTheme.systemIndigo
+                              : AppleTheme.systemOrange,
                         ),
-                        tooltip: isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode',
+                        tooltip: isDark
+                            ? 'Switch to Light Mode'
+                            : 'Switch to Dark Mode',
                         onPressed: () => app.toggleTheme(),
                       ),
                       const SizedBox(height: 4),
                       Tooltip(
-                        message: app.isDaemonOnline ? 'Daemon Port 3001 Active' : 'Sandbox Mode',
+                        message: daemonLabel,
                         child: Container(
                           width: 8,
                           height: 8,
                           decoration: BoxDecoration(
-                            color: app.isDaemonOnline ? AppleTheme.systemGreen : AppleTheme.systemOrange,
+                            color: app.isDaemonOnline
+                                ? AppleTheme.systemGreen
+                                : AppleTheme.systemOrange,
                             shape: BoxShape.circle,
                           ),
                         ),
@@ -197,10 +245,14 @@ class SidebarNavigation extends StatelessWidget {
     return Container(
       width: 250,
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF131317).withAlpha(210) : const Color(0xFFF9F9FB).withAlpha(220),
+        color: isDark
+            ? const Color(0xFF131317).withAlpha(210)
+            : const Color(0xFFF9F9FB).withAlpha(220),
         border: Border(
           right: BorderSide(
-            color: isDark ? Colors.white.withAlpha(16) : Colors.black.withAlpha(12),
+            color: isDark
+                ? Colors.white.withAlpha(16)
+                : Colors.black.withAlpha(12),
             width: 1,
           ),
         ),
@@ -219,7 +271,9 @@ class SidebarNavigation extends StatelessWidget {
                   color: isDark ? Colors.white.withAlpha(12) : Colors.white,
                   borderRadius: BorderRadius.circular(14),
                   border: Border.all(
-                    color: isDark ? Colors.white.withAlpha(16) : Colors.black.withAlpha(10),
+                    color: isDark
+                        ? Colors.white.withAlpha(16)
+                        : Colors.black.withAlpha(10),
                   ),
                   boxShadow: [
                     BoxShadow(
@@ -234,7 +288,9 @@ class SidebarNavigation extends StatelessWidget {
                     ClipRRect(
                       borderRadius: BorderRadius.circular(10),
                       child: Image.asset(
-                        profile.avatarUrl.isNotEmpty ? profile.avatarUrl : 'assets/emms_avatar.png',
+                        profile.avatarUrl.isNotEmpty
+                            ? profile.avatarUrl
+                            : 'assets/emms_avatar.png',
                         width: 38,
                         height: 38,
                         fit: BoxFit.cover,
@@ -242,7 +298,11 @@ class SidebarNavigation extends StatelessWidget {
                           width: 38,
                           height: 38,
                           color: AppleTheme.systemBlue,
-                          child: const Icon(CupertinoIcons.person_fill, color: Colors.white, size: 20),
+                          child: const Icon(
+                            CupertinoIcons.person_fill,
+                            color: Colors.white,
+                            size: 20,
+                          ),
                         ),
                       ),
                     ),
@@ -266,7 +326,11 @@ class SidebarNavigation extends StatelessWidget {
                                 ),
                               ),
                               const SizedBox(width: 4),
-                              const Icon(CupertinoIcons.checkmark_seal_fill, color: AppleTheme.systemBlue, size: 13),
+                              const Icon(
+                                CupertinoIcons.checkmark_seal_fill,
+                                color: AppleTheme.systemBlue,
+                                size: 13,
+                              ),
                             ],
                           ),
                           const SizedBox(height: 2),
@@ -290,15 +354,16 @@ class SidebarNavigation extends StatelessWidget {
               // Navigation Links
               Expanded(
                 child: ListView.separated(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 12,
+                  ),
                   itemCount: navItems.length,
                   separatorBuilder: (_, _) => const SizedBox(height: 3),
                   itemBuilder: (context, index) {
                     final item = navItems[index];
                     final isSelected = selectedIndex == index;
-                    final iconData = item['icon'] as IconData;
-                    final label = item['label'] as String;
-                    final badge = item['badge'] as String?;
+                    final badge = badges[index];
 
                     return InkWell(
                       onTap: () => onDestinationSelected(index),
@@ -306,15 +371,22 @@ class SidebarNavigation extends StatelessWidget {
                       child: AnimatedContainer(
                         duration: const Duration(milliseconds: 180),
                         curve: Curves.easeOut,
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 10,
+                        ),
                         decoration: BoxDecoration(
                           color: isSelected
-                              ? AppleTheme.systemBlue.withAlpha(isDark ? 55 : 35)
+                              ? AppleTheme.systemBlue.withAlpha(
+                                  isDark ? 55 : 35,
+                                )
                               : Colors.transparent,
                           borderRadius: BorderRadius.circular(10),
                           border: isSelected
                               ? Border.all(
-                                  color: AppleTheme.systemBlue.withAlpha(isDark ? 100 : 70),
+                                  color: AppleTheme.systemBlue.withAlpha(
+                                    isDark ? 100 : 70,
+                                  ),
                                   width: 1,
                                 )
                               : null,
@@ -322,7 +394,7 @@ class SidebarNavigation extends StatelessWidget {
                         child: Row(
                           children: [
                             Icon(
-                              iconData,
+                              item.icon,
                               size: 18,
                               color: isSelected
                                   ? AppleTheme.systemBlue
@@ -331,32 +403,43 @@ class SidebarNavigation extends StatelessWidget {
                             const SizedBox(width: 12),
                             Expanded(
                               child: Text(
-                                label,
+                                item.label,
                                 style: TextStyle(
                                   fontSize: 13,
-                                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                                  fontWeight: isSelected
+                                      ? FontWeight.w600
+                                      : FontWeight.w500,
                                   color: isSelected
-                                      ? (isDark ? Colors.white : AppleTheme.systemBlue)
-                                      : (isDark ? Colors.white70 : Colors.black87),
+                                      ? (isDark
+                                            ? Colors.white
+                                            : AppleTheme.systemBlue)
+                                      : (isDark
+                                            ? Colors.white70
+                                            : Colors.black87),
                                   letterSpacing: -0.1,
                                 ),
                               ),
                             ),
                             if (badge != null)
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 6,
+                                  vertical: 2,
+                                ),
                                 decoration: BoxDecoration(
                                   color: isSelected
                                       ? AppleTheme.systemBlue
-                                      : (isDark ? Colors.white.withAlpha(20) : Colors.black.withAlpha(15)),
+                                      : badge.color.withAlpha(isDark ? 45 : 30),
                                   borderRadius: BorderRadius.circular(6),
                                 ),
                                 child: Text(
-                                  badge,
+                                  badge.label,
                                   style: TextStyle(
                                     fontSize: 9.5,
                                     fontWeight: FontWeight.w700,
-                                    color: isSelected ? Colors.white : (isDark ? Colors.white60 : Colors.black54),
+                                    color: isSelected
+                                        ? Colors.white
+                                        : (isDark ? badge.color : badge.color),
                                     letterSpacing: 0.2,
                                   ),
                                 ),
@@ -371,11 +454,16 @@ class SidebarNavigation extends StatelessWidget {
 
               // Bottom Section: Theme & Daemon
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 12,
+                ),
                 decoration: BoxDecoration(
                   border: Border(
                     top: BorderSide(
-                      color: isDark ? Colors.white.withAlpha(14) : Colors.black.withAlpha(12),
+                      color: isDark
+                          ? Colors.white.withAlpha(14)
+                          : Colors.black.withAlpha(12),
                     ),
                   ),
                 ),
@@ -388,9 +476,13 @@ class SidebarNavigation extends StatelessWidget {
                         Row(
                           children: [
                             Icon(
-                              isDark ? CupertinoIcons.moon_fill : CupertinoIcons.sun_max_fill,
+                              isDark
+                                  ? CupertinoIcons.moon_fill
+                                  : CupertinoIcons.sun_max_fill,
                               size: 15,
-                              color: isDark ? AppleTheme.systemIndigo : AppleTheme.systemOrange,
+                              color: isDark
+                                  ? AppleTheme.systemIndigo
+                                  : AppleTheme.systemOrange,
                             ),
                             const SizedBox(width: 8),
                             Text(
@@ -415,9 +507,14 @@ class SidebarNavigation extends StatelessWidget {
 
                     // Daemon Status Row
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 6,
+                      ),
                       decoration: BoxDecoration(
-                        color: isDark ? Colors.white.withAlpha(10) : Colors.black.withAlpha(8),
+                        color: isDark
+                            ? Colors.white.withAlpha(10)
+                            : Colors.black.withAlpha(8),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Row(
@@ -427,10 +524,16 @@ class SidebarNavigation extends StatelessWidget {
                             height: 6.5,
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
-                              color: app.isDaemonOnline ? AppleTheme.systemGreen : AppleTheme.systemOrange,
+                              color: app.isDaemonOnline
+                                  ? AppleTheme.systemGreen
+                                  : AppleTheme.systemOrange,
                               boxShadow: [
                                 BoxShadow(
-                                  color: (app.isDaemonOnline ? AppleTheme.systemGreen : AppleTheme.systemOrange).withAlpha(120),
+                                  color:
+                                      (app.isDaemonOnline
+                                              ? AppleTheme.systemGreen
+                                              : AppleTheme.systemOrange)
+                                          .withAlpha(120),
                                   blurRadius: 4,
                                 ),
                               ],
@@ -439,7 +542,7 @@ class SidebarNavigation extends StatelessWidget {
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(
-                              app.isDaemonOnline ? 'Port 3001 Active' : 'Sandbox Simulated',
+                              daemonLabel,
                               style: TextStyle(
                                 fontSize: 10.5,
                                 fontWeight: FontWeight.w600,

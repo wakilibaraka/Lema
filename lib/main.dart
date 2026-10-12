@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'models/nav_destination.dart';
 import 'providers/app_provider.dart';
 import 'providers/auth_provider.dart';
 import 'providers/posts_provider.dart';
@@ -89,6 +90,8 @@ class _MainLayoutScreenState extends State<MainLayoutScreen> {
     });
   }
 
+  // Slice 25: the view order must line up with `lemaDestinations`, which now
+  // supplies every label (sidebar, title bar, app bar, dock) from one list.
   final List<Widget> _views = const [
     LemaGridView(),
     SimulatorView(),
@@ -101,35 +104,6 @@ class _MainLayoutScreenState extends State<MainLayoutScreen> {
     TasksView(),
     SettingsView(),
     SimulationView(),
-  ];
-
-  final List<String> _viewTitles = const [
-    'Home',
-    'Device Simulator',
-    'Publishing Queue',
-    'Content Calendar',
-    'AI Studio & Planner',
-    'Omnichannel Composer',
-    'Analytics',
-    'Hooks & Scripts Pipeline',
-    'Daily Operations Tick',
-    'Daemon & Settings',
-    'Simulation Engine',
-  ];
-
-  // Short titles for the narrow mobile app bar (Slice 1: no truncation).
-  final List<String> _viewShortTitles = const [
-    'Home',
-    'Simulator',
-    'Queue',
-    'Calendar',
-    'AI Studio',
-    'Composer',
-    'Analytics',
-    'Hooks',
-    'Daily Tick',
-    'Settings',
-    'Simulation',
   ];
 
   @override
@@ -147,7 +121,7 @@ class _MainLayoutScreenState extends State<MainLayoutScreen> {
         body: Column(
           children: [
             WindowTitleBar(
-              title: _viewTitles[app.selectedNavIndex],
+              title: lemaDestinations[app.selectedNavIndex].label,
             ),
             Expanded(
               child: Row(
@@ -214,7 +188,7 @@ class _MainLayoutScreenState extends State<MainLayoutScreen> {
                   const SizedBox(width: 4),
                   Expanded(
                     child: Text(
-                      _viewShortTitles[app.selectedNavIndex],
+                      lemaDestinations[app.selectedNavIndex].shortLabel,
                       style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -232,10 +206,19 @@ class _MainLayoutScreenState extends State<MainLayoutScreen> {
           ),
         ),
       ),
-      body: _views[app.selectedNavIndex],
+      // The dock floats over the canvas, so the page reserves the bar's
+      // height itself — otherwise the last row of every screen sits behind
+      // the frost and cannot be reached.
+      body: Padding(
+        key: const ValueKey('mobile_body_clearance'),
+        padding: EdgeInsets.only(
+          bottom: FloatingTabBar.clearance(context),
+        ),
+        child: _views[app.selectedNavIndex],
+      ),
       // Floating glass pill (Slice 3) replaces the docked CupertinoTabBar.
       bottomNavigationBar: FloatingTabBar(
-        currentIndex: app.selectedNavIndex < 5 ? app.selectedNavIndex : 0,
+        currentIndex: app.selectedTabIndex,
         onTap: (index) => app.setNavIndex(index),
       ),
       ),

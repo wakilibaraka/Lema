@@ -87,7 +87,7 @@ class _QueueViewState extends State<QueueView> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Publishing Queue',
+                        'Queue',
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
@@ -184,7 +184,7 @@ class _QueueViewState extends State<QueueView> {
                       const SizedBox(width: 12),
                       Center(
                         child: Text(
-                          'Next post scheduled in approx. 45 mins',
+                          _nextSlotLabel(scheduledPosts, overdue.length),
                           style: TextStyle(
                               fontSize: 12,
                               color: isDark
@@ -350,6 +350,7 @@ class _QueueViewState extends State<QueueView> {
                         isVideo: post.isVideo,
                         autoPlay: false,
                         showControls: false,
+                        thumbnail: true,
                       ),
                       if (post.isVideo)
                         Positioned(
@@ -513,6 +514,30 @@ class _QueueViewState extends State<QueueView> {
         );
       },
     );
+  }
+
+  /// The next slot, computed from the real queue.
+  ///
+  /// This row used to read "Next post scheduled in approx. 45 mins" for every
+  /// queue, whatever it actually held.
+  String _nextSlotLabel(List<PostModel> scheduled, int overdueCount) {
+    final now = DateTime.now();
+    final upcoming = scheduled
+        .where((p) => !p.scheduledTime.isBefore(now))
+        .toList()
+      ..sort((a, b) => a.scheduledTime.compareTo(b.scheduledTime));
+
+    if (upcoming.isEmpty) {
+      return overdueCount > 0
+          ? 'Nothing left in the future — $overdueCount overdue'
+          : 'Nothing scheduled yet';
+    }
+
+    final delta = upcoming.first.scheduledTime.difference(now);
+    final when = delta.inHours >= 1
+        ? '${delta.inHours}h ${delta.inMinutes % 60}m'
+        : '${delta.inMinutes} min';
+    return 'Next post in $when · ${upcoming.first.platformInfo.name}';
   }
 
   /// Slice 18: the dispatch button renders Queued → Sending → Sent, and
@@ -692,6 +717,7 @@ class _ComposePostModalState extends State<_ComposePostModal> {
                           isVideo: _isVideo,
                           autoPlay: false,
                           showControls: false,
+                          thumbnail: true,
                         ),
                       ),
                     ),

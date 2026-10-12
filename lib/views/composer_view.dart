@@ -150,7 +150,7 @@ class _ComposerViewState extends State<ComposerView> with SingleTickerProviderSt
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Omnichannel Composer',
+                        'Composer',
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
@@ -371,6 +371,7 @@ class _ComposerViewState extends State<ComposerView> with SingleTickerProviderSt
                     isVideo: isVideo,
                     autoPlay: false,
                     showControls: false,
+                    thumbnail: true,
                   )
                 : Container(
                     color: isDark ? Colors.white12 : Colors.black12,

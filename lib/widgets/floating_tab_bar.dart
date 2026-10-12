@@ -1,7 +1,9 @@
 import 'dart:ui';
-import 'package:flutter/cupertino.dart';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+
+import '../models/nav_destination.dart';
 import '../theme/lema_motion.dart';
 import 'poster_reflection.dart';
 
@@ -13,6 +15,7 @@ import 'poster_reflection.dart';
 /// Slice-12 poster reflections, and the spring scale — only the footprint
 /// changed. Content scrolls visibly beneath it (`extendBody: true`).
 class FloatingTabBar extends StatelessWidget {
+  /// Selected dock index, or -1 when the active screen is not in the dock.
   final int currentIndex;
   final ValueChanged<int> onTap;
 
@@ -22,13 +25,16 @@ class FloatingTabBar extends StatelessWidget {
     required this.onTap,
   });
 
-  static const List<(IconData, String)> _items = [
-    (CupertinoIcons.house_fill, 'Home'),
-    (CupertinoIcons.device_phone_portrait, 'Simulator'),
-    (CupertinoIcons.layers_alt, 'Queue'),
-    (CupertinoIcons.calendar, 'Calendar'),
-    (CupertinoIcons.sparkles, 'AI Studio'),
-  ];
+  /// Height the bar occupies over the content, so a page can reserve room
+  /// for it instead of hiding its final row underneath the frost.
+  static const double _contentHeight = 58;
+
+  static double clearance(BuildContext context) =>
+      _contentHeight + MediaQuery.of(context).viewPadding.bottom;
+
+  /// Items come from the shared destination list — the dock labels can no
+  /// longer drift from the sidebar and title bar.
+  List<NavDestination> get _items => lemaDockDestinations;
 
   @override
   Widget build(BuildContext context) {
@@ -45,6 +51,8 @@ class FloatingTabBar extends StatelessWidget {
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 24, sigmaY: 24),
         child: Container(
+          // The bar's own height: 8pt frame + item content + 8pt frame,
+          // with the home-indicator inset absorbed inside the frost.
           padding: EdgeInsets.fromLTRB(8, 8, 8, 8 + bottomInset),
           decoration: BoxDecoration(
             color: isDark
@@ -69,8 +77,10 @@ class FloatingTabBar extends StatelessWidget {
               for (int i = 0; i < _items.length; i++)
                 Expanded(
                   child: _TabItem(
-                    icon: _items[i].$1,
-                    label: _items[i].$2,
+                    icon: _items[i].icon,
+                    label: _items[i].shortLabel,
+                    // `currentIndex` is -1 when the active screen lives
+                    // outside the dock, so nothing claims to be selected.
                     selected: i == currentIndex,
                     isDark: isDark,
                     onTap: () {
@@ -137,8 +147,7 @@ class _TabItem extends StatelessWidget {
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
                 fontSize: 9.5,
-                fontWeight:
-                    selected ? FontWeight.w700 : FontWeight.w500,
+                fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
                 letterSpacing: -0.1,
                 color: selected
                     ? active

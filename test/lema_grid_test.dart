@@ -840,7 +840,7 @@ void main() {
       await pumpQueue(tester);
       expect(tester.takeException(), isNull);
 
-      expect(find.text('Publishing Queue'), findsOneWidget);
+      expect(find.text('Queue'), findsOneWidget);
       expect(find.text('Scheduled (5)'), findsOneWidget);
       expect(find.text('Published (0)'), findsOneWidget);
       expect(find.text('Create Post'), findsOneWidget);
@@ -1012,7 +1012,7 @@ void main() {
       await pumpHooks(tester);
       expect(tester.takeException(), isNull);
 
-      expect(find.text('HOOKS & SCRIPTS'), findsOneWidget);
+      expect(find.text('HOOKS'), findsOneWidget);
       expect(find.text('Hooks'), findsOneWidget);
       expect(find.text('Stop Blending In: The 3-Second Rule'), findsOneWidget);
       expect(find.text('The 30-Minute Case Study Framework'), findsOneWidget);
@@ -1036,7 +1036,7 @@ void main() {
       await tester.tap(find.text('Send to Queue'));
       await tester.pump(const Duration(milliseconds: 500));
       expect(posts.posts.length, 9);
-      expect(find.textContaining('into Publishing Queue'), findsOneWidget);
+      expect(find.textContaining('into the Queue'), findsOneWidget);
       expect(tester.takeException(), isNull);
     });
   });
@@ -1092,7 +1092,7 @@ void main() {
       await pumpSettings(tester);
       expect(tester.takeException(), isNull);
 
-      expect(find.text('Daemon & System Settings'), findsOneWidget);
+      expect(find.text('Settings'), findsWidgets);
       expect(find.text('Media Playback'), findsOneWidget);
       expect(find.text('Video autoplay'), findsOneWidget);
       expect(find.byKey(const ValueKey('autoplay_switch')), findsOneWidget);

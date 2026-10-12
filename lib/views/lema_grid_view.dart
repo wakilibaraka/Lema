@@ -443,16 +443,19 @@ class _LemaGridViewState extends State<LemaGridView>
                         autoPlay: true,
                         showControls: false,
                       ),
+                      // Scrim. The top stop has to carry white text over a
+                      // bright still: 70/255 was not enough and the frosted
+                      // pill below dissolved into light media.
                       Container(
                         decoration: BoxDecoration(
                           gradient: LinearGradient(
                             begin: Alignment.topCenter,
                             end: Alignment.bottomCenter,
                             colors: [
-                              Colors.black.withAlpha(70),
-                              Colors.black.withAlpha(30),
+                              Colors.black.withAlpha(150),
+                              Colors.black.withAlpha(60),
                               Colors.black.withAlpha(120),
-                              Colors.black.withAlpha(200),
+                              Colors.black.withAlpha(205),
                             ],
                             stops: const [0.0, 0.32, 0.62, 1.0],
                           ),
@@ -476,8 +479,10 @@ class _LemaGridViewState extends State<LemaGridView>
                 child: Container(
                   padding:
                       const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  // Dark glass, not white glass: the label is white, so the
+                  // pill must darken whatever media sits behind it.
                   decoration: BoxDecoration(
-                    color: Colors.white.withAlpha(38),
+                    color: Colors.black.withAlpha(115),
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(
                         color: Colors.white.withAlpha(60), width: 1),
@@ -957,6 +962,7 @@ class _LemaGridViewState extends State<LemaGridView>
               fit: BoxFit.cover,
               autoPlay: false,
               showControls: false,
+              thumbnail: true,
             ),
             // Slice 4: drop-target tint (insertion placeholder feel).
             if (isTarget)
@@ -1371,6 +1377,7 @@ class _LemaGridViewState extends State<LemaGridView>
                           isVideo: sorted.first.isVideo,
                           autoPlay: false,
                           showControls: false,
+                          thumbnail: true,
                         ),
                       ),
                     ),
@@ -1819,6 +1826,7 @@ class _QuickEditSheetState extends State<_QuickEditSheet> {
                           isVideo: widget.post.isVideo,
                           autoPlay: false,
                           showControls: false,
+                          thumbnail: true,
                         ),
                       ),
                     ),

@@ -51,7 +51,7 @@ class _CalendarViewState extends State<CalendarView> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Text(
-                'Content Calendar',
+                'Calendar',
                 style: TextStyle(
                   fontSize: 26,
                   fontWeight: FontWeight.w800,
@@ -192,7 +192,7 @@ class _CalendarViewState extends State<CalendarView> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Content Calendar',
+                        'Calendar',
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
@@ -392,6 +392,7 @@ class _CalendarViewState extends State<CalendarView> {
                                                   isVideo: post.isVideo,
                                                   autoPlay: false,
                                                   showControls: false,
+                                                  thumbnail: true,
                                                 ),
                                               ),
                                             ),
@@ -556,6 +557,7 @@ class _CalendarViewState extends State<CalendarView> {
                 isVideo: post.isVideo,
                 autoPlay: false,
                 showControls: false,
+                thumbnail: true,
               ),
             ),
           ),

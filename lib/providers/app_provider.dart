@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../models/nav_destination.dart';
 import '../models/simulation_model.dart';
 import '../services/storage_service.dart';
 import '../services/api_service.dart';
@@ -26,6 +27,14 @@ class AppProvider extends ChangeNotifier {
   }
 
   int get selectedNavIndex => _selectedNavIndex;
+
+  /// Which dock tab should read as selected, or -1 when the active screen is
+  /// not one of the docked tabs (Composer, Analytics, Settings, …).
+  ///
+  /// The mobile shell used to clamp every out-of-range index to 0, so the dock
+  /// highlighted Home while Settings was on screen.
+  int get selectedTabIndex =>
+      _selectedNavIndex < lemaDockTabCount ? _selectedNavIndex : -1;
   String get activeTab => _activeTab;
   String get selectedChannelFilter => _selectedChannelFilter;
   bool get isDarkMode => _isDarkMode;

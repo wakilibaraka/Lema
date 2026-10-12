@@ -83,8 +83,7 @@ class _HooksPipelineViewState extends State<HooksPipelineView> {
     );
 
     context.read<PostsProvider>().addPost(post);
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Transferred "${script.title}" into Publishing Queue!')),
+    ScaffoldMessenger.of(context).showSnackBar(            SnackBar(content: Text('Transferred "${script.title}" into the Queue!')),
     );
   }
 
@@ -171,14 +170,15 @@ class _HooksPipelineViewState extends State<HooksPipelineView> {
     );
   }
 
-  /// Slice 21: page header shared by both layouts. Compact uses the short
-  /// title so it fits 402pt.
+  /// Slice 21: page header shared by both layouts. The destination is named
+  /// "Hooks" everywhere now, so the header matches the sidebar, title bar and
+  /// dock instead of inventing "Hooks & Video Scripts Pipeline".
   Widget _buildPageHeader(bool isDark, {required bool compact}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'HOOKS & SCRIPTS',
+          'HOOKS',
           style: TextStyle(
             fontSize: 11,
             fontWeight: FontWeight.w800,
@@ -188,7 +188,7 @@ class _HooksPipelineViewState extends State<HooksPipelineView> {
         ),
         const SizedBox(height: 6),
         Text(
-          compact ? 'Hooks' : 'Hooks & Video Scripts Pipeline',
+          'Hooks',
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
           style: TextStyle(

@@ -394,7 +394,7 @@ class _SettingsViewState extends State<SettingsView> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Daemon & System Settings',
+                          'Settings',
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(

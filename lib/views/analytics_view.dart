@@ -69,7 +69,7 @@ class _AnalyticsViewState extends State<AnalyticsView> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Post Analytics',
+                        'Analytics',
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
