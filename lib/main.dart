@@ -6,6 +6,7 @@ import 'providers/app_provider.dart';
 import 'providers/auth_provider.dart';
 import 'providers/posts_provider.dart';
 import 'providers/profile_provider.dart';
+import 'services/demo_mode_service.dart';
 import 'services/storage_service.dart';
 import 'theme/apple_theme.dart';
 import 'views/ai_studio_view.dart';
@@ -72,7 +73,19 @@ class _MainLayoutScreenState extends State<MainLayoutScreen> {
   @override
   void initState() {
     super.initState();
+    _hydratePersistedState();
     _maybeShowIntro();
+  }
+
+  /// Reads the state that lives behind services rather than providers.
+  ///
+  /// Both were saved but never loaded, so every launch booted as if demo mode
+  /// had never been switched on and no platform had ever been connected —
+  /// the settings screen contradicted what the user had chosen.
+  Future<void> _hydratePersistedState() async {
+    await DemoModeService.load();
+    if (!mounted) return;
+    await context.read<AuthProvider>().loadTokens();
   }
 
   /// Slice 13: play the intro showcase once, on the very first cold start.

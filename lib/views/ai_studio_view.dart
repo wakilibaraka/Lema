@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../models/platform_info.dart';
 import '../models/post_model.dart';
 import '../models/profile_model.dart';
+import '../providers/app_provider.dart';
 import '../providers/posts_provider.dart';
 import '../providers/profile_provider.dart';
 import '../services/ai_service.dart';
@@ -214,7 +215,7 @@ class _AiStudioViewState extends State<AiStudioView> {
         ),
         const SizedBox(height: 6),
         Text(
-          compact ? 'AI Studio' : 'AI Studio & Content Planner',
+          'AI Studio',
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
           style: TextStyle(
@@ -234,6 +235,30 @@ class _AiStudioViewState extends State<AiStudioView> {
             color: isDark ? Colors.white60 : Colors.black54,
           ),
         ),
+        // Say which engine answers. In demo mode no model is called at all,
+        // so heuristic copy is the honest label for what comes back.
+        if (context.watch<AppProvider>().demoMode) ...[
+          const SizedBox(height: 8),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+              decoration: BoxDecoration(
+                color: AppleTheme.systemOrange.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: const Text(
+                'DEMO MODE · LOCAL ENGINE, NO MODEL CALLS',
+                style: TextStyle(
+                  color: AppleTheme.systemOrange,
+                  fontSize: 9.5,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 0.6,
+                ),
+              ),
+            ),
+          ),
+        ],
       ],
     );
   }

@@ -22,7 +22,14 @@ class DynamicCapsule extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     final isDaemonOnline = app.isDaemonOnline;
-    final isSandbox = app.sandboxMode;
+    // One switch behind this dot now: demo mode.
+    final demoMode = app.demoMode;
+    final dotColor = isDaemonOnline
+        ? (demoMode ? AppleTheme.systemBlue : AppleTheme.systemGreen)
+        : (demoMode ? AppleTheme.systemBlue : AppleTheme.systemOrange);
+    final statusLabel = isDaemonOnline
+        ? (demoMode ? 'DEMO MODE' : 'DAEMON 3001')
+        : (demoMode ? 'DEMO MODE' : 'OFFLINE SYNC');
 
     return GestureDetector(
       onTap: onTap,
@@ -55,15 +62,10 @@ class DynamicCapsule extends StatelessWidget {
               height: 8,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: isDaemonOnline
-                    ? (isSandbox ? AppleTheme.systemBlue : AppleTheme.systemGreen)
-                    : AppleTheme.systemOrange,
+                color: dotColor,
                 boxShadow: [
                   BoxShadow(
-                    color: (isDaemonOnline
-                            ? (isSandbox ? AppleTheme.systemBlue : AppleTheme.systemGreen)
-                            : AppleTheme.systemOrange)
-                        .withValues(alpha: 0.7),
+                    color: dotColor.withValues(alpha: 0.7),
                     blurRadius: 8,
                     spreadRadius: 1.5,
                   ),
@@ -94,9 +96,7 @@ class DynamicCapsule extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               Text(
-                isDaemonOnline
-                    ? (isSandbox ? 'SANDBOX ACTIVE' : 'DAEMON 3001')
-                    : 'OFFLINE SYNC',
+                statusLabel,
                 style: TextStyle(
                   color: Colors.white.withValues(alpha: 0.75),
                   fontSize: 10.5,

@@ -12,6 +12,7 @@ import '../theme/lema_motion.dart';
 import '../views/card_detail_view.dart';
 import '../widgets/lema_toast.dart';
 import '../widgets/media_player_widget.dart';
+import '../widgets/schedule_time_picker.dart';
 
 /// Lema Grid — visually-driven drag-and-drop feed planner.
 ///
@@ -1911,14 +1912,28 @@ class _QuickEditSheetState extends State<_QuickEditSheet> {
                         () => setState(() => _time = _time.subtract(
                             const Duration(minutes: 15))),
                       ),
+                      // Tapping the slot opens the shared date+time picker:
+                      // the ±15-minute steppers alone meant 96 taps to move a
+                      // post a day.
                       Expanded(
-                        child: Text(
-                          DateFormat('EEE, MMM d · h:mm a')
-                              .format(_time),
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w700,
+                        child: GestureDetector(
+                          onTap: () async {
+                            final picked = await showScheduleTimePicker(
+                              context: context,
+                              initial: _time,
+                            );
+                            if (picked != null && mounted) {
+                              setState(() => _time = picked);
+                            }
+                          },
+                          child: Text(
+                            DateFormat('EEE, MMM d · h:mm a')
+                                .format(_time),
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                            ),
                           ),
                         ),
                       ),

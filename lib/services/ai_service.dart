@@ -1,7 +1,10 @@
 import 'dart:convert';
+
 import 'package:google_generative_ai/google_generative_ai.dart';
+
 import '../models/profile_model.dart';
 import '../models/post_model.dart';
+import 'demo_mode_service.dart';
 
 class AiService {
   final String? apiKey;
@@ -10,10 +13,7 @@ class AiService {
 
   AiService({this.apiKey}) {
     if (apiKey != null && apiKey!.isNotEmpty) {
-      _model = GenerativeModel(
-        model: 'gemini-1.5-flash',
-        apiKey: apiKey!,
-      );
+      _model = GenerativeModel(model: 'gemini-1.5-flash', apiKey: apiKey!);
     }
   }
 
@@ -29,7 +29,8 @@ class AiService {
       profile: profile,
       platforms: [platform],
     );
-    return res['caption'] as String? ?? 'Captivating storytelling reel tailored to your brand!';
+    return res['caption'] as String? ??
+        'Captivating storytelling reel tailored to your brand!';
   }
 
   static Future<List<Map<String, dynamic>>> generate7DayContentPlan({
@@ -44,7 +45,15 @@ class AiService {
     return posts.asMap().entries.map((entry) {
       final i = entry.key;
       final post = entry.value;
-      final days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+      final days = [
+        'Monday',
+        'Tuesday',
+        'Wednesday',
+        'Thursday',
+        'Friday',
+        'Saturday',
+        'Sunday',
+      ];
       return {
         'day': days[i % 7],
         'hook': post.hook,
@@ -60,9 +69,18 @@ class AiService {
     required ProfileModel profile,
     required List<String> platforms,
   }) async {
+    // Demo mode never calls out: it is the switch the app-review walkthrough
+    // and offline rehearsals run on, and a half-live model would make the
+    // recorded behaviour depend on the network. The local engine below
+    // answers instead, and `source` says so.
+    if (DemoModeService.isEnabled) {
+      return _heuristicPost(topic: topic, profile: profile, source: 'demo');
+    }
+
     if (_model != null) {
       try {
-        final prompt = '''
+        final prompt =
+            '''
 You are a senior social media strategist and cash-cow video producer for "${profile.name}".
 Niche: ${profile.industry}
 Tone: ${profile.brandPersonality}
@@ -87,24 +105,39 @@ Return ONLY valid JSON with keys:
 
         final res = await _model!.generateContent([Content.text(prompt)]);
         final text = res.text ?? '';
-        final clean = text.replaceAll('```json', '').replaceAll('```', '').trim();
+        final clean = text
+            .replaceAll('```json', '')
+            .replaceAll('```', '')
+            .trim();
         final decoded = jsonDecode(clean);
-        return decoded as Map<String, dynamic>;
+        return {...decoded as Map<String, dynamic>, 'source': 'gemini'};
       } catch (e) {
         // Fallback to local heuristic engine
       }
     }
 
-    // Heuristic Local Engine (Always works 100% offline)
+    return _heuristicPost(topic: topic, profile: profile, source: 'local');
+  }
+
+  /// The offline engine. It works with no key, no daemon and no network, so
+  /// every AI surface stays usable — the copy just says which engine answered.
+  Map<String, dynamic> _heuristicPost({
+    required String topic,
+    required ProfileModel profile,
+    required String source,
+  }) {
     return {
       'title': topic,
-      'hook': 'If you are struggling with $topic in your business, stop right now. You are leaving money on the table.',
+      'hook':
+          'If you are struggling with $topic in your business, stop right now. You are leaving money on the table.',
       'problem': 'Most people focus on selling features and ingredients instead of transformation and emotional outcomes.',
       'secret': 'Top 1% creators connect before they convert. Frame the result in ONE sentence, show relatable tension, and bridge to relief.',
       'hack': 'Replace 10 complicated features with 1 clear transformation statement. Conversions jump by over 40% with zero ad spend.',
       'cta': 'Comment "STORY" below and I will send you our exact word-for-word closing script! 🎬📲',
-      'caption': '$topic ✨\n\nFacts tell, but stories sell. If you want your audience to remember your brand and take action, take them on an emotional journey.\n\nDM "STORY" to audit your video hooks! 🎬\n\n#Storytelling #ContentMarketing #MarketingTips #BusinessGrowth #EmmsDigitalMedia',
+      'caption':
+          '$topic ✨\n\nFacts tell, but stories sell. If you want your audience to remember your brand and take action, take them on an emotional journey.\n\nDM "STORY" to audit your video hooks! 🎬\n\n#Storytelling #ContentMarketing #MarketingTips #BusinessGrowth #EmmsDigitalMedia',
       'hashtags': profile.defaultHashtags,
+      'source': source,
     };
   }
 
@@ -148,18 +181,20 @@ Return ONLY valid JSON with keys:
         platforms: profile.linkedChannels,
       );
 
-      planned.add(PostModel(
-        id: 'ai-7d-${DateTime.now().millisecondsSinceEpoch}-$i',
-        title: gen['title'] ?? topic,
-        hook: gen['hook'] ?? '',
-        caption: gen['caption'] ?? '',
-        platforms: profile.linkedChannels,
-        mediaType: isVideo ? 'video' : 'image',
-        mediaUrl: media,
-        scheduledDate: dateStr,
-        scheduledTime: i % 2 == 0 ? '17:30' : '12:15',
-        status: 'scheduled',
-      ));
+      planned.add(
+        PostModel(
+          id: 'ai-7d-${DateTime.now().millisecondsSinceEpoch}-$i',
+          title: gen['title'] ?? topic,
+          hook: gen['hook'] ?? '',
+          caption: gen['caption'] ?? '',
+          platforms: profile.linkedChannels,
+          mediaType: isVideo ? 'video' : 'image',
+          mediaUrl: media,
+          scheduledDate: dateStr,
+          scheduledTime: i % 2 == 0 ? '17:30' : '12:15',
+          status: 'scheduled',
+        ),
+      );
     }
 
     return planned;

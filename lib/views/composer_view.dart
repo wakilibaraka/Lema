@@ -1,8 +1,11 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+
+import '../models/nav_destination.dart';
 import '../models/platform_info.dart';
 import '../models/post_model.dart';
+import '../providers/app_provider.dart';
 import '../providers/posts_provider.dart';
 import '../providers/auth_provider.dart';
 import '../theme/apple_theme.dart';
@@ -10,6 +13,7 @@ import '../widgets/apple_glass_card.dart';
 import '../widgets/error_banner.dart';
 import '../widgets/media_picker_dialog.dart';
 import '../widgets/media_player_widget.dart';
+import '../widgets/schedule_time_picker.dart';
 
 class ComposerView extends StatefulWidget {
   const ComposerView({super.key});
@@ -18,14 +22,14 @@ class ComposerView extends StatefulWidget {
   State<ComposerView> createState() => _ComposerViewState();
 }
 
-class _ComposerViewState extends State<ComposerView> with SingleTickerProviderStateMixin {
+class _ComposerViewState extends State<ComposerView>
+    with SingleTickerProviderStateMixin {
   late TabController _tabController;
   final TextEditingController _coreController = TextEditingController();
   final Map<String, TextEditingController> _platformOverrides = {};
   final Map<String, String> _platformMediaUrls = {};
   final Map<String, bool> _platformIsVideo = {};
   DateTime _scheduledTime = DateTime.now().add(const Duration(hours: 3));
-  bool _isDraft = false;
 
   static const Map<String, int> _charLimits = {
     'instagram': 2200,
@@ -48,7 +52,10 @@ class _ComposerViewState extends State<ComposerView> with SingleTickerProviderSt
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: SocialPlatform.values.length, vsync: this);
+    _tabController = TabController(
+      length: SocialPlatform.values.length,
+      vsync: this,
+    );
     for (final p in SocialPlatform.values) {
       _platformOverrides[p.name] = TextEditingController();
     }
@@ -74,7 +81,8 @@ class _ComposerViewState extends State<ComposerView> with SingleTickerProviderSt
 
   int _charLimit(String platform) => _charLimits[platform] ?? 2200;
 
-  bool _isOverLimit(String platform) => _charCount(platform) > _charLimit(platform);
+  bool _isOverLimit(String platform) =>
+      _charCount(platform) > _charLimit(platform);
 
   List<String> get _selectedPlatforms {
     return SocialPlatform.values
@@ -83,7 +91,9 @@ class _ComposerViewState extends State<ComposerView> with SingleTickerProviderSt
         .toList();
   }
 
-  void _schedulePost() {
+  /// [asDraft] is what the "Save as Draft" button passes. Both buttons used
+  /// to call this unparameterised, so the draft button scheduled the post.
+  void _schedulePost({bool asDraft = false}) {
     final caption = _coreController.text.trim();
     if (caption.isEmpty) return;
 
@@ -102,7 +112,7 @@ class _ComposerViewState extends State<ComposerView> with SingleTickerProviderSt
         mediaUrl: _platformMediaUrls[platform] ?? '',
         isVideo: _platformIsVideo[platform] ?? false,
         scheduledTime: _scheduledTime,
-        status: _isDraft ? 'draft' : 'scheduled',
+        status: asDraft ? 'draft' : 'scheduled',
       );
 
       context.read<PostsProvider>().addPost(post);
@@ -110,9 +120,11 @@ class _ComposerViewState extends State<ComposerView> with SingleTickerProviderSt
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(_isDraft
-            ? 'Saved as draft'
-            : 'Scheduled for ${_scheduledTime.month}/${_scheduledTime.day} at ${_scheduledTime.hour}:${_scheduledTime.minute.toString().padLeft(2, '0')}'),
+        content: Text(
+          asDraft
+              ? 'Saved as draft'
+              : 'Scheduled for ${formatScheduleSlot(_scheduledTime)}',
+        ),
       ),
     );
 
@@ -123,7 +135,6 @@ class _ComposerViewState extends State<ComposerView> with SingleTickerProviderSt
     setState(() {
       _platformMediaUrls.clear();
       _platformIsVideo.clear();
-      _isDraft = false;
     });
   }
 
@@ -180,7 +191,11 @@ class _ComposerViewState extends State<ComposerView> with SingleTickerProviderSt
                 padding: const EdgeInsets.only(bottom: 12),
                 child: ErrorBanner.tokenExpiredBanner(
                   platform: auth.expiredPlatforms.first,
-                  onReconnect: () {},
+                  // Reconnect lives in Settings (Connected Accounts); the
+                  // banner used to be a dead end with an empty callback.
+                  onReconnect: () => context.read<AppProvider>().setNavIndex(
+                    settingsDestinationIndex,
+                  ),
                 ),
               ),
 
@@ -220,14 +235,18 @@ class _ComposerViewState extends State<ComposerView> with SingleTickerProviderSt
           final platform = SocialPlatform.values[index];
           final info = PlatformInfo.fromPlatform(platform);
           final isSelected = _tabController.index == index;
-          final isConnected = context.watch<AuthProvider>().isConnected(platform.name);
+          final isConnected = context.watch<AuthProvider>().isConnected(
+            platform.name,
+          );
 
           return GestureDetector(
             onTap: () => _tabController.animateTo(index),
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
-                color: isSelected ? info.color.withAlpha(30) : Colors.transparent,
+                color: isSelected
+                    ? info.color.withAlpha(30)
+                    : Colors.transparent,
                 borderRadius: BorderRadius.circular(10),
                 border: Border.all(
                   color: isSelected ? info.color : Colors.grey.withAlpha(60),
@@ -236,13 +255,19 @@ class _ComposerViewState extends State<ComposerView> with SingleTickerProviderSt
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(info.iconData, size: 14, color: isSelected ? info.color : Colors.grey),
+                  Icon(
+                    info.iconData,
+                    size: 14,
+                    color: isSelected ? info.color : Colors.grey,
+                  ),
                   const SizedBox(width: 6),
                   Text(
                     info.name,
                     style: TextStyle(
                       fontSize: 12,
-                      fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                      fontWeight: isSelected
+                          ? FontWeight.w700
+                          : FontWeight.w500,
                       color: isSelected ? info.color : Colors.grey,
                     ),
                   ),
@@ -282,7 +307,9 @@ class _ComposerViewState extends State<ComposerView> with SingleTickerProviderSt
           decoration: InputDecoration(
             hintText: 'Write your core message...',
             filled: true,
-            fillColor: isDark ? Colors.white.withAlpha(12) : Colors.black.withAlpha(8),
+            fillColor: isDark
+                ? Colors.white.withAlpha(12)
+                : Colors.black.withAlpha(8),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
               borderSide: BorderSide.none,
@@ -311,7 +338,9 @@ class _ComposerViewState extends State<ComposerView> with SingleTickerProviderSt
               style: TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w600,
-                color: overLimit ? AppleTheme.systemRed : (isDark ? Colors.white54 : Colors.black45),
+                color: overLimit
+                    ? AppleTheme.systemRed
+                    : (isDark ? Colors.white54 : Colors.black45),
               ),
             ),
           ],
@@ -342,7 +371,9 @@ class _ComposerViewState extends State<ComposerView> with SingleTickerProviderSt
           decoration: InputDecoration(
             hintText: 'Leave empty to use core message...',
             filled: true,
-            fillColor: isDark ? Colors.white.withAlpha(8) : Colors.black.withAlpha(5),
+            fillColor: isDark
+                ? Colors.white.withAlpha(8)
+                : Colors.black.withAlpha(5),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
               borderSide: BorderSide.none,
@@ -386,7 +417,9 @@ class _ComposerViewState extends State<ComposerView> with SingleTickerProviderSt
         const SizedBox(width: 12),
         Expanded(
           child: Text(
-            mediaUrl.isNotEmpty ? mediaUrl.split('/').last : 'No media attached',
+            mediaUrl.isNotEmpty
+                ? mediaUrl.split('/').last
+                : 'No media attached',
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: TextStyle(
@@ -397,7 +430,9 @@ class _ComposerViewState extends State<ComposerView> with SingleTickerProviderSt
         ),
         CupertinoButton(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-          color: isDark ? Colors.white.withAlpha(20) : Colors.black.withAlpha(12),
+          color: isDark
+              ? Colors.white.withAlpha(20)
+              : Colors.black.withAlpha(12),
           borderRadius: BorderRadius.circular(8),
           onPressed: () async {
             final res = await MediaPickerDialog.show(context);
@@ -424,10 +459,14 @@ class _ComposerViewState extends State<ComposerView> with SingleTickerProviderSt
   Widget _buildScheduleSection(bool isDark) {
     return Row(
       children: [
-        Icon(CupertinoIcons.clock, size: 14, color: isDark ? Colors.white54 : Colors.black45),
+        Icon(
+          CupertinoIcons.clock,
+          size: 14,
+          color: isDark ? Colors.white54 : Colors.black45,
+        ),
         const SizedBox(width: 8),
         Text(
-          'Schedule: ${_scheduledTime.month}/${_scheduledTime.day} at ${_scheduledTime.hour}:${_scheduledTime.minute.toString().padLeft(2, '0')}',
+          'Schedule: ${formatScheduleSlot(_scheduledTime)}',
           style: TextStyle(
             fontSize: 12,
             color: isDark ? Colors.white70 : Colors.black87,
@@ -437,22 +476,14 @@ class _ComposerViewState extends State<ComposerView> with SingleTickerProviderSt
         CupertinoButton(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
           onPressed: () async {
-            final picked = await showDatePicker(
+            // Date *and* time: the old picker only chose a day, so every post
+            // from this screen kept the "now + 3h" clock it booted with.
+            final picked = await showScheduleTimePicker(
               context: context,
-              initialDate: _scheduledTime,
-              firstDate: DateTime.now(),
-              lastDate: DateTime.now().add(const Duration(days: 365)),
+              initial: _scheduledTime,
             );
-            if (picked != null) {
-              setState(() {
-                _scheduledTime = DateTime(
-                  picked.year,
-                  picked.month,
-                  picked.day,
-                  _scheduledTime.hour,
-                  _scheduledTime.minute,
-                );
-              });
+            if (picked != null && mounted) {
+              setState(() => _scheduledTime = picked);
             }
           },
           child: Text(
@@ -470,9 +501,11 @@ class _ComposerViewState extends State<ComposerView> with SingleTickerProviderSt
         Expanded(
           child: CupertinoButton(
             padding: const EdgeInsets.symmetric(vertical: 12),
-            color: isDark ? Colors.white.withAlpha(20) : Colors.black.withAlpha(10),
+            color: isDark
+                ? Colors.white.withAlpha(20)
+                : Colors.black.withAlpha(10),
             borderRadius: BorderRadius.circular(12),
-            onPressed: _schedulePost,
+            onPressed: () => _schedulePost(asDraft: true),
             child: Text(
               'Save as Draft',
               style: TextStyle(

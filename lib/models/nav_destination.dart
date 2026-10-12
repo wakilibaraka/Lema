@@ -89,3 +89,11 @@ const int lemaDockTabCount = 5;
 /// Destinations the mobile dock can show.
 List<NavDestination> get lemaDockDestinations =>
     lemaDestinations.take(lemaDockTabCount).toList();
+
+/// Index of a destination by its label, or -1. Used by actions that send the
+/// user somewhere else ("Reconnect" → Settings) without repeating an index.
+int destinationIndexOf(String label) =>
+    lemaDestinations.indexWhere((d) => d.label == label);
+
+/// Where account reconnection lives.
+int get settingsDestinationIndex => destinationIndexOf('Settings');

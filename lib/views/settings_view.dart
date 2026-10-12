@@ -34,6 +34,7 @@ class _SettingsViewState extends State<SettingsView> {
   }
 
   Widget _buildDemoAndAutomationCard(bool isDark) {
+    final app = context.watch<AppProvider>();
     return AppleGlassCard(
       padding: const EdgeInsets.all(20),
       child: Column(
@@ -66,7 +67,7 @@ class _SettingsViewState extends State<SettingsView> {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      'App review demo mode and queue auto-fill.',
+                      'Simulated publishes for app review, and queue auto-fill.',
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
@@ -99,8 +100,10 @@ class _SettingsViewState extends State<SettingsView> {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      'Mock API responses for app review screencasts.',
-                      maxLines: 2,
+                      app.demoMode
+                          ? 'On: publishes and AI calls are simulated locally, so Share Now reports a local publish instead of a failed dispatch.'
+                          : 'Off: nothing is faked. Share Now reports a failed dispatch while no daemon is running.',
+                      maxLines: 3,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(fontSize: 11.5, color: isDark ? Colors.white54 : Colors.black45),
                     ),
@@ -109,12 +112,10 @@ class _SettingsViewState extends State<SettingsView> {
               ),
               const SizedBox(width: 12),
               CupertinoSwitch(
-                value: DemoModeService.isEnabled,
+                key: const ValueKey('demo_mode_switch'),
+                value: app.demoMode,
                 activeTrackColor: AppleTheme.systemBlue,
-                onChanged: (_) async {
-                  await DemoModeService.setEnabled(!DemoModeService.isEnabled);
-                  setState(() {});
-                },
+                onChanged: (value) => app.setDemoMode(value),
               ),
             ],
           ),
@@ -569,8 +570,10 @@ class _SettingsViewState extends State<SettingsView> {
 
                     const Divider(height: 24),
 
-                    // Sandbox Mode Toggle (Slice 22: text column bounded —
-                    // the unbounded Column pushed its switch 224px out).
+                    // Demo mode moved to the Demo & Automation card, where it
+                    // is the single switch for "pretend the platforms are
+                    // there" — this screen used to offer two toggles that
+                    // claimed the same thing.
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -579,7 +582,7 @@ class _SettingsViewState extends State<SettingsView> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                'Sandbox Simulation Mode',
+                                'Discovery',
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                                 style: TextStyle(
@@ -590,7 +593,9 @@ class _SettingsViewState extends State<SettingsView> {
                               ),
                               const SizedBox(height: 2),
                               Text(
-                                'When enabled, posts are simulated safely without making live social media API calls.',
+                                app.isDaemonOnline
+                                    ? 'Pinging port 3001 succeeded, so the daemon will dispatch scheduled posts.'
+                                    : 'No daemon answered on port 3001. Start it, or switch Demo Mode on to rehearse a publish locally.',
                                 maxLines: 3,
                                 overflow: TextOverflow.ellipsis,
                                 style: TextStyle(fontSize: 11.5, color: isDark ? Colors.white54 : Colors.black45),
@@ -599,10 +604,12 @@ class _SettingsViewState extends State<SettingsView> {
                           ),
                         ),
                         const SizedBox(width: 12),
-                        CupertinoSwitch(
-                          value: app.sandboxMode,
-                          activeTrackColor: AppleTheme.systemBlue,
-                          onChanged: (_) => app.toggleSandbox(),
+                        ConnectionStatusDot(
+                          status: app.isDaemonOnline
+                              ? ConnectionStatus.connected
+                              : ConnectionStatus.neverConnected,
+                          platform: 'Auto-poster daemon',
+                          size: 10,
                         ),
                       ],
                     ),

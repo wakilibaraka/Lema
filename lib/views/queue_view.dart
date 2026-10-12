@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+
 import '../models/platform_info.dart';
 import '../models/post_model.dart';
 import '../models/queue_slot_model.dart';
@@ -9,8 +10,10 @@ import '../providers/posts_provider.dart';
 import '../theme/apple_theme.dart';
 import '../widgets/apple_glass_card.dart';
 import '../widgets/lema_pill.dart';
+import '../widgets/lema_toast.dart';
 import '../widgets/media_player_widget.dart';
 import '../widgets/media_picker_dialog.dart';
+import '../widgets/schedule_time_picker.dart';
 
 class QueueView extends StatefulWidget {
   const QueueView({super.key});
@@ -55,9 +58,11 @@ class _QueueViewState extends State<QueueView> {
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(result.isSent
-            ? 'Dispatched to ${post.platformInfo.name} via daemon'
-            : 'Not sent — ${result.toString()}'),
+        content: Text(
+          result.isSent
+              ? 'Dispatched to ${post.platformInfo.name} via daemon'
+              : 'Not sent — ${result.toString()}',
+        ),
       ),
     );
   }
@@ -114,14 +119,23 @@ class _QueueViewState extends State<QueueView> {
                 ),
                 const SizedBox(width: 12),
                 CupertinoButton.filled(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 10,
+                  ),
                   borderRadius: BorderRadius.circular(12),
                   onPressed: () => _showComposeModal(context),
                   child: const Row(
                     children: [
                       Icon(CupertinoIcons.plus_circle_fill, size: 16),
                       SizedBox(width: 8),
-                      Text('Create Post', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+                      Text(
+                        'Create Post',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 13,
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -163,33 +177,27 @@ class _QueueViewState extends State<QueueView> {
                   scrollDirection: Axis.horizontal,
                   children: [
                     LemaPill(
-                      label:
-                          'Scheduled (${scheduledPosts.length})',
+                      label: 'Scheduled (${scheduledPosts.length})',
                       selected: _selectedSegment == 0,
-                      onTap: () =>
-                          setState(() => _selectedSegment = 0),
+                      onTap: () => setState(() => _selectedSegment = 0),
                       isDark: isDark,
                     ),
                     const SizedBox(width: 8),
                     LemaPill(
-                      label:
-                          'Published (${publishedPosts.length})',
+                      label: 'Published (${publishedPosts.length})',
                       selected: _selectedSegment == 1,
-                      onTap: () =>
-                          setState(() => _selectedSegment = 1),
+                      onTap: () => setState(() => _selectedSegment = 1),
                       isDark: isDark,
                     ),
-                    if (_selectedSegment == 0 &&
-                        scheduledPosts.isNotEmpty) ...[
+                    if (_selectedSegment == 0 && scheduledPosts.isNotEmpty) ...[
                       const SizedBox(width: 12),
                       Center(
                         child: Text(
                           _nextSlotLabel(scheduledPosts, overdue.length),
                           style: TextStyle(
-                              fontSize: 12,
-                              color: isDark
-                                  ? Colors.white54
-                                  : Colors.black45),
+                            fontSize: 12,
+                            color: isDark ? Colors.white54 : Colors.black45,
+                          ),
                         ),
                       ),
                       const SizedBox(width: 8),
@@ -229,8 +237,11 @@ class _QueueViewState extends State<QueueView> {
       borderRadius: 14,
       child: Row(
         children: [
-          Icon(CupertinoIcons.exclamationmark_triangle_fill,
-              size: 18, color: AppleTheme.systemOrange),
+          Icon(
+            CupertinoIcons.exclamationmark_triangle_fill,
+            size: 18,
+            color: AppleTheme.systemOrange,
+          ),
           const SizedBox(width: 10),
           Expanded(
             child: Text(
@@ -259,7 +270,8 @@ class _QueueViewState extends State<QueueView> {
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: (slot.isActive ? AppleTheme.systemBlue : Colors.grey).withValues(alpha: 0.12),
+              color: (slot.isActive ? AppleTheme.systemBlue : Colors.grey)
+                  .withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(10),
             ),
             child: Icon(
@@ -297,22 +309,41 @@ class _QueueViewState extends State<QueueView> {
     );
   }
 
-  Widget _buildPostsList(List<PostModel> posts, bool isDark, {required bool isScheduled}) {
+  Widget _buildPostsList(
+    List<PostModel> posts,
+    bool isDark, {
+    required bool isScheduled,
+  }) {
     if (posts.isEmpty) {
       return Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(CupertinoIcons.square_stack_3d_down_right, size: 48, color: isDark ? Colors.white24 : Colors.black26),
+            Icon(
+              CupertinoIcons.square_stack_3d_down_right,
+              size: 48,
+              color: isDark ? Colors.white24 : Colors.black26,
+            ),
             const SizedBox(height: 12),
             Text(
-              isScheduled ? 'No Scheduled Posts in Queue' : 'No Published Posts Yet',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: isDark ? Colors.white60 : Colors.black54),
+              isScheduled
+                  ? 'No Scheduled Posts in Queue'
+                  : 'No Published Posts Yet',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: isDark ? Colors.white60 : Colors.black54,
+              ),
             ),
             const SizedBox(height: 6),
             Text(
-              isScheduled ? 'Click "Create Post" to add content to your next slot.' : 'Publish posts from your queue to see them here.',
-              style: TextStyle(fontSize: 12, color: isDark ? Colors.white38 : Colors.black38),
+              isScheduled
+                  ? 'Click "Create Post" to add content to your next slot.'
+                  : 'Publish posts from your queue to see them here.',
+              style: TextStyle(
+                fontSize: 12,
+                color: isDark ? Colors.white38 : Colors.black38,
+              ),
             ),
           ],
         ),
@@ -324,7 +355,8 @@ class _QueueViewState extends State<QueueView> {
       separatorBuilder: (_, _) => const SizedBox(height: 12),
       itemBuilder: (context, index) {
         final post = posts[index];
-        final formattedDate = DateFormat('EEE, MMM d • h:mm a').format(post.scheduledTime);
+        final formattedDate = DateFormat('EEE, MMM d • h:mm a')
+            .format(post.scheduledTime);
 
         return AppleGlassCard(
           padding: const EdgeInsets.all(16),
@@ -343,145 +375,178 @@ class _QueueViewState extends State<QueueView> {
                     child: SizedBox(
                       width: 76,
                       height: 76,
-                  child: Stack(
-                    children: [
-                      UniversalMediaPlayer(
-                        mediaUrl: post.mediaUrl,
-                        isVideo: post.isVideo,
-                        autoPlay: false,
-                        showControls: false,
-                        thumbnail: true,
-                      ),
-                      if (post.isVideo)
-                        Positioned(
-                          bottom: 6,
-                          right: 6,
-                          child: Container(
-                            padding: const EdgeInsets.all(4),
-                            decoration: BoxDecoration(
-                              color: Colors.black.withValues(alpha: 0.7),
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: const Icon(CupertinoIcons.videocam_fill, size: 12, color: Colors.white),
+                      child: Stack(
+                        children: [
+                          UniversalMediaPlayer(
+                            mediaUrl: post.mediaUrl,
+                            isVideo: post.isVideo,
+                            autoPlay: false,
+                            showControls: false,
+                            thumbnail: true,
                           ),
-                        ),
-                    ],
+                          if (post.isVideo)
+                            Positioned(
+                              bottom: 6,
+                              right: 6,
+                              child: Container(
+                                padding: const EdgeInsets.all(4),
+                                decoration: BoxDecoration(
+                                  color: Colors.black.withValues(alpha: 0.7),
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: const Icon(
+                                  CupertinoIcons.videocam_fill,
+                                  size: 12,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
                   ),
-                ),
-              ),
 
-              const SizedBox(width: 16),
+                  const SizedBox(width: 16),
 
-              // Post Details
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Platform + status chips (short, fixed-size — never overflow).
-                    // Schedule line below is width-bounded with ellipsis.
-                    Row(
+                  // Post Details
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                          decoration: BoxDecoration(
-                            color: post.platformInfo.color.withValues(alpha: 0.15),
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: Text(
-                            post.platformInfo.name,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              color: post.platformInfo.color,
-                              fontSize: 11,
-                              fontWeight: FontWeight.w700,
+                        // Platform + status chips (short, fixed-size — never overflow).
+                        // Schedule line below is width-bounded with ellipsis.
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 3,
+                              ),
+                              decoration: BoxDecoration(
+                                color: post.platformInfo.color.withValues(
+                                  alpha: 0.15,
+                                ),
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: Text(
+                                post.platformInfo.name,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  color: post.platformInfo.color,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
                             ),
+                            if (post.status == 'published') ...[
+                              const SizedBox(width: 6),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 3,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: AppleTheme.systemGreen.withValues(
+                                    alpha: 0.15,
+                                  ),
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: const Text(
+                                  'SENT',
+                                  style: TextStyle(
+                                    color: AppleTheme.systemGreen,
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              ),
+                            ],
+                            if (post.isOverdue) ...[
+                              const SizedBox(width: 6),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 3,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: AppleTheme.systemOrange.withValues(
+                                    alpha: 0.15,
+                                  ),
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: const Text(
+                                  'OVERDUE',
+                                  style: TextStyle(
+                                    color: AppleTheme.systemOrange,
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                        const SizedBox(height: 6),
+                        // Schedule line: bounded by the Expanded column, so the
+                        // date ellipsizes instead of overflowing narrow cards.
+                        Row(
+                          children: [
+                            Icon(
+                              CupertinoIcons.clock,
+                              size: 11,
+                              color: isDark ? Colors.white60 : Colors.black54,
+                            ),
+                            const SizedBox(width: 4),
+                            Expanded(
+                              child: Text(
+                                formattedDate,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w500,
+                                  color: isDark
+                                      ? Colors.white70
+                                      : Colors.black87,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+
+                        const SizedBox(height: 8),
+
+                        // Caption
+                        Text(
+                          post.caption,
+                          style: TextStyle(
+                            fontSize: 13.5,
+                            fontWeight: FontWeight.w500,
+                            color: isDark ? Colors.white : Colors.black87,
+                            height: 1.35,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+
+                        const SizedBox(height: 8),
+
+                        // Media File Info (Slice 18: clamped — the unclamped
+                        // filename was the 61px right-overflow).
+                        Text(
+                          'Asset: ${post.mediaUrl.split('/').last}',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: isDark ? Colors.white38 : Colors.black38,
                           ),
                         ),
-                        if (post.status == 'published') ...[
-                          const SizedBox(width: 6),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                            decoration: BoxDecoration(
-                              color: AppleTheme.systemGreen.withValues(alpha: 0.15),
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: const Text(
-                              'SENT',
-                              style: TextStyle(color: AppleTheme.systemGreen, fontSize: 10, fontWeight: FontWeight.w700),
-                            ),
-                          ),
-                        ],
-                        if (post.isOverdue) ...[
-                          const SizedBox(width: 6),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                            decoration: BoxDecoration(
-                              color: AppleTheme.systemOrange.withValues(alpha: 0.15),
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: const Text(
-                              'OVERDUE',
-                              style: TextStyle(color: AppleTheme.systemOrange, fontSize: 10, fontWeight: FontWeight.w700),
-                            ),
-                          ),
-                        ],
                       ],
                     ),
-                    const SizedBox(height: 6),
-                    // Schedule line: bounded by the Expanded column, so the
-                    // date ellipsizes instead of overflowing narrow cards.
-                    Row(
-                      children: [
-                        Icon(CupertinoIcons.clock, size: 11, color: isDark ? Colors.white60 : Colors.black54),
-                        const SizedBox(width: 4),
-                        Expanded(
-                          child: Text(
-                            formattedDate,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w500,
-                              color: isDark ? Colors.white70 : Colors.black87,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-
-                    const SizedBox(height: 8),
-
-                    // Caption
-                    Text(
-                      post.caption,
-                      style: TextStyle(
-                        fontSize: 13.5,
-                        fontWeight: FontWeight.w500,
-                        color: isDark ? Colors.white : Colors.black87,
-                        height: 1.35,
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-
-                    const SizedBox(height: 8),
-
-                    // Media File Info (Slice 18: clamped — the unclamped
-                    // filename was the 61px right-overflow).
-                    Text(
-                      'Asset: ${post.mediaUrl.split('/').last}',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: isDark ? Colors.white38 : Colors.black38,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              ],
+                  ),
+                ],
               ),
               const SizedBox(height: 12),
 
@@ -491,10 +556,14 @@ class _QueueViewState extends State<QueueView> {
               // buttons squeezed the middle column at 402pt.
               Row(
                 children: [
-                  if (isScheduled) Expanded(child: _dispatchButton(post, isDark)),
+                  if (isScheduled)
+                    Expanded(child: _dispatchButton(post, isDark)),
                   if (!isScheduled) const Spacer(),
                   CupertinoButton(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 6,
+                    ),
                     onPressed: () {
                       context.read<PostsProvider>().deletePost(post.id);
                     },
@@ -522,10 +591,9 @@ class _QueueViewState extends State<QueueView> {
   /// queue, whatever it actually held.
   String _nextSlotLabel(List<PostModel> scheduled, int overdueCount) {
     final now = DateTime.now();
-    final upcoming = scheduled
-        .where((p) => !p.scheduledTime.isBefore(now))
-        .toList()
-      ..sort((a, b) => a.scheduledTime.compareTo(b.scheduledTime));
+    final upcoming =
+        scheduled.where((p) => !p.scheduledTime.isBefore(now)).toList()
+          ..sort((a, b) => a.scheduledTime.compareTo(b.scheduledTime));
 
     if (upcoming.isEmpty) {
       return overdueCount > 0
@@ -563,9 +631,20 @@ class _QueueViewState extends State<QueueView> {
           child: const Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(CupertinoIcons.refresh, size: 13, color: AppleTheme.systemRed),
+              Icon(
+                CupertinoIcons.refresh,
+                size: 13,
+                color: AppleTheme.systemRed,
+              ),
               SizedBox(width: 6),
-              Text('Retry', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppleTheme.systemRed)),
+              Text(
+                'Retry',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: AppleTheme.systemRed,
+                ),
+              ),
             ],
           ),
         ),
@@ -585,7 +664,10 @@ class _QueueViewState extends State<QueueView> {
         children: [
           Icon(CupertinoIcons.paperplane_fill, size: 13),
           SizedBox(width: 6),
-          Text('Share Now', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+          Text(
+            'Share Now',
+            style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+          ),
         ],
       ),
     );
@@ -611,7 +693,7 @@ class _ComposePostModalState extends State<_ComposePostModal> {
   SocialPlatform _platform = SocialPlatform.instagram;
   String _mediaUrl = 'assets/samples/emms_storytelling_reel.mp4';
   bool _isVideo = true;
-  final DateTime _scheduledTime = DateTime.now().add(const Duration(hours: 3));
+  DateTime _scheduledTime = DateTime.now().add(const Duration(hours: 3));
 
   @override
   void dispose() {
@@ -619,176 +701,280 @@ class _ComposePostModalState extends State<_ComposePostModal> {
     super.dispose();
   }
 
+  void _submit({bool asDraft = false}) {
+    final caption = _captionController.text.trim();
+    if (caption.isEmpty) return;
+
+    final newPost = PostModel(
+      id: 'custom_${DateTime.now().millisecondsSinceEpoch}',
+      caption: caption,
+      scheduledTime: _scheduledTime,
+      platform: _platform,
+      mediaUrl: _mediaUrl,
+      isVideo: _isVideo,
+      status: asDraft ? 'draft' : 'scheduled',
+    );
+
+    context.read<PostsProvider>().addPost(newPost);
+    Navigator.of(context).pop();
+    LemaToast.show(
+      context,
+      asDraft ? 'Saved as draft' : 'Added to the queue',
+      kind: asDraft ? LemaToastKind.saved : LemaToastKind.moved,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Center(
-      child: Material(
-        color: Colors.transparent,
-        child: Container(
-          width: 580,
-          margin: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: isDark ? const Color(0xFF1E1E24) : Colors.white,
-            borderRadius: BorderRadius.circular(AppleTheme.radiusXl),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.4),
-                blurRadius: 36,
-                offset: const Offset(0, 10),
-              ),
-            ],
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(24.0),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                // Header
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'Create New Post',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: -0.4,
-                        color: isDark ? Colors.white : Colors.black,
-                      ),
-                    ),
-                    IconButton(
-                      icon: const Icon(CupertinoIcons.xmark_circle_fill, size: 22),
-                      color: isDark ? Colors.white38 : Colors.black26,
-                      onPressed: () => Navigator.of(context).pop(),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-
-                // Platform picker
-                Wrap(
-                  spacing: 8,
-                  children: SocialPlatform.values.map((p) {
-                    final isSel = _platform == p;
-                    final info = PlatformInfo.fromPlatform(p);
-                    return ChoiceChip(
-                      label: Text(info.name),
-                      selected: isSel,
-                      selectedColor: info.color,
-                      onSelected: (sel) {
-                        if (sel) setState(() => _platform = p);
-                      },
-                    );
-                  }).toList(),
-                ),
-
-                const SizedBox(height: 16),
-
-                // Caption
-                TextField(
-                  controller: _captionController,
-                  maxLines: 4,
-                  decoration: InputDecoration(
-                    hintText: 'Craft your high-converting caption, hooks, or call-to-action...',
-                    filled: true,
-                    fillColor: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.04),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide.none,
-                    ),
-                  ),
-                ),
-
-                const SizedBox(height: 16),
-
-                // Media Selector
-                Row(
-                  children: [
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(8),
-                      child: SizedBox(
-                        width: 48,
-                        height: 48,
-                        child: UniversalMediaPlayer(
-                          mediaUrl: _mediaUrl,
-                          isVideo: _isVideo,
-                          autoPlay: false,
-                          showControls: false,
-                          thumbnail: true,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            _mediaUrl.split('/').last,
-                            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          Text(
-                            _isVideo ? 'Video Clip (MP4/MOV)' : 'Still Graphic (PNG/JPG)',
-                            style: TextStyle(fontSize: 10.5, color: isDark ? Colors.white54 : Colors.black54),
-                          ),
-                        ],
-                      ),
-                    ),
-                    CupertinoButton(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                      color: isDark ? Colors.white.withValues(alpha: 0.12) : Colors.black.withValues(alpha: 0.08),
-                      borderRadius: BorderRadius.circular(8),
-                      onPressed: () async {
-                        final res = await MediaPickerDialog.show(context);
-                        if (res != null) {
-                          setState(() {
-                            _mediaUrl = res.pathOrUrl;
-                            _isVideo = res.isVideo;
-                          });
-                        }
-                      },
-                      child: Text(
-                        'Change Media',
-                        style: TextStyle(
-                          fontSize: 11.5,
-                          fontWeight: FontWeight.w600,
-                          color: isDark ? Colors.white : Colors.black87,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-
-                const SizedBox(height: 24),
-
-                // Submit Button
-                CupertinoButton.filled(
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  borderRadius: BorderRadius.circular(12),
-                  onPressed: () {
-                    final caption = _captionController.text.trim();
-                    if (caption.isEmpty) return;
-
-                    final newPost = PostModel(
-                      id: 'custom_${DateTime.now().millisecondsSinceEpoch}',
-                      caption: caption,
-                      scheduledTime: _scheduledTime,
-                      platform: _platform,
-                      mediaUrl: _mediaUrl,
-                      isVideo: _isVideo,
-                    );
-
-                    context.read<PostsProvider>().addPost(newPost);
-                    Navigator.of(context).pop();
-                  },
-                  child: const Text('Add to Publishing Queue', style: TextStyle(fontWeight: FontWeight.w700)),
+      // Scrollable so the extra schedule row can never overflow a short
+      // window or a 402pt phone.
+      child: SingleChildScrollView(
+        child: Material(
+          color: Colors.transparent,
+          child: Container(
+            width: 580,
+            margin: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: isDark ? const Color(0xFF1E1E24) : Colors.white,
+              borderRadius: BorderRadius.circular(AppleTheme.radiusXl),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.4),
+                  blurRadius: 36,
+                  offset: const Offset(0, 10),
                 ),
               ],
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(24.0),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // Header
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Create New Post',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: -0.4,
+                          color: isDark ? Colors.white : Colors.black,
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(
+                          CupertinoIcons.xmark_circle_fill,
+                          size: 22,
+                        ),
+                        color: isDark ? Colors.white38 : Colors.black26,
+                        onPressed: () => Navigator.of(context).pop(),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Platform picker
+                  Wrap(
+                    spacing: 8,
+                    children: SocialPlatform.values.map((p) {
+                      final isSel = _platform == p;
+                      final info = PlatformInfo.fromPlatform(p);
+                      return ChoiceChip(
+                        label: Text(info.name),
+                        selected: isSel,
+                        selectedColor: info.color,
+                        onSelected: (sel) {
+                          if (sel) setState(() => _platform = p);
+                        },
+                      );
+                    }).toList(),
+                  ),
+
+                  const SizedBox(height: 16),
+
+                  // Caption
+                  TextField(
+                    controller: _captionController,
+                    maxLines: 4,
+                    decoration: InputDecoration(
+                      hintText: 'Craft your high-converting caption, hooks, or call-to-action...',
+                      filled: true,
+                      fillColor: isDark
+                          ? Colors.white.withValues(alpha: 0.05)
+                          : Colors.black.withValues(alpha: 0.04),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide.none,
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 16),
+
+                  // Media Selector
+                  Row(
+                    children: [
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: SizedBox(
+                          width: 48,
+                          height: 48,
+                          child: UniversalMediaPlayer(
+                            mediaUrl: _mediaUrl,
+                            isVideo: _isVideo,
+                            autoPlay: false,
+                            showControls: false,
+                            thumbnail: true,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              _mediaUrl.split('/').last,
+                              style: const TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            Text(
+                              _isVideo
+                                  ? 'Video Clip (MP4/MOV)'
+                                  : 'Still Graphic (PNG/JPG)',
+                              style: TextStyle(
+                                fontSize: 10.5,
+                                color: isDark ? Colors.white54 : Colors.black54,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      CupertinoButton(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 6,
+                        ),
+                        color: isDark
+                            ? Colors.white.withValues(alpha: 0.12)
+                            : Colors.black.withValues(alpha: 0.08),
+                        borderRadius: BorderRadius.circular(8),
+                        onPressed: () async {
+                          final res = await MediaPickerDialog.show(context);
+                          if (res != null) {
+                            setState(() {
+                              _mediaUrl = res.pathOrUrl;
+                              _isVideo = res.isVideo;
+                            });
+                          }
+                        },
+                        child: Text(
+                          'Change Media',
+                          style: TextStyle(
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.w600,
+                            color: isDark ? Colors.white : Colors.black87,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 16),
+
+                  // Schedule row: this modal used to hard-code "three hours from
+                  // now" with no way to see or change it.
+                  Row(
+                    children: [
+                      Icon(
+                        CupertinoIcons.clock,
+                        size: 14,
+                        color: isDark ? Colors.white54 : Colors.black45,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'Schedule: ${formatScheduleSlot(_scheduledTime)}',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: isDark ? Colors.white70 : Colors.black87,
+                          ),
+                        ),
+                      ),
+                      CupertinoButton(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 4,
+                        ),
+                        onPressed: () async {
+                          final picked = await showScheduleTimePicker(
+                            context: context,
+                            initial: _scheduledTime,
+                          );
+                          if (picked != null && mounted) {
+                            setState(() => _scheduledTime = picked);
+                          }
+                        },
+                        child: Text(
+                          'Change',
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: AppleTheme.systemBlue,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 16),
+
+                  Row(
+                    children: [
+                      Expanded(
+                        child: CupertinoButton(
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          color: isDark
+                              ? Colors.white.withValues(alpha: 0.12)
+                              : Colors.black.withValues(alpha: 0.08),
+                          borderRadius: BorderRadius.circular(12),
+                          onPressed: () => _submit(asDraft: true),
+                          child: Text(
+                            'Save as Draft',
+                            style: TextStyle(
+                              fontWeight: FontWeight.w600,
+                              color: isDark ? Colors.white : Colors.black87,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: CupertinoButton.filled(
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          borderRadius: BorderRadius.circular(12),
+                          onPressed: _submit,
+                          child: const Text(
+                            'Add to Queue',
+                            style: TextStyle(fontWeight: FontWeight.w700),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
           ),
         ),

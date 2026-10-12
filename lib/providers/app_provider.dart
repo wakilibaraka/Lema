@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import '../models/nav_destination.dart';
 import '../models/simulation_model.dart';
-import '../services/storage_service.dart';
 import '../services/api_service.dart';
+import '../services/demo_mode_service.dart';
+import '../services/storage_service.dart';
 
 class AppProvider extends ChangeNotifier {
   final StorageService _storage;
@@ -12,7 +13,6 @@ class AppProvider extends ChangeNotifier {
   String _activeTab = 'queue';
   String _selectedChannelFilter = 'all';
   bool _isDarkMode = false;
-  bool _sandboxMode = true;
   bool _autoplayVideos = false;
   String _daemonStatus = 'ONLINE';
   SimulationViewMode _simulationView = SimulationViewMode.list;
@@ -38,7 +38,15 @@ class AppProvider extends ChangeNotifier {
   String get activeTab => _activeTab;
   String get selectedChannelFilter => _selectedChannelFilter;
   bool get isDarkMode => _isDarkMode;
-  bool get sandboxMode => _sandboxMode;
+
+  /// Demo mode is owned by [DemoModeService] because the dispatch path and the
+  /// AI service read it directly; this provider only surfaces it to the UI and
+  /// republishes changes.
+  ///
+  /// It replaces the separate `sandboxMode` flag, which was a second switch
+  /// claiming the same thing ("posts are simulated safely") without any code
+  /// behind it.
+  bool get demoMode => DemoModeService.isEnabled;
   bool get autoplayVideos => _autoplayVideos;
   String get daemonStatus => _daemonStatus;
   bool get isDaemonOnline => _daemonStatus == 'ONLINE';
@@ -79,8 +87,15 @@ class AppProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  void toggleSandbox() {
-    _sandboxMode = !_sandboxMode;
+  /// Hydrates demo mode from storage; called once at startup.
+  Future<void> loadDemoMode() async {
+    await DemoModeService.load();
+    notifyListeners();
+  }
+
+  Future<void> setDemoMode(bool enabled) async {
+    if (DemoModeService.isEnabled == enabled) return;
+    await DemoModeService.setEnabled(enabled);
     notifyListeners();
   }
 
