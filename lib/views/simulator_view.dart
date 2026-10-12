@@ -912,10 +912,19 @@ class _SimulatorViewState extends State<SimulatorView> {
         CupertinoButton.filled(
           padding: const EdgeInsets.symmetric(vertical: 12),
           borderRadius: BorderRadius.circular(12),
-          onPressed: () {
-            context.read<PostsProvider>().publishNow(activePost.id);
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Dispatched "${activePost.title}" to ${activePost.platformInfo.name} via Daemon!')),
+          onPressed: () async {
+            // Await the real dispatch outcome: announcing a send that never
+            // happened is worse than reporting the failure.
+            final messenger = ScaffoldMessenger.of(context);
+            final result =
+                await context.read<PostsProvider>().publishNow(activePost.id);
+            if (!mounted) return;
+            messenger.showSnackBar(
+              SnackBar(
+                content: Text(result.isSent
+                    ? 'Dispatched "${activePost.title}" to ${activePost.platformInfo.name} via daemon'
+                    : 'Not sent — ${result.toString()}'),
+              ),
             );
           },
           child: Row(

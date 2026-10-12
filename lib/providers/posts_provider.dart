@@ -149,23 +149,42 @@ class PostsProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> publishNow(String id) async {
+  /// Hands a post to the daemon and reports what happened.
+  ///
+  /// The post only becomes `published` once the dispatch actually
+  /// succeeded. It used to be flipped to `published` *before* the request
+  /// and the daemon's answer was discarded, so a dead daemon still emptied
+  /// the queue and every failure path in the dispatch UI was unreachable.
+  Future<DispatchResult> publishNow(String id) async {
     final idx = _posts.indexWhere((p) => p.id == id);
-    if (idx != -1) {
-      final post = _posts[idx];
-      final updated = post.copyWith(
-        status: 'published',
-        postedAt: DateTime.now(),
-      );
-      _posts[idx] = updated;
-      _storage.savePosts(_posts);
-      notifyListeners();
-
-      // Dispatch to backend daemon
-      try {
-        await _api.publishPost(updated);
-      } catch (_) {}
+    if (idx == -1) {
+      return const DispatchResult(DispatchOutcome.rejected, 'Post no longer exists');
     }
+
+    final post = _posts[idx];
+    final result = await _api.dispatchPost(post);
+    if (!result.isSent) return result;
+
+    // Re-read: the post may have been edited or deleted while the daemon
+    // request was in flight.
+    final current = _posts.indexWhere((p) => p.id == id);
+    if (current == -1) return result;
+
+    _posts[current] = _posts[current].copyWith(
+      status: 'published',
+      postedAt: DateTime.now(),
+    );
+    _storage.savePosts(_posts);
+    notifyListeners();
+    return result;
+  }
+
+  /// Scheduled posts whose slot has already passed. The daemon is parked, so
+  /// nothing converts these on its own — the queue has to surface them.
+  List<PostModel> get overduePosts {
+    final overdue = _posts.where((p) => p.isOverdue).toList()
+      ..sort((a, b) => a.scheduledTime.compareTo(b.scheduledTime));
+    return overdue;
   }
 
   Future<void> syncWithBackend() async {

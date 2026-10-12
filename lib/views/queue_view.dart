@@ -22,10 +22,12 @@ class QueueView extends StatefulWidget {
 class _QueueViewState extends State<QueueView> {
   int _selectedSegment = 0; // 0: Queue, 1: Published History
 
-  /// Slice 18: local dispatch states. The daemon interface is stubbed for
-  /// the parked backend slice — these states already model Queued →
-  /// Sending → Sent/Failed + Retry honestly (failures surface only from
-  /// real `publishNow` errors, never simulated).
+  /// Slice 18: local dispatch states. Queued → Sending → Sent, or
+  /// Failed → Retry when the daemon refuses or is not listening.
+  ///
+  /// The post is only moved to Published by `publishNow` when the dispatch
+  /// really succeeded, so this map is now reachable: a dead daemon keeps
+  /// the post in the queue instead of pretending it went out.
   final Set<String> _sending = {};
   final Map<String, String> _failed = {};
 
@@ -35,27 +37,29 @@ class _QueueViewState extends State<QueueView> {
       _sending.add(post.id);
       _failed.remove(post.id);
     });
-    // Simulated network beat so Sending is perceivable; the state machine
-    // itself is real and will front the daemon later.
-    await Future.delayed(const Duration(milliseconds: 900));
+    // Short beat so Sending is perceivable; the request itself is real.
+    await Future.delayed(const Duration(milliseconds: 450));
     if (!mounted) return;
-    try {
-      context.read<PostsProvider>().publishNow(post.id);
-      if (!mounted) return;
-      setState(() => _sending.remove(post.id));
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Dispatched to ${post.platformInfo.name} via Daemon!')),
-      );
-    } catch (e) {
-      if (!mounted) return;
-      setState(() {
-        _sending.remove(post.id);
-        _failed[post.id] = e.toString();
-      });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Dispatch failed: $e')),
-      );
-    }
+
+    final result = await context.read<PostsProvider>().publishNow(post.id);
+    if (!mounted) return;
+
+    setState(() {
+      _sending.remove(post.id);
+      if (result.isSent) {
+        _failed.remove(post.id);
+      } else {
+        _failed[post.id] = result.toString();
+      }
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(result.isSent
+            ? 'Dispatched to ${post.platformInfo.name} via daemon'
+            : 'Not sent — ${result.toString()}'),
+      ),
+    );
   }
 
   @override
@@ -65,6 +69,7 @@ class _QueueViewState extends State<QueueView> {
     final scheduledPosts = postsProvider.scheduledPosts;
     final publishedPosts = postsProvider.publishedPosts;
     final queueSlots = postsProvider.queueSlots;
+    final overdue = postsProvider.overduePosts;
 
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -194,6 +199,14 @@ class _QueueViewState extends State<QueueView> {
               ),
             ),
 
+            // Overdue band: the parked daemon never advances the clock on
+            // its own, so slots that have already passed are called out
+            // here instead of silently sitting in the queue.
+            if (_selectedSegment == 0 && overdue.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              _buildOverdueBand(isDark, overdue.length),
+            ],
+
             const SizedBox(height: 16),
 
             // Content List
@@ -204,6 +217,34 @@ class _QueueViewState extends State<QueueView> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  /// Amber-on-glass band listing how many slots have already passed. Uses a
+  /// text label as well as colour, per the design plan's status rule.
+  Widget _buildOverdueBand(bool isDark, int count) {
+    return AppleGlassCard(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      borderRadius: 14,
+      child: Row(
+        children: [
+          Icon(CupertinoIcons.exclamationmark_triangle_fill,
+              size: 18, color: AppleTheme.systemOrange),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              count == 1
+                  ? '1 scheduled post missed its slot. The daemon never fired it.'
+                  : '$count scheduled posts missed their slots. The daemon never fired them.',
+              style: TextStyle(
+                fontSize: 12.5,
+                fontWeight: FontWeight.w600,
+                color: isDark ? Colors.white : Colors.black87,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -370,6 +411,20 @@ class _QueueViewState extends State<QueueView> {
                             ),
                           ),
                         ],
+                        if (post.isOverdue) ...[
+                          const SizedBox(width: 6),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                            decoration: BoxDecoration(
+                              color: AppleTheme.systemOrange.withValues(alpha: 0.15),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: const Text(
+                              'OVERDUE',
+                              style: TextStyle(color: AppleTheme.systemOrange, fontSize: 10, fontWeight: FontWeight.w700),
+                            ),
+                          ),
+                        ],
                       ],
                     ),
                     const SizedBox(height: 6),
@@ -461,7 +516,7 @@ class _QueueViewState extends State<QueueView> {
   }
 
   /// Slice 18: the dispatch button renders Queued → Sending → Sent, and
-  /// Failed → Retry when `publishNow` itself throws.
+  /// Failed → Retry when `publishNow` reports a failed dispatch.
   Widget _dispatchButton(PostModel post, bool isDark) {
     if (_sending.contains(post.id)) {
       return const CupertinoButton(
@@ -471,18 +526,23 @@ class _QueueViewState extends State<QueueView> {
       );
     }
     if (_failed.containsKey(post.id)) {
-      return CupertinoButton(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-        color: AppleTheme.systemRed.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(10),
-        onPressed: () => _dispatch(post),
-        child: const Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(CupertinoIcons.refresh, size: 13, color: AppleTheme.systemRed),
-            SizedBox(width: 6),
-            Text('Retry', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppleTheme.systemRed)),
-          ],
+      // The reason an earlier attempt failed travels with the Retry action,
+      // so "Retry" is never a blind button.
+      return Tooltip(
+        message: _failed[post.id]!,
+        child: CupertinoButton(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+          color: AppleTheme.systemRed.withValues(alpha: 0.12),
+          borderRadius: BorderRadius.circular(10),
+          onPressed: () => _dispatch(post),
+          child: const Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(CupertinoIcons.refresh, size: 13, color: AppleTheme.systemRed),
+              SizedBox(width: 6),
+              Text('Retry', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppleTheme.systemRed)),
+            ],
+          ),
         ),
       );
     }

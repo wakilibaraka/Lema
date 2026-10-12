@@ -25,6 +25,7 @@ class _AnalyticsViewState extends State<AnalyticsView> {
   }
 
   Future<void> _loadAnalytics() async {
+    if (!mounted) return;
     setState(() => _loading = true);
     final posts = context.read<PostsProvider>().publishedPosts;
     final result = await AnalyticsService.instance.fetchAggregatedAnalytics(posts);
@@ -36,11 +37,23 @@ class _AnalyticsViewState extends State<AnalyticsView> {
     }
   }
 
+  /// The fetch is per-post over a snapshot of the published set, so a post
+  /// published (or removed) after that snapshot would otherwise keep its
+  /// stale, missing, or mismatched row until a manual Refresh.
+  void _reloadIfPublishedSetChanged(int publishedCount) {
+    if (_loading || _result == null) return;
+    if (_result!.perPost.length == publishedCount) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _loadAnalytics();
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final postsProvider = context.watch<PostsProvider>();
     final publishedPosts = postsProvider.publishedPosts;
+    _reloadIfPublishedSetChanged(publishedPosts.length);
 
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -117,12 +130,15 @@ class _AnalyticsViewState extends State<AnalyticsView> {
                     children: [
                       _buildSummaryCards(isDark),
                       const SizedBox(height: 16),
-                      ...publishedPosts.asMap().entries.map((entry) {
-                        final index = entry.key;
-                        final post = entry.value;
-                        final analytics = _result!.perPost.length > index
-                            ? _result!.perPost[index]
-                            : PostAnalytics(postId: post.id, platform: post.primaryPlatform.name);
+                      // Pair by post id: an index pair reattached one
+                      // post's metrics to whichever post shifted into its
+                      // slot when the published set changed.
+                      ...publishedPosts.map((post) {
+                        final analytics = _result!.forPost(post.id) ??
+                            PostAnalytics(
+                              postId: post.id,
+                              platform: post.primaryPlatform.name,
+                            );
                         return Padding(
                           padding: const EdgeInsets.only(bottom: 12),
                           child: _buildPostAnalyticsCard(post, analytics, isDark),

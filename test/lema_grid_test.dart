@@ -14,6 +14,7 @@ import 'package:lema/providers/profile_provider.dart';
 import 'package:lema/views/ai_studio_view.dart';
 import 'package:lema/views/hooks_pipeline_view.dart';
 import 'package:lema/services/api_service.dart';
+import 'package:lema/services/demo_mode_service.dart';
 import 'package:lema/services/storage_service.dart';
 import 'package:lema/views/card_detail_view.dart';
 import 'package:lema/views/lema_grid_view.dart';
@@ -862,8 +863,15 @@ void main() {
       expect(tester.takeException(), isNull);
     });
 
-    testWidgets('Share Now runs Sending then lands in Published',
+    testWidgets(
+        'Share Now runs Sending then lands in Published (demo mode daemon)',
         (tester) async {
+      // Demo mode stands in for the daemon, so the dispatch really is
+      // reported as sent. Without it the mocked transport refuses and the
+      // post must stay queued (covered in dispatch_truth_test.dart).
+      await DemoModeService.setEnabled(true);
+      addTearDown(() => DemoModeService.setEnabled(false));
+
       final provider = await pumpQueue(tester);
       expect(provider.scheduledPosts.length, 5);
 
@@ -876,6 +884,25 @@ void main() {
       expect(provider.scheduledPosts.length, 4);
       expect(provider.publishedPosts.length, 1);
       expect(find.textContaining('Dispatched to'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('a refused dispatch keeps the post queued and offers Retry',
+        (tester) async {
+      await DemoModeService.setEnabled(false);
+
+      final provider = await pumpQueue(tester);
+      expect(provider.scheduledPosts.length, 5);
+
+      await tester.tap(find.text('Share Now').first);
+      await tester.pump(const Duration(seconds: 2));
+
+      // Nothing was published, so nothing may claim it was.
+      expect(provider.scheduledPosts.length, 5);
+      expect(provider.publishedPosts, isEmpty);
+      expect(find.textContaining('Dispatched to'), findsNothing);
+      expect(find.textContaining('Not sent'), findsOneWidget);
+      expect(find.text('Retry'), findsOneWidget);
       expect(tester.takeException(), isNull);
     });
   });

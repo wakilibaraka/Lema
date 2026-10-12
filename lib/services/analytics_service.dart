@@ -63,6 +63,16 @@ class AnalyticsResult {
         engagementRate = totalViews > 0
             ? ((totalLikes + totalComments + totalShares) / totalViews) * 100
             : 0;
+
+  /// Rows keyed by post id.
+  ///
+  /// Callers must pair by id, never by list position: the published set can
+  /// gain or lose a post between the fetch and the build, and an index pair
+  /// silently relabels one post's numbers as another's.
+  Map<String, PostAnalytics> get byPostId =>
+      {for (final row in perPost) row.postId: row};
+
+  PostAnalytics? forPost(String postId) => byPostId[postId];
 }
 
 class AnalyticsService {
@@ -86,10 +96,35 @@ class AnalyticsService {
     return PostAnalytics(
       postId: post.id,
       platform: post.primaryPlatform.name,
-      likes: post.likesCount,
-      views: int.tryParse(post.views.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0,
+      likes: parseCompactCount(post.likes),
+      views: parseCompactCount(post.views),
       comments: post.comments,
     );
+  }
+
+  /// Parses the compact counters the seeds and platform APIs use:
+  /// `'84.2K'` → 84200, `'1.2M'` → 1200000, `'1,240'` → 1240.
+  ///
+  /// Stripping non-digits turned "84.2K" into 842 views, understating every
+  /// offline figure by two orders of magnitude.
+  static int parseCompactCount(String raw) {
+    final cleaned =
+        raw.trim().toUpperCase().replaceAll(',', '').replaceAll(' ', '');
+    if (cleaned.isEmpty) return 0;
+
+    final multiplier = cleaned.endsWith('K')
+        ? 1000
+        : cleaned.endsWith('M')
+            ? 1000000
+            : 1;
+    final digits =
+        multiplier == 1 ? cleaned : cleaned.substring(0, cleaned.length - 1);
+
+    final value = double.tryParse(digits);
+    if (value != null) return (value * multiplier).round();
+
+    final fallback = int.tryParse(digits.replaceAll(RegExp(r'[^0-9]'), ''));
+    return fallback ?? 0;
   }
 
   Future<AnalyticsResult> fetchAggregatedAnalytics(List<PostModel> posts) async {

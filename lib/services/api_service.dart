@@ -1,7 +1,40 @@
+import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 import 'dart:math';
 import 'package:http/http.dart' as http;
 import '../models/post_model.dart';
+import 'demo_mode_service.dart';
+
+/// What actually happened when a post was handed to the daemon.
+///
+/// A `bool` could not express this: it collapsed "the daemon said no" and
+/// "nothing is listening on 3001" into the same `false`, and every caller
+/// dropped it on the floor.
+enum DispatchOutcome {
+  /// The daemon accepted the publish request (2xx), or demo mode simulated it.
+  sent,
+
+  /// Nothing was published. No daemon answered; the post is still pending.
+  offline,
+
+  /// Nothing was published. The daemon answered with a refusal.
+  rejected,
+}
+
+class DispatchResult {
+  final DispatchOutcome outcome;
+
+  /// Human-readable cause, safe to show next to a Retry action.
+  final String? detail;
+
+  const DispatchResult(this.outcome, [this.detail]);
+
+  bool get isSent => outcome == DispatchOutcome.sent;
+
+  @override
+  String toString() => detail ?? outcome.name;
+}
 
 class ApiService {
   final String baseUrl;
@@ -14,28 +47,41 @@ class ApiService {
   static const int _maxRetries = 3;
   static const Duration _baseDelay = Duration(seconds: 1);
 
-  Future<http.Response> _withRetry(Future<http.Response> Function() request) async {
-    for (int attempt = 0; attempt <= _maxRetries; attempt++) {
+  /// Transport-level retries are deliberately short and few. A refused
+  /// connection to a local daemon will not recover inside the backoff
+  /// ladder, and the dispatch UI offers an explicit Retry.
+  static const int _maxTransportRetries = 1;
+  static const Duration _transportRetryDelay = Duration(milliseconds: 250);
+
+  /// 429/5xx get exponential backoff + jitter (rate-limit resilience);
+  /// transport failures get one quick retry before propagating as offline.
+  Future<http.Response> _withRetry(Future<http.Response> Function() request) =>
+      _withStatusRetry(() => _withTransportRetry(request));
+
+  Future<http.Response> _withTransportRetry(
+      Future<http.Response> Function() request) async {
+    for (int attempt = 0; ; attempt++) {
       try {
-        final response = await request();
-        if (response.statusCode == 429 || response.statusCode >= 500) {
-          if (attempt < _maxRetries) {
-            final jitter = Random().nextInt(1000);
-            final delay = _baseDelay * (1 << attempt) + Duration(milliseconds: jitter);
-            await Future.delayed(delay);
-            continue;
-          }
-        }
-        return response;
-      } catch (e) {
-        if (attempt < _maxRetries) {
-          final jitter = Random().nextInt(1000);
-          final delay = _baseDelay * (1 << attempt) + Duration(milliseconds: jitter);
-          await Future.delayed(delay);
-        } else {
-          rethrow;
-        }
+        return await request();
+      } catch (_) {
+        if (attempt >= _maxTransportRetries) rethrow;
+        await Future.delayed(_transportRetryDelay);
       }
+    }
+  }
+
+  Future<http.Response> _withStatusRetry(
+      Future<http.Response> Function() request) async {
+    for (int attempt = 0; attempt <= _maxRetries; attempt++) {
+      final response = await request();
+      if ((response.statusCode == 429 || response.statusCode >= 500) &&
+          attempt < _maxRetries) {
+        final jitter = Random().nextInt(1000);
+        await Future.delayed(
+            _baseDelay * (1 << attempt) + Duration(milliseconds: jitter));
+        continue;
+      }
+      return response;
     }
     throw Exception('Max retries exceeded');
   }
@@ -69,17 +115,47 @@ class ApiService {
   }
 
   Future<bool> triggerShareNow(String postId) async {
+    final result = await _dispatch(postId);
+    return result.isSent;
+  }
+
+  /// Hands [post] to the local daemon and reports the real outcome.
+  Future<DispatchResult> dispatchPost(PostModel post) => _dispatch(post.id);
+
+  Future<DispatchResult> _dispatch(String postId) async {
+    // Demo mode answers locally: no daemon and no platform APIs are touched,
+    // which is what the app-review walkthroughs need (TECHNICAL_PLAN §4).
+    // The result is labelled so the UI never claims a real send.
+    if (DemoModeService.isEnabled) {
+      return const DispatchResult(
+          DispatchOutcome.sent, 'Demo mode: local publish simulated');
+    }
+
     try {
       final res = await _withRetry(() => http.post(
         Uri.parse('$baseUrl/api/posts/$postId/publish'),
       ).timeout(const Duration(seconds: 6)));
-      return res.statusCode == 200;
-    } catch (_) {
-      return false;
+
+      if (res.statusCode >= 200 && res.statusCode < 300) {
+        return const DispatchResult(DispatchOutcome.sent);
+      }
+      return DispatchResult(
+        DispatchOutcome.rejected,
+        'Daemon refused the publish (HTTP ${res.statusCode})',
+      );
+    } on TimeoutException {
+      return const DispatchResult(
+          DispatchOutcome.offline, 'Daemon timed out after 6s');
+    } on SocketException catch (e) {
+      return DispatchResult(DispatchOutcome.offline,
+          'Daemon unreachable (${e.osError?.message ?? e.message})');
+    } on http.ClientException catch (e) {
+      return DispatchResult(
+          DispatchOutcome.offline, 'Daemon unreachable (${e.message})');
+    } catch (e) {
+      return DispatchResult(DispatchOutcome.offline, 'Daemon unreachable ($e)');
     }
   }
-
-  Future<bool> publishPost(PostModel post) => triggerShareNow(post.id);
 
   Future<String?> uploadMedia({
     required String name,

@@ -11,7 +11,7 @@ class PostModel {
   final String mediaType; // 'video' | 'image'
   final String mediaUrl;
   final String? localFilePath;
-  final String scheduledDate; // 'YYYY-MM-DD'
+  final String _scheduledDateRaw; // 'YYYY-MM-DD'
   final dynamic _scheduledTimeRaw; // String 'HH:MM' or DateTime
   final String status; // 'scheduled' | 'published' | 'draft' | 'failed'
   final String views;
@@ -43,7 +43,10 @@ class PostModel {
         hook = hook ?? (caption.length > 45 ? caption.substring(0, 45) : caption),
         platforms = platforms ?? [platform != null ? platform.name : 'instagram'],
         mediaType = mediaType ?? ((isVideo == true || mediaUrl.toLowerCase().endsWith('.mp4') || mediaUrl.toLowerCase().endsWith('.mov')) ? 'video' : 'image'),
-        scheduledDate = scheduledDate ?? (scheduledTime is DateTime ? scheduledTime.toIso8601String().split('T').first : '2026-10-12'),
+        _scheduledDateRaw = scheduledDate ??
+            (scheduledTime is DateTime
+                ? scheduledTime.toIso8601String().split('T').first
+                : '2026-10-12'),
         _scheduledTimeRaw = scheduledTime ?? '18:00',
         likes = likes.toString();
 
@@ -72,26 +75,69 @@ class PostModel {
     return SocialPlatform.instagram;
   }
 
+  /// True when a scheduled post's time has already passed and nothing has
+  /// published it. The daemon is parked, so nothing converts these
+  /// automatically — the UI has to surface them.
+  /// The calendar day the post belongs to.
+  ///
+  /// When the schedule is held as a real `DateTime` the day is derived from
+  /// it, so `copyWith(scheduledTime: ...)` can never leave the two halves of
+  /// the date/time pair disagreeing. Legacy "HH:MM" payloads keep the
+  /// explicit day.
+  String get scheduledDate {
+    final raw = _scheduledTimeRaw;
+    if (raw is DateTime) {
+      return '${raw.year.toString().padLeft(4, '0')}-'
+          '${raw.month.toString().padLeft(2, '0')}-'
+          '${raw.day.toString().padLeft(2, '0')}';
+    }
+    return _scheduledDateRaw;
+  }
+
+  bool get isOverdue => status == 'scheduled' && scheduledTime.isBefore(DateTime.now());
+
   DateTime get scheduledTime {
-    if (_scheduledTimeRaw is DateTime) {
-      return _scheduledTimeRaw;
+    final raw = _scheduledTimeRaw;
+    if (raw is DateTime) return raw;
+
+    if (raw is String && raw.isNotEmpty) {
+      // toJson writes a full ISO-8601 stamp, so try that first. Parsing it
+      // as "HH:MM" used to throw, and a bare catch fell through to
+      // "now + 3h" — which silently rebased every persisted post on each
+      // app restart.
+      final iso = DateTime.tryParse(raw);
+      if (iso != null) return iso;
+
+      // Legacy payload: "HH:MM" paired with scheduledDate "YYYY-MM-DD".
+      final fromParts = _atTimeOfDay(raw, scheduledDate);
+      if (fromParts != null) return fromParts;
     }
-    if (_scheduledTimeRaw is String) {
-      try {
-        final timeParts = (_scheduledTimeRaw).split(':');
-        final dateParts = scheduledDate.split('-');
-        if (dateParts.length == 3 && timeParts.length >= 2) {
-          return DateTime(
-            int.parse(dateParts[0]),
-            int.parse(dateParts[1]),
-            int.parse(dateParts[2]),
-            int.parse(timeParts[0]),
-            int.parse(timeParts[1]),
-          );
-        }
-      } catch (_) {}
-    }
-    return DateTime.now().add(const Duration(hours: 3));
+
+    // Unreadable payload: fall back to the documented default slot on the
+    // stored date, never to a fresh "now" — otherwise corrupt data would
+    // look like a legitimate reschedule.
+    return _dateOnly(_scheduledDateRaw) ?? DateTime.now();
+  }
+
+  static DateTime? _dateOnly(String date) {
+    final parts = date.split('-');
+    if (parts.length != 3) return null;
+    final y = int.tryParse(parts[0]);
+    final m = int.tryParse(parts[1]);
+    final d = int.tryParse(parts[2]);
+    if (y == null || m == null || d == null) return null;
+    return DateTime(y, m, d);
+  }
+
+  static DateTime? _atTimeOfDay(String hhmm, String date) {
+    final time = hhmm.split(':');
+    if (time.length < 2) return null;
+    final h = int.tryParse(time[0]);
+    final min = int.tryParse(time[1]);
+    if (h == null || min == null) return null;
+    final day = _dateOnly(date);
+    if (day == null) return null;
+    return DateTime(day.year, day.month, day.day, h, min);
   }
 
   PostStatus get postStatus {

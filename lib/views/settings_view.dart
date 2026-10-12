@@ -532,8 +532,10 @@ class _SettingsViewState extends State<SettingsView> {
                               const SizedBox(height: 2),
                               Text(
                                 app.isDaemonOnline
-                                    ? 'Connected to Express daemon on port 3001 (Autonomous scheduler active)'
-                                    : 'Standalone mode (Simulating queue executions locally)',
+                                    ? 'Connected to the daemon on port 3001 — scheduled posts will be dispatched.'
+                                    : DemoModeService.isEnabled
+                                        ? 'No daemon on port 3001. Demo mode is on, so publishes are simulated locally.'
+                                        : 'No daemon on port 3001. Share Now will report a failed dispatch until it is running (or turn on Demo Mode).',
                                 maxLines: 3,
                                 overflow: TextOverflow.ellipsis,
                                 style: TextStyle(
