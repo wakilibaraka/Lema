@@ -230,7 +230,10 @@ class _CalendarViewState extends State<CalendarView> {
                     flex: 6,
                     child: AppleGlassCard(
                       padding: const EdgeInsets.all(16),
-                      child: Column(
+                      // Scrollable: the calendar card sits in a fixed-height
+                      // slot beside the day feed, so TableCalendar's
+                      // intrinsic height overflowed it by 40px at 600pt tall.
+                      child: SingleChildScrollView(child: Column(
                         children: [
                           TableCalendar<PostModel>(
                             firstDay: DateTime.utc(2025, 1, 1),
@@ -300,7 +303,7 @@ class _CalendarViewState extends State<CalendarView> {
                             ],
                           ),
                         ],
-                      ),
+                      ),),
                     ),
                   ),
 

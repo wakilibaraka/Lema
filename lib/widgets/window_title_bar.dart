@@ -55,7 +55,11 @@ class WindowTitleBar extends StatelessWidget {
               const SizedBox(width: 18),
 
               // Title & Breadcrumb
-              Row(
+              // Flexible + ellipsis: the trailing route title was unbounded,
+              // so long names pushed this Row 47px past the right edge on a
+              // narrow desktop window.
+              Flexible(
+                child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
@@ -77,15 +81,20 @@ class WindowTitleBar extends StatelessWidget {
                       ),
                     ),
                   ),
-                  Text(
-                    title,
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w500,
-                      color: isDark ? Colors.white70 : Colors.black54,
+                  Flexible(
+                    child: Text(
+                      title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                        color: isDark ? Colors.white70 : Colors.black54,
+                      ),
                     ),
                   ),
                 ],
+              ),
               ),
 
               const Spacer(),

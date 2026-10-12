@@ -149,6 +149,9 @@ class _SettingsViewState extends State<SettingsView> {
               CupertinoButton(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 color: AppleTheme.systemBlue,
+                // Plain CupertinoButton defaults its foreground to the
+                // same #007AFF as this background; set it explicitly.
+                foregroundColor: Colors.white,
                 borderRadius: BorderRadius.circular(8),
                 onPressed: () {
                   final posts = context.read<PostsProvider>().posts;
@@ -544,6 +547,9 @@ class _SettingsViewState extends State<SettingsView> {
                         CupertinoButton(
                           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                           color: AppleTheme.systemBlue,
+                          // Plain CupertinoButton defaults its foreground to
+                          // the same #007AFF as this background.
+                          foregroundColor: Colors.white,
                           borderRadius: BorderRadius.circular(10),
                           onPressed: () async {
                             await app.checkDaemonHealth();

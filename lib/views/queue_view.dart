@@ -489,6 +489,10 @@ class _QueueViewState extends State<QueueView> {
     return CupertinoButton(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       color: AppleTheme.systemBlue,
+      // A plain (non-.filled) CupertinoButton defaults its foreground to
+      // CupertinoTheme.primaryColor — #007AFF, the same value as the
+      // background above — which rendered the label invisible.
+      foregroundColor: Colors.white,
       borderRadius: BorderRadius.circular(10),
       onPressed: () => _dispatch(post),
       child: const Row(

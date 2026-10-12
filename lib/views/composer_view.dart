@@ -134,8 +134,12 @@ class _ComposerViewState extends State<ComposerView> with SingleTickerProviderSt
 
     return Scaffold(
       backgroundColor: Colors.transparent,
-      body: Padding(
-        padding: const EdgeInsets.all(24.0),
+      // Scrollable: the composer card stack is taller than a 600pt-tall
+      // window, which overflowed by 120px. The 140pt bottom inset also
+      // keeps the action row clear of the docked glass tab bar
+      // (the shell runs with extendBody: true).
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.fromLTRB(24, 24, 24, 140),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -287,15 +291,21 @@ class _ComposerViewState extends State<ComposerView> with SingleTickerProviderSt
         ),
         const SizedBox(height: 8),
         Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(
-              _platformTips[platform] ?? '',
-              style: TextStyle(
-                fontSize: 11,
-                color: isDark ? Colors.white38 : Colors.black38,
+            // Flexible: with spaceBetween and an unbounded tip string, the
+            // counter was pushed 44px past the right edge at tablet width.
+            Flexible(
+              child: Text(
+                _platformTips[platform] ?? '',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 11,
+                  color: isDark ? Colors.white38 : Colors.black38,
+                ),
               ),
             ),
+            const SizedBox(width: 8),
             Text(
               '$count / $limit',
               style: TextStyle(

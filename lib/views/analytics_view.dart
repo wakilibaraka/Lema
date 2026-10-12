@@ -80,6 +80,9 @@ class _AnalyticsViewState extends State<AnalyticsView> {
                 CupertinoButton(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   color: AppleTheme.systemBlue,
+                  // Plain CupertinoButton defaults its foreground to the
+                  // same #007AFF as this background; set it explicitly.
+                  foregroundColor: Colors.white,
                   borderRadius: BorderRadius.circular(8),
                   onPressed: _loadAnalytics,
                   child: const Text(

@@ -485,6 +485,9 @@ class _AiStudioViewState extends State<AiStudioView> {
               CupertinoButton(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 color: AppleTheme.systemBlue,
+                // Plain CupertinoButton defaults its foreground to the
+                // same #007AFF as this background; set it explicitly.
+                foregroundColor: Colors.white,
                 borderRadius: BorderRadius.circular(8),
                 onPressed: () => _addGeneratedToQueue(_generatedContent!),
                 child: const Text('Add to Queue', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600)),

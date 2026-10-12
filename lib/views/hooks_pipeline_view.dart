@@ -310,6 +310,9 @@ class _HooksPipelineViewState extends State<HooksPipelineView> {
                 CupertinoButton(
                   padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                   color: AppleTheme.systemBlue,
+                  // Plain CupertinoButton defaults its foreground to the
+                  // same #007AFF as this background; set it explicitly.
+                  foregroundColor: Colors.white,
                   borderRadius: BorderRadius.circular(10),
                   onPressed: () => _pushToQueue(script),
                   child: const Row(
