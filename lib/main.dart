@@ -2,16 +2,20 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'providers/app_provider.dart';
+import 'providers/auth_provider.dart';
 import 'providers/posts_provider.dart';
 import 'providers/profile_provider.dart';
 import 'services/storage_service.dart';
 import 'theme/apple_theme.dart';
 import 'views/ai_studio_view.dart';
+import 'views/analytics_view.dart';
 import 'views/calendar_view.dart';
+import 'views/composer_view.dart';
 import 'views/hooks_pipeline_view.dart';
 import 'views/lema_grid_view.dart';
 import 'views/queue_view.dart';
 import 'views/settings_view.dart';
+import 'views/simulation_view.dart';
 import 'views/simulator_view.dart';
 import 'views/tasks_view.dart';
 import 'widgets/dynamic_capsule.dart';
@@ -35,6 +39,7 @@ class LemaApp extends StatelessWidget {
       providers: [
         ChangeNotifierProvider(create: (_) => AppProvider()),
         ChangeNotifierProvider(create: (_) => ProfileProvider()),
+        ChangeNotifierProvider(create: (_) => AuthProvider()),
         ChangeNotifierProvider(create: (_) => PostsProvider()),
       ],
       child: Consumer<AppProvider>(
@@ -90,9 +95,12 @@ class _MainLayoutScreenState extends State<MainLayoutScreen> {
     QueueView(),
     CalendarView(),
     AiStudioView(),
+    ComposerView(),
+    AnalyticsView(),
     HooksPipelineView(),
     TasksView(),
     SettingsView(),
+    SimulationView(),
   ];
 
   final List<String> _viewTitles = const [
@@ -101,9 +109,12 @@ class _MainLayoutScreenState extends State<MainLayoutScreen> {
     'Publishing Queue',
     'Content Calendar',
     'AI Studio & Planner',
+    'Omnichannel Composer',
+    'Analytics',
     'Hooks & Scripts Pipeline',
     'Daily Operations Tick',
     'Daemon & Settings',
+    'Simulation Engine',
   ];
 
   // Short titles for the narrow mobile app bar (Slice 1: no truncation).
@@ -113,9 +124,12 @@ class _MainLayoutScreenState extends State<MainLayoutScreen> {
     'Queue',
     'Calendar',
     'AI Studio',
+    'Composer',
+    'Analytics',
     'Hooks',
     'Daily Tick',
     'Settings',
+    'Simulation',
   ];
 
   @override

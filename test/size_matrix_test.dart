@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:lema/providers/app_provider.dart';
+import 'package:lema/providers/auth_provider.dart';
 import 'package:lema/providers/posts_provider.dart';
 import 'package:lema/providers/profile_provider.dart';
 import 'package:lema/services/storage_service.dart';
@@ -52,6 +53,9 @@ void main() {
                 ChangeNotifierProvider(create: (_) => AppProvider()),
                 ChangeNotifierProvider(create: (_) => PostsProvider()),
                 ChangeNotifierProvider(create: (_) => ProfileProvider()),
+                // SettingsView watches AuthProvider for the connected-
+                // accounts card; omitting it threw ProviderNotFound.
+                ChangeNotifierProvider(create: (_) => AuthProvider()),
               ],
               child: view,
             ),

@@ -414,13 +414,18 @@ class _SimulatorViewState extends State<SimulatorView> {
         // Instagram Layout Mode (Reel vs Feed)
         if (_selectedPlatform == SocialPlatform.instagram) ...[
           const SizedBox(height: 14),
-          Row(
+          // Wrap, not Row: the tablet/desktop controls column is a fixed
+          // 300px (260px after padding), so a Row carrying a label plus the
+          // segmented control overflowed by ~200px at 768pt.
+          Wrap(
+            crossAxisAlignment: WrapCrossAlignment.center,
+            spacing: 8,
+            runSpacing: 8,
             children: [
               Text(
-                'Layout: ',
+                'Layout',
                 style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600, color: isDark ? Colors.white70 : Colors.black87),
               ),
-              const SizedBox(width: 8),
               CupertinoSlidingSegmentedControl<bool>(
                 groupValue: _isReelMode,
                 children: const {
@@ -521,18 +526,24 @@ class _SimulatorViewState extends State<SimulatorView> {
                       ),
                     ],
                   ),
+                  // Flexible + ellipsis: the 260px-wide tablet controls
+                  // column clipped this label by 28px at 768pt.
                   child: const Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Icon(CupertinoIcons.folder_badge_plus, size: 15, color: Colors.white),
                       SizedBox(width: 8),
-                      Text(
-                        'Upload / Swap Media',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w700,
-                          fontSize: 12.5,
-                          letterSpacing: -0.2,
+                      Flexible(
+                        child: Text(
+                          'Upload / Swap Media',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 12.5,
+                            letterSpacing: -0.2,
+                          ),
                         ),
                       ),
                     ],

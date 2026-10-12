@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:lema/providers/app_provider.dart';
@@ -5,110 +6,193 @@ import 'package:lema/services/storage_service.dart';
 import 'package:lema/models/simulation_model.dart';
 import 'package:lema/models/post_model.dart';
 import 'package:lema/models/platform_info.dart';
+import 'package:lema/theme/apple_theme.dart';
 
-class SimulationView extends StatelessWidget {
+/// Slice 25 — offline-first simulation engine.
+///
+/// Scores a deterministic set of posts against per-platform bonuses and
+/// persists the run so it survives a restart. Everything runs on-device:
+/// no daemon, no network. The shell (`MainLayoutScreen`) owns the app bar
+/// and the docked tab bar, so this view renders a plain scrollable body.
+class SimulationView extends StatefulWidget {
   const SimulationView({super.key});
+
+  @override
+  State<SimulationView> createState() => _SimulationViewState();
+}
+
+class _SimulationViewState extends State<SimulationView> {
+  late SimulationRun _run;
+  bool _loaded = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_loaded) return;
+    _loaded = true;
+    // Seed once so `posts` and `platformAssignments` share identical
+    // instances — PostModel uses identity equality, so two separate
+    // _seedPosts() calls would leave every assignment lookup null.
+    _run = StorageService.instance.loadSimulationRun() ?? _freshRun();
+  }
+
+  SimulationRun _freshRun() {
+    final seeds = _seedPosts();
+    return SimulationRun(
+      posts: seeds,
+      platformAssignments: {
+        for (final p in seeds) p: PlatformName.instagram,
+      },
+      config: const ScoringConfig(),
+    );
+  }
+
+  Future<void> _score() async {
+    final config = _run.config.copyWith(
+      engagementWeight: 1.0,
+      timeDecayFactor: 0.1,
+    );
+    final results = _run.platformAssignments.entries.map((entry) {
+      final score = defaultScoreFunction(entry.key, entry.value, config);
+      return ScoreResult(
+        totalScore: score,
+        engagementComponent: score * 0.6,
+        decayComponent: score * 0.4,
+        platformBonuses: {entry.value: config.platformBonus[entry.value] ?? 0.0},
+      );
+    }).toList();
+
+    setState(() => _run = _run.copyWith(results: results));
+    await StorageService.instance.saveSimulationRun(_run);
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Simulation scored & saved')),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     final app = context.watch<AppProvider>();
-    final isDark = app.isDarkMode;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final mode = app.simulationView;
 
-    // Load or create a SimulationRun
-    SimulationRun run = StorageService.instance.loadSimulationRun() ??
-        SimulationRun(
-          posts: _seedPosts(),
-          platformAssignments: {
-            for (var p in _seedPosts()) p: PlatformName.instagram,
-          },
-          config: const ScoringConfig(),
-        );
-
-    return Scaffold(
-      appBar: AppBar(title: const Text('Simulation')),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'View mode',
-              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+    return Padding(
+      // Bottom clearance for the docked glass tab bar (extendBody: true).
+      padding: const EdgeInsets.fromLTRB(24, 24, 24, 140),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            'Simulation Engine',
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.w800,
+              letterSpacing: -0.5,
+              color: isDark ? Colors.white : Colors.black,
             ),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                _ViewToggleButton(
-                  label: 'Grid',
-                  isSelected: app.simulationView == SimulationViewMode.grid,
-                  onTap: () => app.setSimulationView(SimulationViewMode.grid),
-                  isDark: isDark,
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Offline scoring across platforms. No daemon, no network.',
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontSize: 13,
+              color: isDark ? Colors.white60 : Colors.black54,
+            ),
+          ),
+          const SizedBox(height: 20),
+          Row(
+            children: [
+              Text(
+                'View mode',
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                  color: isDark ? Colors.white70 : Colors.black87,
                 ),
-                const SizedBox(width: 12),
-                _ViewToggleButton(
-                  label: 'List',
-                  isSelected: app.simulationView == SimulationViewMode.list,
-                  onTap: () => app.setSimulationView(SimulationViewMode.list),
-                  isDark: isDark,
-                ),
-              ],
-            ),
-            const SizedBox(height: 24),
-
-            ElevatedButton(
-              onPressed: () {
-                // Re‑run scoring with current config.
-                final config = run.config.copyWith(
-                  engagementWeight: 1.0,
-                  timeDecayFactor: 0.1,
-                );
-                final newResults = run.platformAssignments.entries.map((entry) {
-                  final post = entry.key;
-                  final platform = entry.value;
-                  final score = defaultScoreFunction(post, platform, config);
-                  return ScoreResult(
-                    totalScore: score,
-                    engagementComponent: score * 0.6,
-                    decayComponent: score * 0.4,
-                    platformBonuses: {platform: config.platformBonus[platform] ?? 0.0},
-                  );
-                }).toList();
-
-                final updatedRun = run.copyWith(results: newResults);
-                StorageService.instance.saveSimulationRun(updatedRun);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Simulation scored & saved')),
-                );
-              },
-              child: const Text('Score Simulation'),
-            ),
-            const SizedBox(height: 12),
-
-            Text(
-              'Run ID: ${run.id.substring(0, 8)}',
-              style: TextStyle(color: isDark ? Colors.white70 : Colors.grey),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Posts simulated: ${run.posts.length}',
-              style: TextStyle(color: isDark ? Colors.white70 : Colors.grey),
-            ),
-            const SizedBox(height: 24),
-
-            const Text(
-              'Simulated Feed',
-              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
-            ),
-            const SizedBox(height: 8),
-            Expanded(
-              child: _BuildFeed(
-                viewMode: app.simulationView,
-                posts: run.posts,
-                platformAssignments: run.platformAssignments,
-                config: run.config,
               ),
+              const SizedBox(width: 12),
+              _ViewToggleButton(
+                label: 'Grid',
+                isSelected: mode == SimulationViewMode.grid,
+                onTap: () =>
+                    app.setSimulationView(SimulationViewMode.grid),
+                isDark: isDark,
+              ),
+              const SizedBox(width: 8),
+              _ViewToggleButton(
+                label: 'List',
+                isSelected: mode == SimulationViewMode.list,
+                onTap: () => app.setSimulationView(SimulationViewMode.list),
+                isDark: isDark,
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          CupertinoButton.filled(
+            padding: const EdgeInsets.symmetric(vertical: 13),
+            borderRadius: BorderRadius.circular(12),
+            onPressed: _score,
+            child: const Text(
+              'Score Simulation',
+              style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
             ),
-          ],
+          ),
+          const SizedBox(height: 14),
+          Wrap(
+            spacing: 16,
+            runSpacing: 4,
+            children: [
+              _metaChip('Run', _shortId(_run.id), isDark),
+              _metaChip('Posts', '${_run.posts.length}', isDark),
+              _metaChip('Scored', '${_run.results.length}', isDark),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'SIMULATED FEED',
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontSize: 10.5,
+              fontWeight: FontWeight.w800,
+              letterSpacing: 1.0,
+              color: isDark ? Colors.white38 : Colors.black38,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Expanded(
+            child: _BuildFeed(
+              viewMode: mode,
+              posts: _run.posts,
+              platformAssignments: _run.platformAssignments,
+              config: _run.config,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  static String _shortId(String id) =>
+      id.length <= 8 ? id : id.substring(0, 8);
+
+  Widget _metaChip(String label, String value, bool isDark) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(
+        color: isDark ? Colors.white.withAlpha(14) : Colors.black.withAlpha(7),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Text(
+        '$label · $value',
+        style: TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.w600,
+          color: isDark ? Colors.white70 : Colors.black87,
         ),
       ),
     );
@@ -145,17 +229,10 @@ class SimulationView extends StatelessWidget {
       ),
     ];
   }
-
-  // _persistRun removed – persistence is handled via StorageService directly.
-
-  // Helper functions used inside the widget -------------------------------------------------
-
-  // defaultScoreFunction is defined in simulation_model.dart; we reference it via the typedef.
-  // No extra code needed here.
 }
 
 // -----------------------------------------------------------------------------
-// View‑mode toggle button
+// View-mode toggle button
 // -----------------------------------------------------------------------------
 class _ViewToggleButton extends StatelessWidget {
   final String label;
@@ -168,36 +245,30 @@ class _ViewToggleButton extends StatelessWidget {
     required this.isSelected,
     required this.onTap,
     required this.isDark,
-    Key? key,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
-    final color = isSelected
-        ? (isDark ? Colors.white : Colors.black)
-        : (isDark ? Colors.white24 : Colors.grey.shade300);
-    final textColor = isSelected
-        ? (isDark ? Colors.black : Colors.white)
-        : (isDark ? Colors.white70 : Colors.black87);
-
-    return Expanded(
-      child: TextButton(
-        onPressed: onTap,
-        child: Text(
-          label,
-          style: TextStyle(color: textColor, fontWeight: FontWeight.w600),
-        ),
-        style: TextButton.styleFrom(
-          padding: const EdgeInsets.symmetric(vertical: 10),
-          backgroundColor: color,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-            side: BorderSide(
-              color: isSelected
-                  ? Colors.transparent
-                  : (isDark ? Colors.white30 : Colors.black26),
-            ),
-          ),
+    final selected = isSelected;
+    return CupertinoButton(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      minimumSize: const Size(0, 32),
+      color: selected
+          ? AppleTheme.systemBlue
+          : (isDark ? Colors.white.withAlpha(16) : Colors.black.withAlpha(8)),
+      borderRadius: BorderRadius.circular(16),
+      foregroundColor: selected
+          ? Colors.white
+          : (isDark ? Colors.white70 : Colors.black87),
+      onPressed: onTap,
+      child: Text(
+        label,
+        style: TextStyle(
+          fontWeight: FontWeight.w600,
+          fontSize: 12.5,
+          color: selected
+              ? Colors.white
+              : (isDark ? Colors.white70 : Colors.black87),
         ),
       ),
     );
@@ -205,7 +276,7 @@ class _ViewToggleButton extends StatelessWidget {
 }
 
 // -----------------------------------------------------------------------------
-// Feed builder – grid or list
+// Feed builder — grid or list
 // -----------------------------------------------------------------------------
 class _BuildFeed extends StatelessWidget {
   final SimulationViewMode viewMode;
@@ -218,8 +289,7 @@ class _BuildFeed extends StatelessWidget {
     required this.posts,
     required this.platformAssignments,
     required this.config,
-    Key? key,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -243,6 +313,7 @@ class _BuildFeed extends StatelessWidget {
           platform: platform,
           aspectRatio: platform.aspectRatio,
           isGrid: isGrid,
+          score: defaultScoreFunction(post, platform, config),
         );
       },
     );
@@ -254,14 +325,15 @@ class _FeedCard extends StatelessWidget {
   final PlatformName platform;
   final double aspectRatio;
   final bool isGrid;
+  final double score;
 
   const _FeedCard({
     required this.post,
     required this.platform,
     required this.aspectRatio,
     required this.isGrid,
-    Key? key,
-  }) : super(key: key);
+    required this.score,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -277,36 +349,43 @@ class _FeedCard extends StatelessWidget {
 
     return Card(
       color: const Color(0xFF1E1E1E),
+      clipBehavior: Clip.antiAlias,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Media placeholder respecting aspect ratio
-          AspectRatio(
-            aspectRatio: aspectRatio,
+          Expanded(
             child: Container(
+              width: double.infinity,
               color: color.withAlpha(30),
-              child: const Icon(Icons.image, size: 80, color: Colors.white24),
+              child: const Icon(Icons.image, size: 48, color: Colors.white24),
             ),
           ),
-          const SizedBox(height: 6),
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8.0),
+            padding: const EdgeInsets.fromLTRB(8, 6, 8, 0),
             child: Text(
-              post.caption ?? '',
+              post.caption,
               maxLines: isGrid ? 2 : 3,
               overflow: TextOverflow.ellipsis,
               style: const TextStyle(color: Colors.white70, fontSize: 11),
             ),
           ),
-          const SizedBox(height: 4),
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8.0),
+            padding: const EdgeInsets.fromLTRB(8, 4, 8, 8),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  '${post.likes.toString().padLeft(3) ?? '0'} likes',
+                  '${post.likes.padLeft(3)} likes',
                   style: const TextStyle(color: Colors.white54, fontSize: 9),
+                ),
+                Text(
+                  score.toStringAsFixed(1),
+                  style: const TextStyle(
+                    color: AppleTheme.systemBlue,
+                    fontSize: 9,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
               ],
             ),

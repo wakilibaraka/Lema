@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../models/simulation_model.dart';
 import '../services/storage_service.dart';
 import '../services/api_service.dart';
 
@@ -13,12 +14,14 @@ class AppProvider extends ChangeNotifier {
   bool _sandboxMode = true;
   bool _autoplayVideos = false;
   String _daemonStatus = 'ONLINE';
+  SimulationViewMode _simulationView = SimulationViewMode.list;
 
   AppProvider([StorageService? storage, ApiService? api])
       : _storage = storage ?? StorageService.instance,
         _api = api ?? ApiService.instance {
     _isDarkMode = _storage.isDarkMode();
     _autoplayVideos = _storage.autoplayVideos();
+    _simulationView = _storage.loadSimulationViewMode();
     _checkDaemon();
   }
 
@@ -30,6 +33,7 @@ class AppProvider extends ChangeNotifier {
   bool get autoplayVideos => _autoplayVideos;
   String get daemonStatus => _daemonStatus;
   bool get isDaemonOnline => _daemonStatus == 'ONLINE';
+  SimulationViewMode get simulationView => _simulationView;
   ThemeMode get themeMode => _isDarkMode ? ThemeMode.dark : ThemeMode.light;
 
   void setNavIndex(int index) {
@@ -48,6 +52,15 @@ class AppProvider extends ChangeNotifier {
 
   void setChannelFilter(String filter) {
     _selectedChannelFilter = filter;
+    notifyListeners();
+  }
+
+  /// Slice 25: grid/list presentation for the offline simulation engine,
+  /// persisted so the choice survives a restart.
+  void setSimulationView(SimulationViewMode mode) {
+    if (_simulationView == mode) return;
+    _simulationView = mode;
+    _storage.setSimulationViewMode(mode);
     notifyListeners();
   }
 

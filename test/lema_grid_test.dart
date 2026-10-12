@@ -8,6 +8,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:lema/models/post_model.dart';
 import 'package:lema/providers/app_provider.dart';
+import 'package:lema/providers/auth_provider.dart';
 import 'package:lema/providers/posts_provider.dart';
 import 'package:lema/providers/profile_provider.dart';
 import 'package:lema/views/ai_studio_view.dart';
@@ -1047,6 +1048,10 @@ void main() {
             providers: [
               ChangeNotifierProvider.value(value: app),
               ChangeNotifierProvider(create: (_) => ProfileProvider()),
+              // SettingsView watches AuthProvider for the connected-
+              // accounts card; omitting it threw ProviderNotFound and
+              // masked the autoplay switch behind an error widget.
+              ChangeNotifierProvider(create: (_) => AuthProvider()),
             ],
             child: const SettingsView(),
           ),

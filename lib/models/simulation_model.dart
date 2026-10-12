@@ -1,6 +1,4 @@
-import 'dart:convert';
-import 'package:lema/lib/models/post_model.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:lema/models/post_model.dart';
 
 enum PlatformName { instagram, tiktok, youtube, twitter, facebook }
 
@@ -47,6 +45,14 @@ class ScoringConfig {
   }
 }
 
+/// Reversible platform-name codec so JSON round-trips survive an enum rename.
+PlatformName _platformFromKey(String key, PlatformName fallback) {
+  for (final p in PlatformName.values) {
+    if (p.toString() == key || p.name == key) return p;
+  }
+  return fallback;
+}
+
 class ScoreResult {
   final double totalScore;
   final double engagementComponent;
@@ -64,15 +70,26 @@ class ScoreResult {
         'totalScore': totalScore,
         'engagementComponent': engagementComponent,
         'decayComponent': decayComponent,
-        'platformBonuses': platformBonuses.entries.map((e) => [e.key.toString(), e.value]).toMap(),
+        'platformBonuses':
+            platformBonuses.map((k, v) => MapEntry(k.toString(), v)),
       };
 
-  static ScoreResult fromJson(Map<String, dynamic> json) => ScoreResult(
-        totalScore: json['totalScore'] as double,
-        engagementComponent: json['engagementComponent'] as double,
-        decayComponent: json['decayComponent'] as double,
-        platformBonuses: (json['platformBonuses'] as Map<String, dynamic>).map((k, v) => MapEntry(PlatformName.values.firstWhere((e) => e.toString() == k, orElse: () => PlatformName.instagram), v as double)),
-      );
+  static ScoreResult fromJson(Map<String, dynamic> json) {
+    final rawBonuses = json['platformBonuses'];
+    return ScoreResult(
+      totalScore: (json['totalScore'] as num? ?? 0).toDouble(),
+      engagementComponent: (json['engagementComponent'] as num? ?? 0).toDouble(),
+      decayComponent: (json['decayComponent'] as num? ?? 0).toDouble(),
+      platformBonuses: rawBonuses is Map
+          ? rawBonuses.map(
+              (k, v) => MapEntry(
+                _platformFromKey(k.toString(), PlatformName.instagram),
+                (v as num).toDouble(),
+              ),
+            )
+          : <PlatformName, double>{},
+    );
+  }
 }
 
 class SimulationRun {
@@ -97,45 +114,66 @@ class SimulationRun {
   Map<String, dynamic> toJson() => {
         'id': id,
         'createdAt': createdAt.toIso8601String(),
-        'posts': posts.map((p) => p.toMap()).toList(),
-        'platformAssignments':
-            platformAssignments.entries.map((e) => {'postId': e.key.id, 'platform': e.value.toString()}).toList(),
+        'posts': posts.map((p) => p.toJson()).toList(),
+        'platformAssignments': platformAssignments.entries
+            .map((e) => {'postId': e.key.id, 'platform': e.value.toString()})
+            .toList(),
         'config': {
           'engagementWeight': config.engagementWeight,
           'timeDecayFactor': config.timeDecayFactor,
-          'platformBonus': config.platformBonuses.map((k, v) => [k.toString(), v]),
+          'platformBonus':
+              config.platformBonus.map((k, v) => MapEntry(k.toString(), v)),
         },
         'results': results.map((r) => r.toJson()).toList(),
       };
 
   factory SimulationRun.fromJson(Map<String, dynamic> json) {
-    final postsList = (json['posts'] as List).map((m) => PostModel.fromMap(m)).toList();
+    final postsList = (json['posts'] as List? ?? [])
+        .whereType<Map>()
+        .map((m) => PostModel.fromJson(Map<String, dynamic>.from(m)))
+        .toList();
+
     final pa = <PostModel, PlatformName>{};
-    for (final entry in json['platformAssignments'] as List) {
-      final post = postsList.firstWhere((p) => p.id == entry['postId'], orElse: () => postsList.first);
-      final plat = PlatformName.values.firstWhere(
-        (p) => p.toString() == entry['platform'],
-        orElse: () => PlatformName.instagram,
+    for (final entry in (json['platformAssignments'] as List? ?? [])) {
+      if (entry is! Map || postsList.isEmpty) continue;
+      final id = entry['postId'];
+      final idx = postsList.indexWhere((p) => p.id == id);
+      if (idx == -1) continue;
+      pa[postsList[idx]] = _platformFromKey(
+        entry['platform']?.toString() ?? '',
+        PlatformName.instagram,
       );
-      pa[post] = plat;
     }
-    final cfgMap = json['config'] as Map<String, dynamic>;
-    final config = ScoringConfig(
-      engagementWeight: cfgMap['engagementWeight'] as double? ?? 1.0,
-      timeDecayFactor: cfgMap['timeDecayFactor'] as double? ?? 0.1,
-      platformBonus: (cfgMap['platformBonus'] as Map<String, dynamic>)
-          .map((k, v) => MapEntry(PlatformName.values.firstWhere((e) => e.toString() == k, orElse: () => PlatformName.instagram), v as double)),
+
+    final cfgMap = Map<String, dynamic>.from(
+      (json['config'] as Map?) ?? const {},
     );
-    final resultsList = (json['results'] as List?)
-        ?.map((r) => ScoreResult.fromJson(r as Map<String, dynamic>))
-        .toList() ?? [];
+    final rawBonus = cfgMap['platformBonus'];
+    final config = ScoringConfig(
+      engagementWeight: (cfgMap['engagementWeight'] as num? ?? 1.0).toDouble(),
+      timeDecayFactor: (cfgMap['timeDecayFactor'] as num? ?? 0.1).toDouble(),
+      platformBonus: rawBonus is Map
+          ? rawBonus.map(
+              (k, v) => MapEntry(
+                _platformFromKey(k.toString(), PlatformName.instagram),
+                (v as num).toDouble(),
+              ),
+            )
+          : <PlatformName, double>{},
+    );
+
     return SimulationRun(
-      id: json['id'] as String,
-      createdAt: DateTime.parse(json['createdAt'] as String),
+      id: json['id']?.toString() ??
+          DateTime.now().millisecondsSinceEpoch.toString(),
+      createdAt: DateTime.tryParse(json['createdAt']?.toString() ?? '') ??
+          DateTime.now(),
       posts: postsList,
       platformAssignments: pa,
       config: config,
-      results: resultsList,
+      results: (json['results'] as List? ?? [])
+          .whereType<Map>()
+          .map((r) => ScoreResult.fromJson(Map<String, dynamic>.from(r)))
+          .toList(),
     );
   }
 
@@ -158,13 +196,13 @@ class SimulationRun {
   }
 }
 
-typedef ScorePostFunction(PostModel post, PlatformName platform, ScoringConfig config) => double;
-
-final ScorePostFunction defaultScoreFunction = (PostModel post, PlatformName platform, ScoringConfig config) {
-  final likes = double.tryParse(post.likes ?? '0') ?? 0.0;
-  final now = DateTime.now().millisecondsSinceEpoch / 1000.0;
-  final postTime = post.createdAt?.millisecondsSinceEpoch / 1000.0 ?? now;
-  final timeDecay = (now - postTime) * config.timeDecayFactor;
+double defaultScoreFunction(
+    PostModel post, PlatformName platform, ScoringConfig config) {
+  final likes = double.tryParse(post.likes) ?? 0.0;
+  final nowMs = DateTime.now().millisecondsSinceEpoch;
+  final postMs = post.createdAt?.millisecondsSinceEpoch ?? nowMs;
+  final timeDecay = ((nowMs - postMs) / 1000.0) * config.timeDecayFactor;
   final platformBonus = config.platformBonus[platform] ?? 0.0;
-  return (likes * config.engagementWeight - timeDecay + platformBonus).clamp(0, double.infinity);
-};
+  return (likes * config.engagementWeight - timeDecay + platformBonus)
+      .clamp(0, double.infinity);
+}

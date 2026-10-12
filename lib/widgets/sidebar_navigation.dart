@@ -31,9 +31,12 @@ class SidebarNavigation extends StatelessWidget {
       {'icon': CupertinoIcons.layers_alt, 'label': 'Publish Queue', 'badge': 'Buffer'},
       {'icon': CupertinoIcons.calendar, 'label': 'Content Calendar', 'badge': null},
       {'icon': CupertinoIcons.sparkles, 'label': 'AI Studio', 'badge': 'Gemini'},
+      {'icon': CupertinoIcons.pencil_circle, 'label': 'Composer', 'badge': null},
+      {'icon': CupertinoIcons.chart_bar, 'label': 'Analytics', 'badge': null},
       {'icon': CupertinoIcons.film, 'label': 'Hooks & Scripts', 'badge': '60s'},
       {'icon': CupertinoIcons.checkmark_circle, 'label': 'Daily Tick', 'badge': null},
       {'icon': CupertinoIcons.gear_alt, 'label': 'Daemon & Settings', 'badge': null},
+      {'icon': CupertinoIcons.speedometer, 'label': 'Simulation Engine', 'badge': null},
     ];
 
     if (isRail) {
