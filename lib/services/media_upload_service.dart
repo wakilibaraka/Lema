@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'media_processing_service.dart';
 
 class UploadedMediaItem {
   final String id;
@@ -68,6 +69,16 @@ class MediaUploadService {
       final isVideo = ['mp4', 'mov', 'webm', 'avi', 'mkv'].contains(ext);
       final bytes = await file.readAsBytes();
       final sizeBytes = file.lengthSync() ?? (await file.length()) ?? bytes.length;
+
+      final validation = MediaProcessingService.validateMediaForPlatform(
+        filePath: fileName,
+        platform: 'instagram',
+        isVideo: isVideo,
+        fileSizeBytes: sizeBytes,
+      );
+      if (validation != null && !validation.isValid) {
+        throw Exception('${validation.message} ${validation.suggestion ?? ''}');
+      }
 
       String finalUrl = '';
 

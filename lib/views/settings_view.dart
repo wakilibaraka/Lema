@@ -2,10 +2,17 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../models/platform_info.dart';
 import '../providers/app_provider.dart';
+import '../providers/auth_provider.dart';
+import '../providers/posts_provider.dart';
 import '../providers/profile_provider.dart';
+import '../services/token_lifecycle_service.dart';
+import '../services/demo_mode_service.dart';
+import '../services/queue_autofill_service.dart';
 import '../theme/apple_theme.dart';
 import '../widgets/apple_glass_card.dart';
+import '../widgets/connection_status_dot.dart';
 import '../widgets/showcase_carousel.dart';
 
 class SettingsView extends StatefulWidget {
@@ -24,6 +31,333 @@ class _SettingsViewState extends State<SettingsView> {
     _apiKeyController.dispose();
     _daemonUrlController.dispose();
     super.dispose();
+  }
+
+  Widget _buildDemoAndAutomationCard(bool isDark) {
+    return AppleGlassCard(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: AppleTheme.systemOrange.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(CupertinoIcons.wand_stars, color: AppleTheme.systemOrange, size: 20),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Demo & Automation',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        color: isDark ? Colors.white : Colors.black,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'App review demo mode and queue auto-fill.',
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: isDark ? Colors.white60 : Colors.black54,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const Divider(height: 20),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Demo Mode',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 13.5,
+                        fontWeight: FontWeight.w600,
+                        color: isDark ? Colors.white : Colors.black,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'Mock API responses for app review screencasts.',
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(fontSize: 11.5, color: isDark ? Colors.white54 : Colors.black45),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 12),
+              CupertinoSwitch(
+                value: DemoModeService.isEnabled,
+                activeTrackColor: AppleTheme.systemBlue,
+                onChanged: (_) async {
+                  await DemoModeService.setEnabled(!DemoModeService.isEnabled);
+                  setState(() {});
+                },
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Queue Auto-Fill',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 13.5,
+                        fontWeight: FontWeight.w600,
+                        color: isDark ? Colors.white : Colors.black,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'Suggest recycled content for empty calendar slots.',
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(fontSize: 11.5, color: isDark ? Colors.white54 : Colors.black45),
+                    ),
+                  ],
+                ),
+              ),
+              CupertinoButton(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                color: AppleTheme.systemBlue,
+                borderRadius: BorderRadius.circular(8),
+                onPressed: () {
+                  final posts = context.read<PostsProvider>().posts;
+                  final gaps = QueueAutofillService.findGapsInRange(
+                    start: DateTime.now(),
+                    end: DateTime.now().add(const Duration(days: 7)),
+                    scheduledPosts: posts.where((p) => p.status == 'scheduled').toList(),
+                  );
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Found ${gaps.length} empty slots in the next 7 days.')),
+                  );
+                },
+                child: const Text(
+                  'Scan Gaps',
+                  style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildConnectedAccountsCard(bool isDark) {
+    final auth = context.watch<AuthProvider>();
+
+    return AppleGlassCard(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: AppleTheme.systemIndigo.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(CupertinoIcons.link, color: AppleTheme.systemIndigo, size: 20),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Connected Accounts',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        color: isDark ? Colors.white : Colors.black,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'Manage OAuth connections for each platform.',
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: isDark ? Colors.white60 : Colors.black54,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const Divider(height: 20),
+          ...SocialPlatform.values.map((platform) {
+            final info = PlatformInfo.fromPlatform(platform);
+            final status = auth.getStatus(platform.name);
+            final isConnected = status == TokenStatus.connected;
+            final isExpired = status == TokenStatus.expired;
+            final isExpiringSoon = status == TokenStatus.expiringSoon;
+
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: Row(
+                children: [
+                  Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      color: info.color.withAlpha(25),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Icon(info.iconData, color: info.color, size: 18),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          info.name,
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: isDark ? Colors.white : Colors.black,
+                          ),
+                        ),
+                        Text(
+                          isConnected
+                              ? 'Connected as ${info.handle}'
+                              : isExpired
+                                  ? 'Token expired — reconnect required'
+                                  : isExpiringSoon
+                                      ? 'Token expiring soon'
+                                      : 'Not connected',
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: isExpired
+                                ? AppleTheme.systemRed
+                                : isExpiringSoon
+                                    ? AppleTheme.systemOrange
+                                    : isConnected
+                                        ? AppleTheme.systemGreen
+                                        : (isDark ? Colors.white38 : Colors.black38),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  ConnectionStatusDot(
+                    status: ConnectionStatusDot.fromTokenStatus(status),
+                    platform: info.name,
+                  ),
+                  const SizedBox(width: 8),
+                  CupertinoButton(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    color: isConnected
+                        ? AppleTheme.systemRed.withValues(alpha: 0.12)
+                        : AppleTheme.systemBlue,
+                    borderRadius: BorderRadius.circular(8),
+                    onPressed: () {
+                      if (isConnected) {
+                        auth.disconnectPlatform(platform.name);
+                      } else {
+                        _showConnectDialog(platform.name, info.name);
+                      }
+                    },
+                    child: Text(
+                      isConnected ? 'Disconnect' : 'Connect',
+                      style: TextStyle(
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.w600,
+                        color: isConnected ? AppleTheme.systemRed : Colors.white,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }),
+        ],
+      ),
+    );
+  }
+
+  void _showConnectDialog(String platform, String platformName) {
+    final controller = TextEditingController();
+    showCupertinoDialog(
+      context: context,
+      builder: (context) => CupertinoAlertDialog(
+        title: Text('Connect $platformName'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: 8),
+            const Text(
+              'Paste an access token from the platform\'s OAuth flow.',
+              style: TextStyle(fontSize: 13),
+            ),
+            const SizedBox(height: 12),
+            CupertinoTextField(
+              controller: controller,
+              placeholder: 'Access token',
+              obscureText: true,
+            ),
+          ],
+        ),
+        actions: [
+          CupertinoDialogAction(
+            child: const Text('Cancel'),
+            onPressed: () => Navigator.of(context).pop(),
+          ),
+          CupertinoDialogAction(
+            isDefaultAction: true,
+            onPressed: () {
+              final token = controller.text.trim();
+              if (token.isNotEmpty) {
+                context.read<AuthProvider>().connectPlatform(
+                      platform,
+                      accessToken: token,
+                      expiresAt: DateTime.now().add(const Duration(days: 60)),
+                    );
+              }
+              Navigator.of(context).pop();
+            },
+            child: const Text('Connect'),
+          ),
+        ],
+      ),
+    );
   }
 
   Future<void> _openGitHub() async {
@@ -267,6 +601,14 @@ class _SettingsViewState extends State<SettingsView> {
                   ],
                 ),
               ),
+
+              const SizedBox(height: 20),
+
+              _buildConnectedAccountsCard(isDark),
+
+              const SizedBox(height: 20),
+
+              _buildDemoAndAutomationCard(isDark),
 
               const SizedBox(height: 20),
 

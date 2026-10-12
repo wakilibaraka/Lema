@@ -1,0 +1,489 @@
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../models/platform_info.dart';
+import '../models/post_model.dart';
+import '../providers/posts_provider.dart';
+import '../providers/auth_provider.dart';
+import '../theme/apple_theme.dart';
+import '../widgets/apple_glass_card.dart';
+import '../widgets/error_banner.dart';
+import '../widgets/media_picker_dialog.dart';
+import '../widgets/media_player_widget.dart';
+
+class ComposerView extends StatefulWidget {
+  const ComposerView({super.key});
+
+  @override
+  State<ComposerView> createState() => _ComposerViewState();
+}
+
+class _ComposerViewState extends State<ComposerView> with SingleTickerProviderStateMixin {
+  late TabController _tabController;
+  final TextEditingController _coreController = TextEditingController();
+  final Map<String, TextEditingController> _platformOverrides = {};
+  final Map<String, String> _platformMediaUrls = {};
+  final Map<String, bool> _platformIsVideo = {};
+  DateTime _scheduledTime = DateTime.now().add(const Duration(hours: 3));
+  bool _isDraft = false;
+
+  static const Map<String, int> _charLimits = {
+    'instagram': 2200,
+    'tiktok': 2200,
+    'youtube': 5000,
+    'facebook': 63206,
+    'linkedin': 3000,
+    'twitter': 280,
+  };
+
+  static const Map<String, String> _platformTips = {
+    'instagram': 'Links in captions are not clickable. Use link in bio.',
+    'tiktok': 'Keep it punchy. Use trending hashtags.',
+    'youtube': 'Title required. Description supports timestamps.',
+    'facebook': 'Longer posts perform well. Ask questions.',
+    'linkedin': 'Professional tone. Line breaks improve readability.',
+    'twitter': 'Concise and punchy. Thread for longer content.',
+  };
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: SocialPlatform.values.length, vsync: this);
+    for (final p in SocialPlatform.values) {
+      _platformOverrides[p.name] = TextEditingController();
+    }
+    _tabController.addListener(() => setState(() {}));
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    _coreController.dispose();
+    for (final c in _platformOverrides.values) {
+      c.dispose();
+    }
+    super.dispose();
+  }
+
+  String _effectiveCaption(String platform) {
+    final override = _platformOverrides[platform]?.text ?? '';
+    return override.isNotEmpty ? override : _coreController.text;
+  }
+
+  int _charCount(String platform) => _effectiveCaption(platform).length;
+
+  int _charLimit(String platform) => _charLimits[platform] ?? 2200;
+
+  bool _isOverLimit(String platform) => _charCount(platform) > _charLimit(platform);
+
+  List<String> get _selectedPlatforms {
+    return SocialPlatform.values
+        .where((p) => _platformMediaUrls.containsKey(p.name))
+        .map((p) => p.name)
+        .toList();
+  }
+
+  void _schedulePost() {
+    final caption = _coreController.text.trim();
+    if (caption.isEmpty) return;
+
+    final platforms = _selectedPlatforms.isEmpty
+        ? [SocialPlatform.values[_tabController.index].name]
+        : _selectedPlatforms;
+
+    for (final platform in platforms) {
+      final platformCaption = _effectiveCaption(platform);
+      if (platformCaption.trim().isEmpty) continue;
+
+      final post = PostModel(
+        id: 'composer_${DateTime.now().millisecondsSinceEpoch}_$platform',
+        caption: platformCaption,
+        platforms: [platform],
+        mediaUrl: _platformMediaUrls[platform] ?? '',
+        isVideo: _platformIsVideo[platform] ?? false,
+        scheduledTime: _scheduledTime,
+        status: _isDraft ? 'draft' : 'scheduled',
+      );
+
+      context.read<PostsProvider>().addPost(post);
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(_isDraft
+            ? 'Saved as draft'
+            : 'Scheduled for ${_scheduledTime.month}/${_scheduledTime.day} at ${_scheduledTime.hour}:${_scheduledTime.minute.toString().padLeft(2, '0')}'),
+      ),
+    );
+
+    _coreController.clear();
+    for (final c in _platformOverrides.values) {
+      c.clear();
+    }
+    setState(() {
+      _platformMediaUrls.clear();
+      _platformIsVideo.clear();
+      _isDraft = false;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final auth = context.watch<AuthProvider>();
+
+    return Scaffold(
+      backgroundColor: Colors.transparent,
+      body: Padding(
+        padding: const EdgeInsets.all(24.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Omnichannel Composer',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: -0.5,
+                          color: isDark ? Colors.white : Colors.black,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Write once, format per platform.',
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: isDark ? Colors.white60 : Colors.black54,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+
+            if (auth.hasAnyExpired)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: ErrorBanner.tokenExpiredBanner(
+                  platform: auth.expiredPlatforms.first,
+                  onReconnect: () {},
+                ),
+              ),
+
+            AppleGlassCard(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  _buildPlatformTabs(isDark),
+                  const SizedBox(height: 16),
+                  _buildCoreComposer(isDark),
+                  const SizedBox(height: 12),
+                  _buildPlatformOverride(isDark),
+                  const SizedBox(height: 12),
+                  _buildMediaSection(isDark),
+                  const SizedBox(height: 12),
+                  _buildScheduleSection(isDark),
+                  const SizedBox(height: 16),
+                  _buildActionButtons(isDark),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPlatformTabs(bool isDark) {
+    return SizedBox(
+      height: 36,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        itemCount: SocialPlatform.values.length,
+        separatorBuilder: (_, _) => const SizedBox(width: 8),
+        itemBuilder: (context, index) {
+          final platform = SocialPlatform.values[index];
+          final info = PlatformInfo.fromPlatform(platform);
+          final isSelected = _tabController.index == index;
+          final isConnected = context.watch<AuthProvider>().isConnected(platform.name);
+
+          return GestureDetector(
+            onTap: () => _tabController.animateTo(index),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: isSelected ? info.color.withAlpha(30) : Colors.transparent,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(
+                  color: isSelected ? info.color : Colors.grey.withAlpha(60),
+                ),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(info.iconData, size: 14, color: isSelected ? info.color : Colors.grey),
+                  const SizedBox(width: 6),
+                  Text(
+                    info.name,
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                      color: isSelected ? info.color : Colors.grey,
+                    ),
+                  ),
+                  if (!isConnected) ...[
+                    const SizedBox(width: 4),
+                    Container(
+                      width: 6,
+                      height: 6,
+                      decoration: const BoxDecoration(
+                        color: AppleTheme.systemRed,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildCoreComposer(bool isDark) {
+    final platform = SocialPlatform.values[_tabController.index].name;
+    final count = _charCount(platform);
+    final limit = _charLimit(platform);
+    final overLimit = _isOverLimit(platform);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        TextField(
+          controller: _coreController,
+          maxLines: 5,
+          onChanged: (_) => setState(() {}),
+          decoration: InputDecoration(
+            hintText: 'Write your core message...',
+            filled: true,
+            fillColor: isDark ? Colors.white.withAlpha(12) : Colors.black.withAlpha(8),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide.none,
+            ),
+          ),
+        ),
+        const SizedBox(height: 8),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              _platformTips[platform] ?? '',
+              style: TextStyle(
+                fontSize: 11,
+                color: isDark ? Colors.white38 : Colors.black38,
+              ),
+            ),
+            Text(
+              '$count / $limit',
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                color: overLimit ? AppleTheme.systemRed : (isDark ? Colors.white54 : Colors.black45),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPlatformOverride(bool isDark) {
+    final platform = SocialPlatform.values[_tabController.index].name;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(
+          'Override for ${PlatformInfo.fromString(platform).name} (optional)',
+          style: TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.w600,
+            color: isDark ? Colors.white54 : Colors.black54,
+          ),
+        ),
+        const SizedBox(height: 6),
+        TextField(
+          controller: _platformOverrides[platform],
+          maxLines: 2,
+          onChanged: (_) => setState(() {}),
+          decoration: InputDecoration(
+            hintText: 'Leave empty to use core message...',
+            filled: true,
+            fillColor: isDark ? Colors.white.withAlpha(8) : Colors.black.withAlpha(5),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: BorderSide.none,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildMediaSection(bool isDark) {
+    final platform = SocialPlatform.values[_tabController.index].name;
+    final mediaUrl = _platformMediaUrls[platform] ?? '';
+    final isVideo = _platformIsVideo[platform] ?? false;
+
+    return Row(
+      children: [
+        ClipRRect(
+          borderRadius: BorderRadius.circular(8),
+          child: SizedBox(
+            width: 48,
+            height: 48,
+            child: mediaUrl.isNotEmpty
+                ? UniversalMediaPlayer(
+                    mediaUrl: mediaUrl,
+                    isVideo: isVideo,
+                    autoPlay: false,
+                    showControls: false,
+                  )
+                : Container(
+                    color: isDark ? Colors.white12 : Colors.black12,
+                    child: Icon(
+                      CupertinoIcons.photo,
+                      size: 20,
+                      color: isDark ? Colors.white38 : Colors.black38,
+                    ),
+                  ),
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Text(
+            mediaUrl.isNotEmpty ? mediaUrl.split('/').last : 'No media attached',
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontSize: 12,
+              color: isDark ? Colors.white70 : Colors.black87,
+            ),
+          ),
+        ),
+        CupertinoButton(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          color: isDark ? Colors.white.withAlpha(20) : Colors.black.withAlpha(12),
+          borderRadius: BorderRadius.circular(8),
+          onPressed: () async {
+            final res = await MediaPickerDialog.show(context);
+            if (res != null) {
+              setState(() {
+                _platformMediaUrls[platform] = res.pathOrUrl;
+                _platformIsVideo[platform] = res.isVideo;
+              });
+            }
+          },
+          child: Text(
+            'Attach',
+            style: TextStyle(
+              fontSize: 11.5,
+              fontWeight: FontWeight.w600,
+              color: isDark ? Colors.white : Colors.black87,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildScheduleSection(bool isDark) {
+    return Row(
+      children: [
+        Icon(CupertinoIcons.clock, size: 14, color: isDark ? Colors.white54 : Colors.black45),
+        const SizedBox(width: 8),
+        Text(
+          'Schedule: ${_scheduledTime.month}/${_scheduledTime.day} at ${_scheduledTime.hour}:${_scheduledTime.minute.toString().padLeft(2, '0')}',
+          style: TextStyle(
+            fontSize: 12,
+            color: isDark ? Colors.white70 : Colors.black87,
+          ),
+        ),
+        const Spacer(),
+        CupertinoButton(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+          onPressed: () async {
+            final picked = await showDatePicker(
+              context: context,
+              initialDate: _scheduledTime,
+              firstDate: DateTime.now(),
+              lastDate: DateTime.now().add(const Duration(days: 365)),
+            );
+            if (picked != null) {
+              setState(() {
+                _scheduledTime = DateTime(
+                  picked.year,
+                  picked.month,
+                  picked.day,
+                  _scheduledTime.hour,
+                  _scheduledTime.minute,
+                );
+              });
+            }
+          },
+          child: Text(
+            'Change',
+            style: TextStyle(fontSize: 11, color: AppleTheme.systemBlue),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildActionButtons(bool isDark) {
+    return Row(
+      children: [
+        Expanded(
+          child: CupertinoButton(
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            color: isDark ? Colors.white.withAlpha(20) : Colors.black.withAlpha(10),
+            borderRadius: BorderRadius.circular(12),
+            onPressed: _schedulePost,
+            child: Text(
+              'Save as Draft',
+              style: TextStyle(
+                fontWeight: FontWeight.w600,
+                color: isDark ? Colors.white70 : Colors.black87,
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: CupertinoButton.filled(
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            borderRadius: BorderRadius.circular(12),
+            onPressed: _schedulePost,
+            child: const Text(
+              'Schedule Post',
+              style: TextStyle(fontWeight: FontWeight.w700),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
