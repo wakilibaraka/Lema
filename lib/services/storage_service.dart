@@ -75,10 +75,17 @@ class StorageService {
   bool _postsDecodeError = false;
   bool get hadPostsDecodeError => _postsDecodeError;
 
+  /// True when nothing was stored for posts, so the caller can persist the
+  /// seed queue. The seed slots are built relative to launch time, so leaving
+  /// them unsaved moved the whole visible schedule on every restart.
+  bool _postsWereMissing = false;
+  bool get postsWereMissing => _postsWereMissing;
+
   List<PostModel> loadPosts() {
     final raw = _prefs.getString(_keyPosts);
     if (raw == null || raw.isEmpty) {
       _postsDecodeError = false;
+      _postsWereMissing = true;
       // Slice 22 fix: return a COPY — callers mutate the list (add,
       // reorder, migrate) and must never corrupt the seed template.
       return List<PostModel>.from(defaultSeedPosts);
@@ -86,9 +93,13 @@ class StorageService {
     try {
       final List decoded = jsonDecode(raw);
       _postsDecodeError = false;
+      _postsWereMissing = false;
       return decoded.map((e) => PostModel.fromJson(e)).toList();
     } catch (_) {
+      // A corrupt blob is not an empty one: never overwrite it here, the
+      // retry path in the grid owns recovery.
       _postsDecodeError = true;
+      _postsWereMissing = false;
       return List<PostModel>.from(defaultSeedPosts);
     }
   }

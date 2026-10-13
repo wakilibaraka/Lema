@@ -28,6 +28,11 @@ class PostsProvider extends ChangeNotifier {
     if (_posts.isEmpty) {
       _posts = List.from(defaultSeedPosts);
       _storage.savePosts(_posts);
+    } else if (_storage.postsWereMissing) {
+      // First run: the seed queue is what the user is looking at, so it has to
+      // be stored. Leaving it unsaved rebuilt the seeds (and their launch-
+      // relative slot times) on every start, so the schedule drifted.
+      _storage.savePosts(_posts);
     } else {
       // Slice 5 seed migration: merge any seed ids missing from storage
       // (e.g. new draft seeds on existing installs), then persist.

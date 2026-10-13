@@ -4,7 +4,6 @@ import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:lema/models/nav_destination.dart';
-import 'package:lema/models/post_model.dart';
 import 'package:lema/providers/app_provider.dart';
 import 'package:lema/providers/auth_provider.dart';
 import 'package:lema/providers/posts_provider.dart';
@@ -54,6 +53,38 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   setUp(() => SharedPreferences.setMockInitialValues({}));
   tearDown(() => DemoModeService.setEnabled(false));
+
+  group('The seeded queue is stored, not regenerated', () {
+    test('a first run persists the queue it shows', () async {
+      SharedPreferences.setMockInitialValues({});
+      final prefs = await SharedPreferences.getInstance();
+      StorageService(prefs);
+
+      expect(prefs.getString('lema_posts'), isNull);
+      final first = PostsProvider();
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+
+      expect(prefs.getString('lema_posts'), isNotNull,
+          reason: 'the visible schedule must survive a restart');
+
+      // A second run reads the stored slots instead of rebuilding them.
+      final stored = first.posts.map((p) => p.scheduledTime).toList();
+      final restarted = PostsProvider();
+      expect(restarted.posts.map((p) => p.scheduledTime).toList(), stored);
+    });
+
+    test('a corrupt blob is left alone for the retry path', () async {
+      SharedPreferences.setMockInitialValues({'lema_posts': '{not json'});
+      final prefs = await SharedPreferences.getInstance();
+      final storage = StorageService(prefs);
+
+      storage.loadPosts();
+      expect(storage.hadPostsDecodeError, isTrue);
+      expect(storage.postsWereMissing, isFalse);
+      expect(prefs.getString('lema_posts'), '{not json',
+          reason: 'recovery belongs to retryLoad, not to load');
+    });
+  });
 
   group('Save as Draft saves a draft', () {
     testWidgets('the draft button does not schedule', (tester) async {
