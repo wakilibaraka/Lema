@@ -446,19 +446,24 @@ class _LemaGridViewState extends State<LemaGridView>
                       ),
                       // Scrim. The top stop has to carry white text over a
                       // bright still: 70/255 was not enough and the frosted
-                      // pill below dissolved into light media.
+                      // pill below dissolved into light media. It also has to
+                      // out-darken the reel's own burned-in captions, which
+                      // otherwise bleed through and collide with the pill
+                      // (design plan §Hero) — so the first two stops hold a
+                      // near-solid band across the pill's 14–54pt zone.
                       Container(
                         decoration: BoxDecoration(
                           gradient: LinearGradient(
                             begin: Alignment.topCenter,
                             end: Alignment.bottomCenter,
                             colors: [
-                              Colors.black.withAlpha(150),
-                              Colors.black.withAlpha(60),
+                              Colors.black.withAlpha(235),
+                              Colors.black.withAlpha(225),
+                              Colors.black.withAlpha(70),
                               Colors.black.withAlpha(120),
                               Colors.black.withAlpha(205),
                             ],
-                            stops: const [0.0, 0.32, 0.62, 1.0],
+                            stops: const [0.0, 0.16, 0.40, 0.64, 1.0],
                           ),
                         ),
                       ),
