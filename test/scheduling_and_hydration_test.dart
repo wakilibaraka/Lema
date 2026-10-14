@@ -4,6 +4,8 @@ import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:lema/models/nav_destination.dart';
+import 'package:lema/models/post_model.dart';
+import 'package:lema/models/simulation_model.dart';
 import 'package:lema/providers/app_provider.dart';
 import 'package:lema/providers/auth_provider.dart';
 import 'package:lema/providers/posts_provider.dart';
@@ -292,6 +294,86 @@ void main() {
       await tester.tap(find.text('Done'));
       await tester.pumpAndSettle();
       expect(chosen, DateTime(2026, 10, 20, 14, 30));
+    });
+  });
+
+  group('A saved simulation run is read back at launch', () {
+    test('save → load round-trips posts, assignments, config and results',
+        () async {
+      SharedPreferences.setMockInitialValues({});
+      final prefs = await SharedPreferences.getInstance();
+      final storage = StorageService(prefs);
+
+      final first = PostModel(
+        id: 'sim-1',
+        caption: 'Hook that survived a restart',
+        mediaUrl: 'https://cdn.example.com/reel.mp4',
+        scheduledTime: DateTime(2026, 11, 3, 7, 15),
+      );
+      final second = PostModel(
+        id: 'sim-2',
+        caption: 'Short post',
+        mediaUrl: 'https://cdn.example.com/still.jpg',
+        status: 'draft',
+      );
+      final run = SimulationRun(
+        id: 'run-42',
+        createdAt: DateTime(2026, 10, 14, 8, 30),
+        posts: [first, second],
+        platformAssignments: {
+          first: PlatformName.tiktok,
+          second: PlatformName.youtube,
+        },
+        config: const ScoringConfig(
+          engagementWeight: 1.5,
+          timeDecayFactor: 0.25,
+          platformBonus: {PlatformName.instagram: 12.0},
+        ),
+        results: [
+          ScoreResult(
+            totalScore: 91.5,
+            engagementComponent: 60.0,
+            decayComponent: 19.5,
+            platformBonuses: {PlatformName.tiktok: 12.0},
+          ),
+        ],
+      );
+
+      await storage.saveSimulationRun(run);
+      final loaded = storage.loadSimulationRun();
+
+      expect(loaded, isNotNull, reason: 'a saved run must be readable');
+      expect(loaded!.id, 'run-42');
+      expect(loaded.createdAt, DateTime(2026, 10, 14, 8, 30));
+      expect(loaded.posts.map((p) => p.id), ['sim-1', 'sim-2']);
+      expect(loaded.posts.first.scheduledTime, DateTime(2026, 11, 3, 7, 15));
+
+      // Identity keys do not survive JSON: match restored assignments by
+      // post id, the same way simulation_view re-pairs them.
+      final restored = <String, PlatformName>{};
+      loaded.platformAssignments.forEach((post, platform) {
+        restored[post.id] = platform;
+      });
+      expect(restored,
+          {'sim-1': PlatformName.tiktok, 'sim-2': PlatformName.youtube});
+
+      expect(loaded.config.engagementWeight, 1.5);
+      expect(loaded.config.timeDecayFactor, 0.25);
+      expect(loaded.config.platformBonus[PlatformName.instagram], 12.0);
+
+      expect(loaded.results, hasLength(1));
+      expect(loaded.results.first.totalScore, 91.5);
+      expect(loaded.results.first.platformBonuses[PlatformName.tiktok], 12.0);
+    });
+
+    test('a corrupt blob returns null for a fresh run, not a crash', () async {
+      SharedPreferences.setMockInitialValues({
+        'lema_simulation_run': '{not valid json',
+      });
+      final prefs = await SharedPreferences.getInstance();
+      final storage = StorageService(prefs);
+
+      expect(storage.loadSimulationRun(), isNull);
     });
   });
 }

@@ -78,6 +78,8 @@ class PostModel {
   /// True when a scheduled post's time has already passed and nothing has
   /// published it. The daemon is parked, so nothing converts these
   /// automatically — the UI has to surface them.
+  bool get isOverdue => status == 'scheduled' && scheduledTime.isBefore(DateTime.now());
+
   /// The calendar day the post belongs to.
   ///
   /// When the schedule is held as a real `DateTime` the day is derived from
@@ -93,8 +95,6 @@ class PostModel {
     }
     return _scheduledDateRaw;
   }
-
-  bool get isOverdue => status == 'scheduled' && scheduledTime.isBefore(DateTime.now());
 
   DateTime get scheduledTime {
     final raw = _scheduledTimeRaw;
@@ -115,8 +115,11 @@ class PostModel {
 
     // Unreadable payload: fall back to the documented default slot on the
     // stored date, never to a fresh "now" — otherwise corrupt data would
-    // look like a legitimate reschedule.
-    return _dateOnly(_scheduledDateRaw) ?? DateTime.now();
+    // look like a legitimate reschedule. If even the date is garbage, a
+    // fixed past instant keeps the value stable across calls (a
+    // read-the-clock fallback would flip the post to overdue between two
+    // rebuilds) and surfaces it in the overdue list instead of hiding it.
+    return _dateOnly(_scheduledDateRaw) ?? DateTime(2000);
   }
 
   static DateTime? _dateOnly(String date) {

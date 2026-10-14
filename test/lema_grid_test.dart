@@ -883,7 +883,13 @@ void main() {
       await tester.pump(const Duration(seconds: 2));
       expect(provider.scheduledPosts.length, 4);
       expect(provider.publishedPosts.length, 1);
-      expect(find.textContaining('Dispatched to'), findsOneWidget);
+      // Demo mode reports its own label now and must never claim a daemon
+      // send (review finding 1) — the old 'Dispatched to … via daemon'
+      // text was the bug, not the contract.
+      expect(
+          find.textContaining('Demo mode: local publish simulated'),
+          findsOneWidget);
+      expect(find.textContaining('via daemon'), findsNothing);
       expect(tester.takeException(), isNull);
     });
 

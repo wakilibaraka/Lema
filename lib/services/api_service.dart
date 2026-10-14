@@ -114,12 +114,12 @@ class ApiService {
     }
   }
 
-  Future<bool> triggerShareNow(String postId) async {
-    final result = await _dispatch(postId);
-    return result.isSent;
-  }
-
   /// Hands [post] to the local daemon and reports the real outcome.
+  ///
+  /// The publish POST deliberately bypasses [_withRetry]: a timed-out or
+  /// 5xx'd publish may already have gone out, so retrying it would post the
+  /// same content twice (review finding 2). The dispatch UI owns Retry.
+  /// [_withRetry] stays on the GETs, where a repeat is harmless.
   Future<DispatchResult> dispatchPost(PostModel post) => _dispatch(post.id);
 
   Future<DispatchResult> _dispatch(String postId) async {
@@ -132,9 +132,9 @@ class ApiService {
     }
 
     try {
-      final res = await _withRetry(() => http.post(
-        Uri.parse('$baseUrl/api/posts/$postId/publish'),
-      ).timeout(const Duration(seconds: 6)));
+      final res = await http
+          .post(Uri.parse('$baseUrl/api/posts/$postId/publish'))
+          .timeout(const Duration(seconds: 6));
 
       if (res.statusCode >= 200 && res.statusCode < 300) {
         return const DispatchResult(DispatchOutcome.sent);

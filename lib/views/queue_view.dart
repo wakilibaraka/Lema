@@ -60,7 +60,10 @@ class _QueueViewState extends State<QueueView> {
       SnackBar(
         content: Text(
           result.isSent
-              ? 'Dispatched to ${post.platformInfo.name} via daemon'
+              // The label travels with the result so demo mode never claims
+              // a real daemon send (review finding 1).
+              ? (result.detail ??
+                  'Dispatched to ${post.platformInfo.name} via daemon')
               : 'Not sent — ${result.toString()}',
         ),
       ),

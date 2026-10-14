@@ -922,7 +922,10 @@ class _SimulatorViewState extends State<SimulatorView> {
             messenger.showSnackBar(
               SnackBar(
                 content: Text(result.isSent
-                    ? 'Dispatched "${activePost.title}" to ${activePost.platformInfo.name} via daemon'
+                    // Prefer the result's own label: demo mode reports its
+                    // simulated send instead of claiming a daemon (finding 1).
+                    ? (result.detail ??
+                        'Dispatched "${activePost.title}" to ${activePost.platformInfo.name} via daemon')
                     : 'Not sent — ${result.toString()}'),
               ),
             );
