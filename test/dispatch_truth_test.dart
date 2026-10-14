@@ -1,4 +1,8 @@
+import 'dart:async';
+
 import 'package:flutter_test/flutter_test.dart';
+import 'package:http/http.dart' as http;
+import 'package:http/testing.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:lema/models/post_model.dart';
@@ -101,6 +105,18 @@ void main() {
       });
 
       expect(broken.scheduledTime, DateTime(2026, 10, 12));
+    });
+
+    test('a post corrupt in both date and time holds one stable past instant',
+        () {
+      final broken =
+          _post('bad', scheduledTime: 'tbd', scheduledDate: 'unknown');
+
+      expect(broken.scheduledTime, DateTime(2000));
+      expect(broken.scheduledTime.isBefore(DateTime.now()), isTrue);
+      // Stable across parses: a clock-reading fallback would drift between
+      // two reads and flip the post to overdue on a later rebuild.
+      expect(broken.scheduledTime, DateTime(2000));
     });
   });
 
@@ -221,6 +237,47 @@ void main() {
 
       expect(result.outcome, DispatchOutcome.sent);
       expect(result.toString(), contains('Demo mode'));
+    });
+  });
+
+  group('The publish POST is attempted exactly once', () {
+    // Drives the REAL ApiService (unlike _StubApi above) against a stub
+    // HTTP client, so the no-retry contract of _dispatch is proven at the
+    // transport level: a retried publish can send the same content twice.
+    test('a 500 from the daemon is reported, not retried', () async {
+      await DemoModeService.setEnabled(false);
+      var attempts = 0;
+      final api = ApiService(
+        client: MockClient((request) async {
+          attempts++;
+          return http.Response('boom', 500);
+        }),
+      );
+
+      final result = await api.dispatchPost(_post('p1'));
+
+      expect(result.outcome, DispatchOutcome.rejected);
+      expect(result.detail, contains('HTTP 500'));
+      expect(attempts, 1,
+          reason: 'the retry ladder would have POSTed four times');
+    });
+
+    test('a timed-out publish is attempted once, not twice', () async {
+      await DemoModeService.setEnabled(false);
+      var attempts = 0;
+      final api = ApiService(
+        client: MockClient((request) async {
+          attempts++;
+          throw TimeoutException('stub daemon hung');
+        }),
+      );
+
+      final result = await api.dispatchPost(_post('p1'));
+
+      expect(result.outcome, DispatchOutcome.offline);
+      expect(result.detail, contains('timed out'));
+      expect(attempts, 1,
+          reason: 'the old transport retry would have sent a second POST');
     });
   });
 }

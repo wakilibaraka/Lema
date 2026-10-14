@@ -38,9 +38,21 @@ class DispatchResult {
 
 class ApiService {
   final String baseUrl;
-  static ApiService? _instance;
 
-  const ApiService({this.baseUrl = 'http://localhost:3001'});
+  /// Injectable transport. Production uses a shared real client; tests pass
+  /// a stub (package:http MockClient) so retry counts can be asserted
+  /// without a live daemon. Nullable to keep this constructor `const`.
+  final http.Client? client;
+
+  static ApiService? _instance;
+  static final http.Client _sharedClient = http.Client();
+
+  const ApiService({
+    this.baseUrl = 'http://localhost:3001',
+    this.client,
+  });
+
+  http.Client get _http => client ?? _sharedClient;
 
   static ApiService get instance => _instance ??= const ApiService();
 
@@ -88,7 +100,7 @@ class ApiService {
 
   Future<List<PostModel>> fetchPosts() async {
     try {
-      final res = await _withRetry(() => http.get(Uri.parse('$baseUrl/api/posts')).timeout(
+      final res = await _withRetry(() => _http.get(Uri.parse('$baseUrl/api/posts')).timeout(
             const Duration(seconds: 4),
           ));
       if (res.statusCode == 200) {
@@ -105,7 +117,7 @@ class ApiService {
 
   Future<bool> checkDaemonStatus() async {
     try {
-      final res = await _withRetry(() => http.get(Uri.parse('$baseUrl/api/settings')).timeout(
+      final res = await _withRetry(() => _http.get(Uri.parse('$baseUrl/api/settings')).timeout(
             const Duration(seconds: 3),
           ));
       return res.statusCode == 200;
@@ -132,7 +144,7 @@ class ApiService {
     }
 
     try {
-      final res = await http
+      final res = await _http
           .post(Uri.parse('$baseUrl/api/posts/$postId/publish'))
           .timeout(const Duration(seconds: 6));
 
@@ -163,7 +175,7 @@ class ApiService {
     required String mimeType,
   }) async {
     try {
-      final res = await _withRetry(() => http.post(
+      final res = await _withRetry(() => _http.post(
         Uri.parse('$baseUrl/api/upload'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
