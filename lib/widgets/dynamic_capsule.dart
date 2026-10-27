@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/app_provider.dart';
 import '../providers/profile_provider.dart';
-import '../theme/apple_theme.dart';
+import '../theme/backdrop_theme.dart';
 
 class DynamicCapsule extends StatelessWidget {
   final VoidCallback? onTap;
@@ -25,8 +25,8 @@ class DynamicCapsule extends StatelessWidget {
     // One switch behind this dot now: demo mode.
     final demoMode = app.demoMode;
     final dotColor = isDaemonOnline
-        ? (demoMode ? AppleTheme.systemBlue : AppleTheme.systemGreen)
-        : (demoMode ? AppleTheme.systemBlue : AppleTheme.systemOrange);
+        ? (demoMode ? BackdropTheme.accent : BackdropTheme.statusOnline)
+        : (demoMode ? BackdropTheme.accent : BackdropTheme.statusWarning);
     final statusLabel = isDaemonOnline
         ? (demoMode ? 'DEMO MODE' : 'DAEMON 3001')
         : (demoMode ? 'DEMO MODE' : 'OFFLINE SYNC');

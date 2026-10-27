@@ -10,7 +10,7 @@ import 'package:video_player/video_player.dart';
 import 'dart:io' show File;
 
 import '../providers/app_provider.dart';
-import '../theme/apple_theme.dart';
+import '../theme/backdrop_theme.dart';
 
 class UniversalMediaPlayer extends StatefulWidget {
   final String mediaUrl;
@@ -365,8 +365,10 @@ class _UniversalMediaPlayerState extends State<UniversalMediaPlayer> {
                 children: [
                   const Icon(
                     CupertinoIcons.play_rectangle,
-                    color: AppleTheme.systemOrange,
+                    color: Color(0xFFFF9500),
                     size: 40,
+                    // Backdrop orange == iOS systemOrange; tracked for migration.
+
                   ),
                   const SizedBox(height: 8),
                   const Text(
@@ -505,8 +507,10 @@ class _UniversalMediaPlayerState extends State<UniversalMediaPlayer> {
                             : 0.0,
                         backgroundColor: Colors.white.withValues(alpha: 0.25),
                         valueColor: const AlwaysStoppedAnimation<Color>(
-                          AppleTheme.systemBlue,
+                          BackdropTheme.accent,
                         ),
+                        // Backdrop magenta replaces iOS systemBlue here.
+
                         minHeight: 3.5,
                       ),
                     ),

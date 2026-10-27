@@ -1,7 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import '../services/media_upload_service.dart';
-import '../theme/apple_theme.dart';
+import '../theme/backdrop_theme.dart';
 
 class MediaPickerResult {
   final String pathOrUrl;
@@ -136,7 +136,7 @@ class _MediaPickerDialogState extends State<MediaPickerDialog> {
           constraints: const BoxConstraints(maxHeight: 680),
           decoration: BoxDecoration(
             color: isDark ? const Color(0xFF1E1E24) : Colors.white,
-            borderRadius: BorderRadius.circular(AppleTheme.radiusXl),
+            borderRadius: BorderRadius.circular(24),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withAlpha(100),
@@ -160,10 +160,10 @@ class _MediaPickerDialogState extends State<MediaPickerDialog> {
                     Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: AppleTheme.systemBlue.withAlpha(30),
+                        color: BackdropTheme.accent.withAlpha(30),
                         borderRadius: BorderRadius.circular(10),
                       ),
-                      child: const Icon(CupertinoIcons.photo_on_rectangle, color: AppleTheme.systemBlue, size: 20),
+                      child: const Icon(CupertinoIcons.photo_on_rectangle, color: BackdropTheme.accent, size: 20),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
@@ -205,8 +205,8 @@ class _MediaPickerDialogState extends State<MediaPickerDialog> {
                 padding: const EdgeInsets.all(16.0),
                 child: CupertinoButton(
                   padding: const EdgeInsets.symmetric(vertical: 14),
-                  color: AppleTheme.systemBlue,
-                  borderRadius: BorderRadius.circular(AppleTheme.radiusMd),
+                  color: BackdropTheme.accent,
+                  borderRadius: BorderRadius.circular(12),
                   onPressed: _isUploading ? null : _pickAndUpload,
                   child: _isUploading
                       ? Row(
@@ -288,7 +288,7 @@ class _MediaPickerDialogState extends State<MediaPickerDialog> {
                                       Icon(
                                         u.isVideo ? CupertinoIcons.film_fill : CupertinoIcons.photo,
                                         size: 16,
-                                        color: u.isVideo ? AppleTheme.systemPurple : AppleTheme.systemTeal,
+                                        color: u.isVideo ? const Color(0xFFAF52DE) : const Color(0xFF007AFF),
                                       ),
                                       const SizedBox(width: 10),
                                       Expanded(
@@ -350,7 +350,7 @@ class _MediaPickerDialogState extends State<MediaPickerDialog> {
                                   Icon(
                                     item.isVideo ? CupertinoIcons.videocam_fill : CupertinoIcons.photo_fill,
                                     size: 16,
-                                    color: item.isVideo ? AppleTheme.systemPurple : AppleTheme.systemTeal,
+                                    color: item.isVideo ? const Color(0xFFAF52DE) : const Color(0xFF007AFF),
                                   ),
                                   const SizedBox(width: 10),
                                   Expanded(

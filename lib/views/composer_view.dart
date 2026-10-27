@@ -8,7 +8,7 @@ import '../models/post_model.dart';
 import '../providers/app_provider.dart';
 import '../providers/posts_provider.dart';
 import '../providers/auth_provider.dart';
-import '../theme/apple_theme.dart';
+import '../theme/backdrop_theme.dart';
 import '../widgets/apple_glass_card.dart';
 import '../widgets/error_banner.dart';
 import '../widgets/media_picker_dialog.dart';
@@ -277,7 +277,7 @@ class _ComposerViewState extends State<ComposerView>
                       width: 6,
                       height: 6,
                       decoration: const BoxDecoration(
-                        color: AppleTheme.systemRed,
+                        color: BackdropTheme.statusWarning,
                         shape: BoxShape.circle,
                       ),
                     ),
@@ -339,7 +339,7 @@ class _ComposerViewState extends State<ComposerView>
                 fontSize: 11,
                 fontWeight: FontWeight.w600,
                 color: overLimit
-                    ? AppleTheme.systemRed
+                    ? BackdropTheme.statusWarning
                     : (isDark ? Colors.white54 : Colors.black45),
               ),
             ),
@@ -488,7 +488,7 @@ class _ComposerViewState extends State<ComposerView>
           },
           child: Text(
             'Change',
-            style: TextStyle(fontSize: 11, color: AppleTheme.systemBlue),
+            style: TextStyle(fontSize: 11, color: BackdropTheme.accent),
           ),
         ),
       ],

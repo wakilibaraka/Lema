@@ -10,7 +10,7 @@ import '../providers/profile_provider.dart';
 import '../services/token_lifecycle_service.dart';
 import '../services/demo_mode_service.dart';
 import '../services/queue_autofill_service.dart';
-import '../theme/apple_theme.dart';
+import '../theme/backdrop_theme.dart';
 import '../widgets/apple_glass_card.dart';
 import '../widgets/connection_status_dot.dart';
 import '../widgets/showcase_carousel.dart';
@@ -45,10 +45,10 @@ class _SettingsViewState extends State<SettingsView> {
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: AppleTheme.systemOrange.withValues(alpha: 0.12),
+                  color: BackdropTheme.statusWarning.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: const Icon(CupertinoIcons.wand_stars, color: AppleTheme.systemOrange, size: 20),
+                child: const Icon(CupertinoIcons.wand_stars, color: BackdropTheme.statusWarning, size: 20),
               ),
               const SizedBox(width: 14),
               Expanded(
@@ -114,7 +114,7 @@ class _SettingsViewState extends State<SettingsView> {
               CupertinoSwitch(
                 key: const ValueKey('demo_mode_switch'),
                 value: app.demoMode,
-                activeTrackColor: AppleTheme.systemBlue,
+                activeTrackColor: BackdropTheme.accent,
                 onChanged: (value) => app.setDemoMode(value),
               ),
             ],
@@ -149,7 +149,7 @@ class _SettingsViewState extends State<SettingsView> {
               ),
               CupertinoButton(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                color: AppleTheme.systemBlue,
+                color: BackdropTheme.accent,
                 // Plain CupertinoButton defaults its foreground to the
                 // same #007AFF as this background; set it explicitly.
                 foregroundColor: Colors.white,
@@ -190,10 +190,10 @@ class _SettingsViewState extends State<SettingsView> {
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: AppleTheme.systemIndigo.withValues(alpha: 0.12),
+                  color: BackdropTheme.violet.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: const Icon(CupertinoIcons.link, color: AppleTheme.systemIndigo, size: 20),
+                child: const Icon(CupertinoIcons.link, color: BackdropTheme.violet, size: 20),
               ),
               const SizedBox(width: 14),
               Expanded(
@@ -268,13 +268,12 @@ class _SettingsViewState extends State<SettingsView> {
                                       ? 'Token expiring soon'
                                       : 'Not connected',
                           style: TextStyle(
-                            fontSize: 11,
-                            color: isExpired
-                                ? AppleTheme.systemRed
+                            fontSize: 11,                              color: isExpired
+                                ? BackdropTheme.statusWarning
                                 : isExpiringSoon
-                                    ? AppleTheme.systemOrange
+                                    ? BackdropTheme.statusWarning
                                     : isConnected
-                                        ? AppleTheme.systemGreen
+                                        ? BackdropTheme.statusOnline
                                         : (isDark ? Colors.white38 : Colors.black38),
                           ),
                         ),
@@ -287,10 +286,9 @@ class _SettingsViewState extends State<SettingsView> {
                   ),
                   const SizedBox(width: 8),
                   CupertinoButton(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                    color: isConnected
-                        ? AppleTheme.systemRed.withValues(alpha: 0.12)
-                        : AppleTheme.systemBlue,
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),                        color: isConnected
+                            ? BackdropTheme.statusWarning.withValues(alpha: 0.12)
+                            : BackdropTheme.accent,
                     borderRadius: BorderRadius.circular(8),
                     onPressed: () {
                       if (isConnected) {
@@ -304,7 +302,7 @@ class _SettingsViewState extends State<SettingsView> {
                       style: TextStyle(
                         fontSize: 11.5,
                         fontWeight: FontWeight.w600,
-                        color: isConnected ? AppleTheme.systemRed : Colors.white,
+                        color: isConnected ? BackdropTheme.statusWarning : Colors.white,
                       ),
                     ),
                   ),
@@ -477,7 +475,7 @@ class _SettingsViewState extends State<SettingsView> {
                     CupertinoButton(
                       padding: const EdgeInsets.symmetric(
                           horizontal: 16, vertical: 8),
-                      color: AppleTheme.systemBlue,
+                      color: BackdropTheme.accent,
                       borderRadius: BorderRadius.circular(20),
                       onPressed: () => ShowcaseCarousel.present(context),
                       child: const Text(
@@ -506,12 +504,12 @@ class _SettingsViewState extends State<SettingsView> {
                         Container(
                           padding: const EdgeInsets.all(10),
                           decoration: BoxDecoration(
-                            color: (app.isDaemonOnline ? AppleTheme.systemGreen : AppleTheme.systemOrange).withValues(alpha: 0.12),
+                            color: (app.isDaemonOnline ? BackdropTheme.statusOnline : BackdropTheme.statusWarning).withValues(alpha: 0.12),
                             borderRadius: BorderRadius.circular(10),
                           ),
                           child: Icon(
                             CupertinoIcons.antenna_radiowaves_left_right,
-                            color: app.isDaemonOnline ? AppleTheme.systemGreen : AppleTheme.systemOrange,
+                            color: app.isDaemonOnline ? BackdropTheme.statusOnline : BackdropTheme.statusWarning,
                             size: 20,
                           ),
                         ),
@@ -549,7 +547,7 @@ class _SettingsViewState extends State<SettingsView> {
                         ),
                         CupertinoButton(
                           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                          color: AppleTheme.systemBlue,
+                          color: BackdropTheme.accent,
                           // Plain CupertinoButton defaults its foreground to
                           // the same #007AFF as this background.
                           foregroundColor: Colors.white,
@@ -638,10 +636,10 @@ class _SettingsViewState extends State<SettingsView> {
                         Container(
                           padding: const EdgeInsets.all(10),
                           decoration: BoxDecoration(
-                            color: AppleTheme.systemTeal.withValues(alpha: 0.12),
+                            color: BackdropTheme.accent.withValues(alpha: 0.12),
                             borderRadius: BorderRadius.circular(10),
                           ),
-                          child: const Icon(CupertinoIcons.play_rectangle_fill, color: AppleTheme.systemTeal, size: 20),
+                          child: const Icon(CupertinoIcons.play_rectangle_fill, color: BackdropTheme.accent, size: 20),
                         ),
                         const SizedBox(width: 14),
                         Expanded(
@@ -705,7 +703,7 @@ class _SettingsViewState extends State<SettingsView> {
                         CupertinoSwitch(
                           key: const ValueKey('autoplay_switch'),
                           value: app.autoplayVideos,
-                          activeTrackColor: AppleTheme.systemBlue,
+                          activeTrackColor: BackdropTheme.accent,
                           onChanged: (_) => app.toggleAutoplay(),
                         ),
                       ],
@@ -727,10 +725,10 @@ class _SettingsViewState extends State<SettingsView> {
                         Container(
                           padding: const EdgeInsets.all(10),
                           decoration: BoxDecoration(
-                            color: AppleTheme.systemPurple.withValues(alpha: 0.12),
+                            color: BackdropTheme.violet.withValues(alpha: 0.12),
                             borderRadius: BorderRadius.circular(10),
                           ),
-                          child: const Icon(CupertinoIcons.sparkles, color: AppleTheme.systemPurple, size: 20),
+                          child: const Icon(CupertinoIcons.sparkles, color: BackdropTheme.violet, size: 20),
                         ),
                         const SizedBox(width: 14),
                         Expanded(
@@ -817,7 +815,7 @@ class _SettingsViewState extends State<SettingsView> {
                                     ),
                                   ),
                                   const SizedBox(width: 6),
-                                  const Icon(CupertinoIcons.checkmark_seal_fill, color: AppleTheme.systemBlue, size: 14),
+                                  const Icon(CupertinoIcons.checkmark_seal_fill, color: BackdropTheme.accent, size: 14),
                                 ],
                               ),
                               const SizedBox(height: 2),
@@ -834,10 +832,10 @@ class _SettingsViewState extends State<SettingsView> {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                           decoration: BoxDecoration(
-                            color: AppleTheme.systemGreen.withValues(alpha: 0.15),
+                            color: BackdropTheme.statusOnline.withValues(alpha: 0.15),
                             borderRadius: BorderRadius.circular(6),
                           ),
-                          child: const Text('BASE PROFILE', style: TextStyle(color: AppleTheme.systemGreen, fontSize: 10, fontWeight: FontWeight.w700)),
+                          child: const Text('BASE PROFILE', style: TextStyle(color: BackdropTheme.statusOnline, fontSize: 10, fontWeight: FontWeight.w700)),
                         ),
                       ],
                     ),
@@ -854,7 +852,7 @@ class _SettingsViewState extends State<SettingsView> {
                     const SizedBox(height: 10),
                     Text(
                       'Contact Channels: 0757 638 846 • emmahsonny@gmail.com',
-                      style: TextStyle(fontSize: 11.5, color: AppleTheme.systemBlue, fontWeight: FontWeight.w600),
+                      style: TextStyle(fontSize: 11.5, color: BackdropTheme.accent, fontWeight: FontWeight.w600),
                     ),
                   ],
                 ),

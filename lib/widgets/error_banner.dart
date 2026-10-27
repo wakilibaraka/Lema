@@ -1,7 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import '../theme/apple_theme.dart';
 
 class ErrorBanner extends StatelessWidget {
   final String message;
@@ -17,6 +16,8 @@ class ErrorBanner extends StatelessWidget {
     this.onDismiss,
   });
 
+  static const _errorRed = Color(0xFFFF3B30);
+
   @override
   Widget build(BuildContext context) {
     return ClipRRect(
@@ -26,9 +27,9 @@ class ErrorBanner extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
           decoration: BoxDecoration(
-            color: AppleTheme.systemRed.withAlpha(200),
+            color: _errorRed.withAlpha(200),
             borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: AppleTheme.systemRed.withAlpha(180)),
+            border: Border.all(color: _errorRed.withAlpha(180)),
           ),
           child: Row(
             children: [
@@ -59,7 +60,7 @@ class ErrorBanner extends StatelessWidget {
                     child: Text(
                       actionLabel!,
                       style: const TextStyle(
-                        color: AppleTheme.systemRed,
+                        color: _errorRed,
                         fontSize: 12,
                         fontWeight: FontWeight.w700,
                       ),

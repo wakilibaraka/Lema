@@ -1,7 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import '../models/task_model.dart';
-import '../theme/apple_theme.dart';
+import '../theme/backdrop_theme.dart';
 import '../widgets/apple_glass_card.dart';
 
 class TasksView extends StatefulWidget {
@@ -150,10 +150,10 @@ class _TasksViewState extends State<TasksView> {
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: AppleTheme.systemGreen.withValues(alpha: 0.12),
+                      color: BackdropTheme.statusOnline.withValues(alpha: 0.12),
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(CupertinoIcons.checkmark_seal_fill, color: AppleTheme.systemGreen, size: 24),
+                    child: const Icon(CupertinoIcons.checkmark_seal_fill, color: Color(0xFF34C759), size: 24),
                   ),
                   const SizedBox(width: 16),
                   Expanded(
@@ -178,7 +178,7 @@ class _TasksViewState extends State<TasksView> {
                           style: const TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
-                            color: AppleTheme.systemGreen,
+                            color: Color(0xFF34C759),
                           ),
                         ),
                         const SizedBox(height: 8),
@@ -188,7 +188,7 @@ class _TasksViewState extends State<TasksView> {
                             value: progress,
                             minHeight: 6,
                             backgroundColor: isDark ? Colors.white12 : Colors.black12,
-                            valueColor: const AlwaysStoppedAnimation<Color>(AppleTheme.systemGreen),
+                            valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF34C759)),
                           ),
                         ),
                       ],
@@ -260,10 +260,10 @@ class _TasksViewState extends State<TasksView> {
                             width: 24,
                             height: 24,
                             decoration: BoxDecoration(
-                              color: isDone ? AppleTheme.systemGreen : Colors.transparent,
+                              color: isDone ? BackdropTheme.statusOnline : Colors.transparent,
                               borderRadius: BorderRadius.circular(7),
                               border: Border.all(
-                                color: isDone ? AppleTheme.systemGreen : (isDark ? Colors.white38 : Colors.black26),
+                                color: isDone ? BackdropTheme.statusOnline : (isDark ? Colors.white38 : Colors.black26),
                                 width: 2,
                               ),
                             ),
@@ -346,13 +346,13 @@ class _TasksViewState extends State<TasksView> {
   Color _priorityColor(TaskPriority priority) {
     switch (priority) {
       case TaskPriority.urgent:
-        return AppleTheme.systemRed;
+        return const Color(0xFFFF3B30);
       case TaskPriority.high:
-        return AppleTheme.systemOrange;
+        return const Color(0xFFFF9500);
       case TaskPriority.medium:
-        return AppleTheme.systemBlue;
+        return const Color(0xFF007AFF);
       case TaskPriority.low:
-        return AppleTheme.systemTeal;
+        return const Color(0xFF34C759);
     }
   }
 }

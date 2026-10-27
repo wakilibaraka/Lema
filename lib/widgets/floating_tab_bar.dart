@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../models/nav_destination.dart';
+import '../theme/backdrop_theme.dart';
 import '../theme/lema_motion.dart';
 import 'poster_reflection.dart';
 
@@ -11,9 +12,9 @@ import 'poster_reflection.dart';
 ///
 /// Apple Photos language: full-width frosted bar, rounded top corners,
 /// background extending under the home indicator (manual bottom inset, no
-/// SafeArea gap). Selected tab keeps the raised blue-tinted bubble, the
-/// Slice-12 poster reflections, and the spring scale — only the footprint
-/// changed. Content scrolls visibly beneath it (`extendBody: true`).
+/// SafeArea gap). Selected tab keeps the raised bubble (Backdrop magenta —
+/// the Home accent), the Slice-12 poster reflections, and the spring scale.
+/// Content scrolls visibly beneath it (`extendBody: true`).
 class FloatingTabBar extends StatelessWidget {
   /// Selected dock index, or -1 when the active screen is not in the dock.
   final int currentIndex;
@@ -114,7 +115,8 @@ class _TabItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final active = const Color(0xFF007AFF);
+    // Backdrop accent replaces the old system-blue bubble.
+    final active = BackdropTheme.accent;
     return GestureDetector(
       onTap: onTap,
       behavior: HitTestBehavior.opaque,

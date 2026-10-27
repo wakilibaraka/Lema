@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../theme/apple_theme.dart';
 
 enum ConnectionStatus { connected, expiringSoon, expired, neverConnected }
 
@@ -18,11 +17,11 @@ class ConnectionStatusDot extends StatelessWidget {
   Color get _color {
     switch (status) {
       case ConnectionStatus.connected:
-        return AppleTheme.systemGreen;
+        return const Color(0xFF34C759);
       case ConnectionStatus.expiringSoon:
-        return AppleTheme.systemOrange;
+        return const Color(0xFFFF9500);
       case ConnectionStatus.expired:
-        return AppleTheme.systemRed;
+        return const Color(0xFFFF3B30);
       case ConnectionStatus.neverConnected:
         return Colors.grey;
     }

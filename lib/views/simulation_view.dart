@@ -6,7 +6,7 @@ import 'package:lema/services/storage_service.dart';
 import 'package:lema/models/simulation_model.dart';
 import 'package:lema/models/post_model.dart';
 import 'package:lema/models/platform_info.dart';
-import 'package:lema/theme/apple_theme.dart';
+import 'package:lema/theme/backdrop_theme.dart';
 
 /// Slice 25 — offline-first simulation engine.
 ///
@@ -254,7 +254,7 @@ class _ViewToggleButton extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
       minimumSize: const Size(0, 32),
       color: selected
-          ? AppleTheme.systemBlue
+          ? BackdropTheme.accent
           : (isDark ? Colors.white.withAlpha(16) : Colors.black.withAlpha(8)),
       borderRadius: BorderRadius.circular(16),
       foregroundColor: selected
@@ -382,7 +382,7 @@ class _FeedCard extends StatelessWidget {
                 Text(
                   score.toStringAsFixed(1),
                   style: const TextStyle(
-                    color: AppleTheme.systemBlue,
+                    color: BackdropTheme.accent,
                     fontSize: 9,
                     fontWeight: FontWeight.w700,
                   ),

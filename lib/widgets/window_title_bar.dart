@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/app_provider.dart';
 import '../providers/profile_provider.dart';
-import '../theme/apple_theme.dart';
+import '../theme/backdrop_theme.dart';
 import 'dynamic_capsule.dart';
 
 class WindowTitleBar extends StatelessWidget {
@@ -28,10 +28,10 @@ class WindowTitleBar extends StatelessWidget {
       height: 50,
       padding: const EdgeInsets.symmetric(horizontal: 16),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF131317).withAlpha(220) : const Color(0xFFFBFBFD).withAlpha(220),
+        color: BackdropTheme.chrome(isDark),
         border: Border(
           bottom: BorderSide(
-            color: isDark ? Colors.white.withAlpha(16) : Colors.black.withAlpha(12),
+            color: BackdropTheme.hairline(isDark),
             width: 1,
           ),
         ),
@@ -118,7 +118,8 @@ class WindowTitleBar extends StatelessWidget {
                   icon: Icon(
                     isDark ? CupertinoIcons.sun_max_fill : CupertinoIcons.moon_fill,
                     size: 14,
-                    color: isDark ? AppleTheme.systemOrange : AppleTheme.systemIndigo,
+                    color:
+                        isDark ? BackdropTheme.statusWarning : BackdropTheme.violet,
                   ),
                   tooltip: isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode',
                   padding: const EdgeInsets.symmetric(horizontal: 8),
@@ -133,22 +134,22 @@ class WindowTitleBar extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4.5),
                   decoration: BoxDecoration(
-                    color: AppleTheme.systemBlue.withAlpha(isDark ? 35 : 22),
+                    color: BackdropTheme.accent.withAlpha(isDark ? 35 : 22),
                     borderRadius: BorderRadius.circular(14),
                     border: Border.all(
-                      color: AppleTheme.systemBlue.withAlpha(50),
+                      color: BackdropTheme.accent.withAlpha(50),
                     ),
                   ),
                   child: Row(
                     children: [
-                      const Icon(CupertinoIcons.checkmark_seal_fill, color: AppleTheme.systemBlue, size: 12.5),
+                      const Icon(CupertinoIcons.checkmark_seal_fill, color: BackdropTheme.accent, size: 12.5),
                       const SizedBox(width: 6),
                       Text(
                         profile.name,
                         style: const TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w600,
-                          color: AppleTheme.systemBlue,
+                          color: BackdropTheme.accent,
                           letterSpacing: -0.2,
                         ),
                       ),

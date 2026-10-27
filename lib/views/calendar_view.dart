@@ -5,7 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:table_calendar/table_calendar.dart';
 import '../models/post_model.dart';
 import '../providers/posts_provider.dart';
-import '../theme/apple_theme.dart';
+import '../theme/backdrop_theme.dart';
 import '../widgets/apple_glass_card.dart';
 import '../widgets/media_player_widget.dart';
 import '../widgets/page_flip_day.dart';
@@ -85,11 +85,11 @@ class _CalendarViewState extends State<CalendarView> {
                       mainAxisAlignment: MainAxisAlignment.spaceAround,
                       children: [
                         _buildStatItem('Scheduled',
-                            '${postsProvider.scheduledPosts.length}', AppleTheme.systemBlue),
+                            '${postsProvider.scheduledPosts.length}', BackdropTheme.accent),
                         _buildStatItem('Published',
-                            '${postsProvider.publishedPosts.length}', AppleTheme.systemGreen),
+                            '${postsProvider.publishedPosts.length}', BackdropTheme.statusOnline),
                         _buildStatItem('Reels',
-                            '${allPosts.where((p) => p.isVideo).length}', AppleTheme.systemPurple),
+                            '${allPosts.where((p) => p.isVideo).length}', BackdropTheme.violet),
                       ],
                     ),
                   ],
@@ -104,7 +104,7 @@ class _CalendarViewState extends State<CalendarView> {
                     Row(
                       children: [
                         const Icon(CupertinoIcons.calendar_today,
-                            size: 18, color: AppleTheme.systemBlue),
+                            size: 18, color: BackdropTheme.accent),
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
@@ -125,7 +125,7 @@ class _CalendarViewState extends State<CalendarView> {
                           padding: const EdgeInsets.symmetric(
                               horizontal: 8, vertical: 3),
                           decoration: BoxDecoration(
-                            color: AppleTheme.systemBlue
+                            color: BackdropTheme.accent
                                 .withValues(alpha: 0.12),
                             borderRadius: BorderRadius.circular(8),
                           ),
@@ -134,7 +134,7 @@ class _CalendarViewState extends State<CalendarView> {
                             style: const TextStyle(
                                 fontSize: 11,
                                 fontWeight: FontWeight.w700,
-                                color: AppleTheme.systemBlue),
+                                color: BackdropTheme.accent),
                           ),
                         ),
                       ],
@@ -246,15 +246,15 @@ class _CalendarViewState extends State<CalendarView> {
                             calendarStyle: CalendarStyle(
                               outsideDaysVisible: false,
                               todayDecoration: BoxDecoration(
-                                color: AppleTheme.systemBlue.withValues(alpha: 0.35),
+                                color: BackdropTheme.accent.withValues(alpha: 0.35),
                                 shape: BoxShape.circle,
                               ),
                               selectedDecoration: const BoxDecoration(
-                                color: AppleTheme.systemBlue,
+                                color: BackdropTheme.accent,
                                 shape: BoxShape.circle,
                               ),
                               markerDecoration: const BoxDecoration(
-                                color: AppleTheme.systemGreen,
+                                color: BackdropTheme.statusOnline,
                                 shape: BoxShape.circle,
                               ),
                               markersMaxCount: 3,
@@ -297,9 +297,9 @@ class _CalendarViewState extends State<CalendarView> {
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceAround,
                             children: [
-                              _buildStatItem('Scheduled', '${postsProvider.scheduledPosts.length}', AppleTheme.systemBlue),
-                              _buildStatItem('Published', '${postsProvider.publishedPosts.length}', AppleTheme.systemGreen),
-                              _buildStatItem('Reels', '${allPosts.where((p) => p.isVideo).length}', AppleTheme.systemPurple),
+                              _buildStatItem('Scheduled', '${postsProvider.scheduledPosts.length}', BackdropTheme.accent),
+                              _buildStatItem('Published', '${postsProvider.publishedPosts.length}', BackdropTheme.statusOnline),
+                              _buildStatItem('Reels', '${allPosts.where((p) => p.isVideo).length}', BackdropTheme.violet),
                             ],
                           ),
                         ],
@@ -319,7 +319,7 @@ class _CalendarViewState extends State<CalendarView> {
                         children: [
                           Row(
                             children: [
-                              const Icon(CupertinoIcons.calendar_today, size: 18, color: AppleTheme.systemBlue),
+                              const Icon(CupertinoIcons.calendar_today, size: 18, color: BackdropTheme.accent),
                               const SizedBox(width: 8),
                               Expanded(
                                 child: Text(
@@ -339,12 +339,12 @@ class _CalendarViewState extends State<CalendarView> {
                               Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                                 decoration: BoxDecoration(
-                                  color: AppleTheme.systemBlue.withValues(alpha: 0.12),
+                                  color: BackdropTheme.accent.withValues(alpha: 0.12),
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                                 child: Text(
                                   '${selectedPosts.length} posts',
-                                  style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppleTheme.systemBlue),
+                                  style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: BackdropTheme.accent),
                                 ),
                               ),
                             ],
@@ -475,15 +475,15 @@ class _CalendarViewState extends State<CalendarView> {
       calendarStyle: CalendarStyle(
         outsideDaysVisible: false,
         todayDecoration: BoxDecoration(
-          color: AppleTheme.systemBlue.withValues(alpha: 0.35),
+          color: BackdropTheme.accent.withValues(alpha: 0.35),
           shape: BoxShape.circle,
         ),
         selectedDecoration: const BoxDecoration(
-          color: AppleTheme.systemBlue,
+          color: BackdropTheme.accent,
           shape: BoxShape.circle,
         ),
         markerDecoration: const BoxDecoration(
-          color: AppleTheme.systemGreen,
+          color: BackdropTheme.statusOnline,
           shape: BoxShape.circle,
         ),
         markersMaxCount: 3,

@@ -6,7 +6,7 @@ import '../models/platform_info.dart';
 import '../models/post_model.dart';
 import '../models/script_model.dart';
 import '../providers/posts_provider.dart';
-import '../theme/apple_theme.dart';
+import '../theme/backdrop_theme.dart';
 import '../widgets/apple_glass_card.dart';
 import '../widgets/media_player_widget.dart';
 
@@ -224,7 +224,7 @@ class _HooksPipelineViewState extends State<HooksPipelineView> {
     return AppleGlassCard(
       padding: const EdgeInsets.all(14),
       customBorder: selected
-          ? Border.all(color: AppleTheme.systemBlue, width: 1.5)
+          ? Border.all(color: BackdropTheme.accent, width: 1.5)
           : null,
       onTap: onTap,
       child: Column(
@@ -309,7 +309,7 @@ class _HooksPipelineViewState extends State<HooksPipelineView> {
                 const SizedBox(width: 8),
                 CupertinoButton(
                   padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                  color: AppleTheme.systemBlue,
+                  color: BackdropTheme.accent,
                   // Plain CupertinoButton defaults its foreground to the
                   // same #007AFF as this background; set it explicitly.
                   foregroundColor: Colors.white,
@@ -330,13 +330,13 @@ class _HooksPipelineViewState extends State<HooksPipelineView> {
             const Divider(height: 24),
 
             // Teleprompter Script Blocks
-            _buildScriptSection('1. 3-SECOND HOOK (STOP SCROLL)', script.hook, AppleTheme.systemRed, isDark),
+            _buildScriptSection('1. 3-SECOND HOOK (STOP SCROLL)', script.hook, BackdropTheme.statusWarning, isDark),
             const SizedBox(height: 14),
-            _buildScriptSection('2. THE CORE PROBLEM (RELATABLE PAIN)', script.problem, AppleTheme.systemOrange, isDark),
+            _buildScriptSection('2. THE CORE PROBLEM (RELATABLE PAIN)', script.problem, BackdropTheme.statusWarning, isDark),
             const SizedBox(height: 14),
-            _buildScriptSection('3. TRANSFORMATION & FRAMEWORK', script.solution, AppleTheme.systemGreen, isDark),
+            _buildScriptSection('3. TRANSFORMATION & FRAMEWORK', script.solution, BackdropTheme.statusOnline, isDark),
             const SizedBox(height: 14),
-            _buildScriptSection('4. CALL TO ACTION (CTA)', script.cta, AppleTheme.systemBlue, isDark),
+            _buildScriptSection('4. CALL TO ACTION (CTA)', script.cta, BackdropTheme.accent, isDark),
 
             const SizedBox(height: 20),
 
@@ -460,13 +460,13 @@ class _HooksPipelineViewState extends State<HooksPipelineView> {
   Color _getStageColor(ScriptStage stage) {
     switch (stage) {
       case ScriptStage.draft:
-        return AppleTheme.systemOrange;
+        return BackdropTheme.statusWarning;
       case ScriptStage.readyToRecord:
-        return AppleTheme.systemBlue;
+        return BackdropTheme.accent;
       case ScriptStage.recorded:
-        return AppleTheme.systemPurple;
+        return BackdropTheme.violet;
       case ScriptStage.published:
-        return AppleTheme.systemGreen;
+        return BackdropTheme.statusOnline;
     }
   }
 }

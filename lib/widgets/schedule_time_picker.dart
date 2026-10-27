@@ -1,6 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import '../theme/apple_theme.dart';
+
 
 /// The one schedule picker all three scheduling surfaces use.
 ///
@@ -15,7 +15,10 @@ Future<DateTime?> showScheduleTimePicker({
   required DateTime initial,
 }) {
   final now = DateTime.now();
-  var selected = initial;
+  // Nothing can be scheduled into the past; an overdue slot opens at today.
+  final minDate = DateTime(now.year, now.month, now.day);
+  final start = initial.isBefore(minDate) ? minDate : initial;
+  var selected = start;
 
   return showCupertinoModalPopup<DateTime>(
     context: context,
@@ -59,9 +62,8 @@ Future<DateTime?> showScheduleTimePicker({
             Expanded(
               child: CupertinoDatePicker(
                 mode: CupertinoDatePickerMode.dateAndTime,
-                initialDateTime: initial,
-                // Nothing can be scheduled into the past.
-                minimumDate: DateTime(now.year, now.month, now.day),
+                initialDateTime: start,
+                minimumDate: minDate,
                 minuteInterval: 5,
                 use24hFormat: false,
                 onDateTimeChanged: (value) => selected = value,
@@ -105,6 +107,6 @@ const List<String> _months = [
 
 /// Colours a schedule line so an already-passed slot reads as late.
 Color scheduleColor(DateTime time, bool isDark, {bool overdue = false}) {
-  if (overdue) return AppleTheme.systemOrange;
+  if (overdue) return const Color(0xFFFF9500);
   return isDark ? Colors.white70 : Colors.black87;
 }

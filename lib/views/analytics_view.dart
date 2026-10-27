@@ -4,7 +4,7 @@ import 'package:provider/provider.dart';
 import '../models/post_model.dart';
 import '../providers/posts_provider.dart';
 import '../services/analytics_service.dart';
-import '../theme/apple_theme.dart';
+import '../theme/backdrop_theme.dart';
 import '../widgets/apple_glass_card.dart';
 
 class AnalyticsView extends StatefulWidget {
@@ -92,7 +92,7 @@ class _AnalyticsViewState extends State<AnalyticsView> {
                 ),
                 CupertinoButton(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  color: AppleTheme.systemBlue,
+                  color: BackdropTheme.accent,
                   // Plain CupertinoButton defaults its foreground to the
                   // same #007AFF as this background; set it explicitly.
                   foregroundColor: Colors.white,
@@ -157,13 +157,13 @@ class _AnalyticsViewState extends State<AnalyticsView> {
   Widget _buildSummaryCards(bool isDark) {
     return Row(
       children: [
-        _buildSummaryCard('Likes', _result!.totalLikes, AppleTheme.systemPink, CupertinoIcons.heart_fill, isDark),
+        _buildSummaryCard('Likes', _result!.totalLikes, const Color(0xFFFF2D55), CupertinoIcons.heart_fill, isDark),
         const SizedBox(width: 12),
-        _buildSummaryCard('Views', _result!.totalViews, AppleTheme.systemBlue, CupertinoIcons.eye_fill, isDark),
+        _buildSummaryCard('Views', _result!.totalViews, BackdropTheme.accent, CupertinoIcons.eye_fill, isDark),
         const SizedBox(width: 12),
-        _buildSummaryCard('Comments', _result!.totalComments, AppleTheme.systemGreen, CupertinoIcons.chat_bubble_2_fill, isDark),
+        _buildSummaryCard('Comments', _result!.totalComments, BackdropTheme.statusOnline, CupertinoIcons.chat_bubble_2_fill, isDark),
         const SizedBox(width: 12),
-        _buildSummaryCard('Shares', _result!.totalShares, AppleTheme.systemPurple, CupertinoIcons.arrow_2_squarepath, isDark),
+        _buildSummaryCard('Shares', _result!.totalShares, const Color(0xFF962FBF), CupertinoIcons.arrow_2_squarepath, isDark),
       ],
     );
   }

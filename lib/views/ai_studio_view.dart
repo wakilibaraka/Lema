@@ -8,7 +8,7 @@ import '../providers/app_provider.dart';
 import '../providers/posts_provider.dart';
 import '../providers/profile_provider.dart';
 import '../services/ai_service.dart';
-import '../theme/apple_theme.dart';
+import '../theme/backdrop_theme.dart';
 import '../widgets/apple_glass_card.dart';
 
 class AiStudioView extends StatefulWidget {
@@ -244,13 +244,13 @@ class _AiStudioViewState extends State<AiStudioView> {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
               decoration: BoxDecoration(
-                color: AppleTheme.systemOrange.withValues(alpha: 0.15),
+                color: BackdropTheme.statusWarning.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(6),
               ),
               child: const Text(
                 'DEMO MODE · LOCAL ENGINE, NO MODEL CALLS',
                 style: TextStyle(
-                  color: AppleTheme.systemOrange,
+                  color: BackdropTheme.statusWarning,
                   fontSize: 9.5,
                   fontWeight: FontWeight.w800,
                   letterSpacing: 0.6,
@@ -305,10 +305,10 @@ class _AiStudioViewState extends State<AiStudioView> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
-                  color: AppleTheme.systemPurple.withValues(alpha: 0.15),
+                  color: BackdropTheme.violet.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: const Text('GEMINI 1.5 PRO', style: TextStyle(color: AppleTheme.systemPurple, fontSize: 10, fontWeight: FontWeight.w700)),
+                child: const Text('GEMINI 1.5 PRO', style: TextStyle(color: BackdropTheme.violet, fontSize: 10, fontWeight: FontWeight.w700)),
               ),
             ],
           ),
@@ -354,7 +354,7 @@ class _AiStudioViewState extends State<AiStudioView> {
             return ChoiceChip(
               label: Text(t, style: const TextStyle(fontSize: 12)),
               selected: isSel,
-              selectedColor: AppleTheme.systemBlue,
+              selectedColor: BackdropTheme.accent,
               onSelected: (sel) {
                 if (sel) setState(() => _selectedTone = t);
               },
@@ -431,7 +431,7 @@ class _AiStudioViewState extends State<AiStudioView> {
   Widget _generatePlanButton(bool isDark) {
     return CupertinoButton(
       padding: const EdgeInsets.symmetric(vertical: 14),
-      color: AppleTheme.systemPurple,
+      color: BackdropTheme.violet,
       borderRadius: BorderRadius.circular(12),
       onPressed: _isLoading ? null : _generate7DayPlan,
       child: const Row(
@@ -468,14 +468,14 @@ class _AiStudioViewState extends State<AiStudioView> {
           'assets/emms_avatar.png',
           fit: BoxFit.cover,
           errorBuilder: (context, error, stackTrace) => Container(
-            color: AppleTheme.systemPurple.withValues(alpha: 0.2),
+            color: BackdropTheme.violet.withValues(alpha: 0.2),
             alignment: Alignment.center,
             child: Text(
               initial,
               style: const TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w800,
-                color: AppleTheme.systemPurple,
+                color: BackdropTheme.violet,
               ),
             ),
           ),
@@ -509,7 +509,7 @@ class _AiStudioViewState extends State<AiStudioView> {
             if (_generatedContent != null)
               CupertinoButton(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                color: AppleTheme.systemBlue,
+                color: BackdropTheme.accent,
                 // Plain CupertinoButton defaults its foreground to the
                 // same #007AFF as this background; set it explicitly.
                 foregroundColor: Colors.white,
@@ -621,12 +621,12 @@ class _AiStudioViewState extends State<AiStudioView> {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                       decoration: BoxDecoration(
-                        color: AppleTheme.systemPurple.withValues(alpha: 0.15),
+                        color: BackdropTheme.violet.withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: Text(
                         day,
-                        style: const TextStyle(color: AppleTheme.systemPurple, fontSize: 11, fontWeight: FontWeight.w700),
+                        style: const TextStyle(color: BackdropTheme.violet, fontSize: 11, fontWeight: FontWeight.w700),
                       ),
                     ),
                     CupertinoButton(

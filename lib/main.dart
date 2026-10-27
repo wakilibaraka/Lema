@@ -8,7 +8,7 @@ import 'providers/posts_provider.dart';
 import 'providers/profile_provider.dart';
 import 'services/demo_mode_service.dart';
 import 'services/storage_service.dart';
-import 'theme/apple_theme.dart';
+import 'theme/backdrop_theme.dart';
 import 'views/ai_studio_view.dart';
 import 'views/analytics_view.dart';
 import 'views/calendar_view.dart';
@@ -50,8 +50,8 @@ class LemaApp extends StatelessWidget {
             title: 'Lema - Social Auto-Poster & AI Studio',
             debugShowCheckedModeBanner: false,
             themeMode: app.themeMode,
-            theme: AppleTheme.lightTheme,
-            darkTheme: AppleTheme.darkTheme,
+            theme: BackdropTheme.lightTheme,
+            darkTheme: BackdropTheme.darkTheme,
             home: const MainLayoutScreen(),
           );
         },
@@ -186,8 +186,10 @@ class _MainLayoutScreenState extends State<MainLayoutScreen> {
         preferredSize: const Size.fromHeight(56),
         child: Container(
           decoration: BoxDecoration(
-            color: isDark ? const Color(0xFF131317) : Colors.white,
-            border: Border(bottom: BorderSide(color: isDark ? Colors.white10 : Colors.black12)),
+            color: BackdropTheme.chrome(isDark),
+            border: Border(
+              bottom: BorderSide(color: BackdropTheme.hairline(isDark)),
+            ),
           ),
           child: SafeArea(
             child: Padding(

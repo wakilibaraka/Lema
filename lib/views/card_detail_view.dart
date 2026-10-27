@@ -2,7 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 import '../models/post_model.dart';
-import '../theme/apple_theme.dart';
+import '../theme/backdrop_theme.dart';
 import '../theme/lema_motion.dart';
 
 /// Tag helper so every hero in the app is uniquely addressable.
@@ -451,7 +451,7 @@ class _CardSurface extends StatelessWidget {
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(20),
                       color: _isVirtual
-                          ? AppleTheme.systemBlue
+                          ? BackdropTheme.accent
                           : ink.withAlpha(16),
                     ),
                     child: Text(
@@ -509,7 +509,7 @@ class _CardArtwork extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final seed = post.id.hashCode;
-    final tint = muted ? const Color(0xFF9A9AA2) : AppleTheme.systemBlue;
+    final tint = muted ? const Color(0xFF9A9AA2) : BackdropTheme.accent;
     return Stack(
       fit: StackFit.expand,
       children: [

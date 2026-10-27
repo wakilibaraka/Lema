@@ -4,25 +4,33 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import '../models/nav_destination.dart';
 import '../models/platform_info.dart';
 import '../models/post_model.dart';
+import '../providers/app_provider.dart';
 import '../providers/posts_provider.dart';
-import '../theme/apple_theme.dart';
+
+import '../theme/backdrop_theme.dart';
 import '../theme/lema_motion.dart';
 import '../views/card_detail_view.dart';
+import '../widgets/backdrop/backdrop_sheets.dart';
+import '../widgets/backdrop/story_rings.dart';
+import '../widgets/backdrop/tilted_media_strip.dart';
 import '../widgets/lema_toast.dart';
 import '../widgets/media_player_widget.dart';
 import '../widgets/schedule_time_picker.dart';
 
 /// Lema Grid — visually-driven drag-and-drop feed planner.
 ///
-/// Design language lifted directly from the travel reference screenshots:
-///  * extreme border radii (24–32), soft drop shadows, frosted glassmorphism
-///  * high-contrast off-white canvas (#F5F5F8) + black / dark-gray type
-///  * immersive edge-to-edge hero preview card (Norway Fjord Escape pattern)
-///  * floating segmented filter pills (trip-length / climate pattern)
-///  * vertical accordion day timeline (Day 1 Arrival pattern)
-///  * floating bottom-sheet quick-edit modal (trip-suggestion sheet pattern)
+/// Backdrop design language (Instagram-inspired events feed):
+///  * off-white canvas (#F5F5F8) + near-black type, 24pt card radii
+///  * header row: avatar + prompt + circular glass search/bell buttons
+///  * gradient story rings = compose + platform filters (PlatformInfo)
+///  * day accordions styled as event cards: bold title, platform chips,
+///    tilted media strip (post thumbnails) + dashed add tile
+///  * floating dark "New post" pill over the feed
+/// Full spec: LEMA_DESIGN_PLAN.md §2–3. Data/behavior unchanged — this is
+/// presentation over PostModel/PostsProvider.
 class LemaGridView extends StatefulWidget {
   const LemaGridView({super.key});
 
@@ -86,11 +94,11 @@ class _LemaGridViewState extends State<LemaGridView>
         return ('DRAFT', const Color(0xFFFF9F0A));
       case 'published':
       case 'posted':
-        return ('LIVE', AppleTheme.systemGreen);
+        return ('LIVE', const Color(0xFF34C759));
       case 'failed':
-        return ('FAILED', AppleTheme.systemRed);
+        return ('FAILED', const Color(0xFFFF3B30));
       default:
-        return ('QUEUED', AppleTheme.systemBlue);
+        return ('QUEUED', BackdropTheme.accent);
     }
   }
 
@@ -160,15 +168,25 @@ class _LemaGridViewState extends State<LemaGridView>
 
     // Slice 10: clamp text scaling so clamped titles survive max sizes.
     final media = MediaQuery.of(context);
+    // The reference's floating create pill belongs to the phone surface: the
+    // dock reserves a clearance band under the scroll view and the pill sits
+    // in it. The sidebar layouts (>=768pt) reserve no band, so the pill lands
+    // on whatever is at the viewport bottom — in practice the filter-pill row,
+    // covering live tap targets. Their create affordance is the sidebar
+    // Composer entry, so the pill is phone/tablet-dock only.
+    final hasDockClearance = media.size.width < 768;
     return Scaffold(
       backgroundColor: canvas ?? Colors.transparent,
       body: MediaQuery(
         data: media.copyWith(
           textScaler: media.textScaler.clamp(maxScaleFactor: 1.2),
         ),
-        child: CustomScrollView(
+        child: Stack(
+          children: [
+            CustomScrollView(
         slivers: [
-          SliverToBoxAdapter(child: _buildHeader(isDark, scheduled, drafts)),
+          SliverToBoxAdapter(child: _buildHeader(isDark)),
+          SliverToBoxAdapter(child: _buildStoryRings()),
           SliverToBoxAdapter(
               child: _buildStatsStrip(context, isDark, scheduled, drafts)),
           if (heroPost != null)
@@ -248,13 +266,23 @@ class _LemaGridViewState extends State<LemaGridView>
           ),
           const SliverToBoxAdapter(child: SizedBox(height: 140)),
           ],
+            ),
+            // Backdrop floating create pill, parked in the bottom clearance.
+            if (hasDockClearance)
+              Positioned(
+                left: 0,
+                right: 0,
+                bottom: 14,
+                child: _buildCreatePill(isDark),
+              ),
+          ],
         ),
       ),
     );
   }
 
-  // ── Header: "TRAVELING UP / Where should we take you today?" ──────────
-  Widget _buildHeader(bool isDark, int scheduled, int drafts) {
+  // ── Backdrop header: avatar + prompt + search/bell circles ───────────
+  Widget _buildHeader(bool isDark) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 18, 20, 0),
       child: Column(
@@ -269,37 +297,178 @@ class _LemaGridViewState extends State<LemaGridView>
               color: isDark ? Colors.white54 : Colors.black54,
             ),
           ),
-          const SizedBox(height: 8),
-          Text(
-            'Good morning, Emms',
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-              color: isDark ? Colors.white70 : const Color(0xFF3A3A3C),
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Where should we\npost today?',
-            style: TextStyle(
-              fontSize: 32,
-              height: 1.05,
-              fontWeight: FontWeight.w900,
-              letterSpacing: -1.0,
-              color: isDark ? Colors.white : Colors.black,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Tap, drag, ship.',
-            style: TextStyle(
-              fontSize: 12.5,
-              color: isDark ? Colors.white54 : Colors.black54,
-            ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              // Brand avatar inside a story-style gradient ring.
+              Container(
+                width: 42,
+                height: 42,
+                padding: const EdgeInsets.all(2.5),
+                decoration: BackdropTheme.ringDecoration(),
+                child: Container(
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: isDark ? const Color(0xFF26262C) : Colors.white,
+                  ),
+                  alignment: Alignment.center,
+                  child: const Text(
+                    'L',
+                    style: TextStyle(
+                      fontSize: 17,
+                      fontWeight: FontWeight.w900,
+                      color: BackdropTheme.accent,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      "What's your next post?",
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: -0.4,
+                        height: 1.15,
+                        color: BackdropTheme.ink(isDark),
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'Tap, drag, ship.',
+                      style: TextStyle(
+                        fontSize: 12.5,
+                        color: BackdropTheme.inkSecondary(isDark),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              _headerCircleBtn(
+                  isDark,
+                  CupertinoIcons.search,
+                  'Find a post',
+                  () => showFindPostSheet(context)),
+              const SizedBox(width: 8),
+              _headerCircleBtn(
+                  isDark,
+                  CupertinoIcons.bell,
+                  'Queue health',
+                  () => showQueueHealthSheet(context)),
+            ],
           ),
         ],
       ),
     );
+  }
+
+  Widget _headerCircleBtn(
+      bool isDark, IconData icon, String label, VoidCallback onTap) {
+    return Semantics(
+      button: true,
+      label: label,
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          width: 38,
+          height: 38,
+          decoration: BackdropTheme.circleDecoration(isDark),
+          child: Icon(icon, size: 18, color: BackdropTheme.ink(isDark)),
+        ),
+      ),
+    );
+  }
+
+  /// Story rings — compose + platform filters in feed language. Drives the
+  /// same `_platformFilter` as the pills below: one state, two surfaces.
+  Widget _buildStoryRings() {
+    const order = [
+      'instagram',
+      'tiktok',
+      'youtube',
+      'facebook',
+      'linkedin',
+      'twitter',
+    ];
+    return StoryRingsRow(
+      rings: [
+        StoryRingData(
+          label: 'New post',
+          icon: CupertinoIcons.camera_fill,
+          color: BackdropTheme.accent,
+          isNew: true,
+          onTap: _openCompose,
+        ),
+        for (final id in order)
+          StoryRingData(
+            label: platformsMap[id]!.name,
+            icon: platformsMap[id]!.iconData,
+            color: platformsMap[id]!.accentColor,
+            selected: _platformFilter == id,
+            dim: _platformFilter != 'all' && _platformFilter != id,
+            onTap: () => setState(
+                () => _platformFilter = _platformFilter == id ? 'all' : id),
+          ),
+      ],
+    );
+  }
+
+  /// Floating create pill (reference "+ Create New Event" pattern).
+  Widget _buildCreatePill(bool isDark) {
+    return Center(
+      child: GestureDetector(
+        onTap: () {
+          HapticFeedback.lightImpact();
+          _openCompose();
+        },
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(24),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              decoration: BoxDecoration(
+                color: Colors.black.withAlpha(isDark ? 165 : 140),
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(color: Colors.white.withAlpha(28)),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withAlpha(60),
+                    blurRadius: 18,
+                    offset: const Offset(0, 8),
+                  ),
+                ],
+              ),
+              child: const Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(CupertinoIcons.plus, color: Colors.white, size: 17),
+                  SizedBox(width: 6),
+                  Text(
+                    'New post',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: -0.2,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _openCompose() {
+    context.read<AppProvider>().setNavIndex(destinationIndexOf('Composer'));
   }
 
   // ── Symmetric stat card (Queued | Drafts) ─────────────────────────────
@@ -930,9 +1099,9 @@ class _LemaGridViewState extends State<LemaGridView>
         borderRadius: BorderRadius.circular(22),
         border: Border.all(
           color: isTarget
-              ? AppleTheme.systemBlue
+              ? BackdropTheme.accent
               : (_draggingId == post.id
-                  ? AppleTheme.systemBlue.withAlpha(140)
+                  ? BackdropTheme.accent.withAlpha(140)
                   : (isDark
                       ? Colors.white.withAlpha(18)
                       : Colors.black.withAlpha(8))),
@@ -974,7 +1143,7 @@ class _LemaGridViewState extends State<LemaGridView>
             if (isTarget)
               Positioned.fill(
                 child: Container(
-                  color: AppleTheme.systemBlue.withAlpha(55),
+                  color: BackdropTheme.accent.withAlpha(55),
                 ),
               ),
             // Slice 4: status pill, top-left (never color-alone: label text).
@@ -1211,7 +1380,7 @@ class _LemaGridViewState extends State<LemaGridView>
         mainAxisSize: MainAxisSize.min,
         children: [
           const Icon(CupertinoIcons.clock_fill,
-              size: 12, color: AppleTheme.systemBlue),
+              size: 12, color: BackdropTheme.accent),
           const SizedBox(width: 5),
           Flexible(
             child: Text(
@@ -1221,7 +1390,7 @@ class _LemaGridViewState extends State<LemaGridView>
               style: const TextStyle(
                 fontSize: 11.5,
                 fontWeight: FontWeight.w700,
-                color: AppleTheme.systemBlue,
+                color: BackdropTheme.accent,
               ),
             ),
           ),
@@ -1247,7 +1416,7 @@ class _LemaGridViewState extends State<LemaGridView>
                   : Colors.white.withAlpha(240),
               borderRadius: BorderRadius.circular(26),
               border: Border.all(
-                color: AppleTheme.systemRed.withAlpha(70),
+                color: const Color(0xFFFF3B30).withAlpha(70),
                 width: 1.2,
               ),
             ),
@@ -1257,12 +1426,12 @@ class _LemaGridViewState extends State<LemaGridView>
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: AppleTheme.systemRed.withAlpha(25),
+                    color: const Color(0xFFFF3B30).withAlpha(25),
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(
                     CupertinoIcons.exclamationmark_triangle_fill,
-                    color: AppleTheme.systemRed,
+                    color: Color(0xFFFF3B30),
                     size: 26,
                   ),
                 ),
@@ -1368,65 +1537,64 @@ class _LemaGridViewState extends State<LemaGridView>
                   _expandedDays.add(dayKey);
                 }
               }),
-              borderRadius: BorderRadius.circular(26),
-              child: Padding(
-                padding: const EdgeInsets.all(14),
-                child: Row(
-                  children: [
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(16),
-                      child: SizedBox(
-                        width: 52,
-                        height: 52,
-                        child: UniversalMediaPlayer(
-                          mediaUrl: sorted.first.mediaUrl,
-                          isVideo: sorted.first.isVideo,
-                          autoPlay: false,
-                          showControls: false,
-                          thumbnail: true,
+              borderRadius: BorderRadius.circular(26),                child: Padding(
+                  padding: const EdgeInsets.all(14),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              label,
+                              style: TextStyle(
+                                fontSize: 17,
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: -0.4,
+                                color: isDark
+                                    ? Colors.white
+                                    : Colors.black,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              '${sorted.length} posts · ${DateFormat('h:mm a').format(sorted.first.scheduledTime)} start',
+                              style: TextStyle(
+                                fontSize: 11.5,
+                                color: isDark
+                                    ? Colors.white54
+                                    : Colors.black54,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            // Platform chips: which networks this day feeds.
+                            Wrap(
+                              spacing: 6,
+                              runSpacing: 4,
+                              children: [
+                                for (final id in _dayPlatforms(sorted))
+                                  Container(
+                                    width: 22,
+                                    height: 22,
+                                    decoration: BoxDecoration(
+                                      color: platformsMap[id]?.accentColor
+                                              .withAlpha(24),
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: Icon(
+                                      platformsMap[id]?.iconData ??
+                                          CupertinoIcons.globe,
+                                      size: 12,
+                                      color: platformsMap[id]?.accentColor ??
+                                          Colors.grey,
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          ],
                         ),
                       ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment:
-                            CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Day ${dayIndex + 1}',
-                            style: TextStyle(
-                              fontSize: 10.5,
-                              fontWeight: FontWeight.w600,
-                              color: isDark
-                                  ? Colors.white38
-                                  : Colors.black38,
-                            ),
-                          ),
-                          Text(
-                            label,
-                            style: TextStyle(
-                              fontSize: 14.5,
-                              fontWeight: FontWeight.w800,
-                              letterSpacing: -0.2,
-                              color: isDark
-                                  ? Colors.white
-                                  : Colors.black,
-                            ),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          Text(
-                            '${sorted.length} posts · ${DateFormat('h:mm a').format(sorted.first.scheduledTime)} start',
-                            style: TextStyle(
-                              fontSize: 11,
-                              color: isDark
-                                  ? Colors.white54
-                                  : Colors.black54,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
                     AnimatedRotation(
                       turns: expanded ? 0.5 : 0.0,
                       duration:
@@ -1448,8 +1616,7 @@ class _LemaGridViewState extends State<LemaGridView>
               child: AnimatedSize(
                 duration: const Duration(milliseconds: 280),
                 curve: Curves.easeInOut,
-                alignment: Alignment.topCenter,
-                child: expanded
+                alignment: Alignment.topCenter,                child: expanded
                     ? Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
@@ -1458,9 +1625,19 @@ class _LemaGridViewState extends State<LemaGridView>
                               color: isDark
                                   ? Colors.white12
                                   : Colors.black.withAlpha(8)),
+                          // Backdrop tilted strip: the day's media as
+                          // scattered prints + dashed compose tile.
                           Padding(
-                            padding:
-                                const EdgeInsets.fromLTRB(14, 10, 14, 14),
+                            padding: const EdgeInsets.fromLTRB(14, 14, 14, 6),
+                            child: TiltedMediaStrip(
+                              posts: sorted,
+                              onAdd: _openCompose,
+                              onOpen: (post) => Navigator.of(context)
+                                  .push(CardDetailView.route(post)),
+                            ),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(14, 4, 14, 14),
                             child: Column(
                               children: [
                                 ..._groupedSlots(
@@ -1477,6 +1654,12 @@ class _LemaGridViewState extends State<LemaGridView>
         ),
       ),
     );
+  }
+
+  /// Unique platform ids across a day's posts, in platformsMap order.
+  List<String> _dayPlatforms(List<PostModel> posts) {
+    final present = posts.expand((p) => p.platforms).toSet();
+    return platformsMap.keys.where(present.contains).toList();
   }
 
   /// Slice 6: bucket a day's posts into Morning / Afternoon / Evening.
@@ -2083,13 +2266,12 @@ class _QuickEditSheetState extends State<_QuickEditSheet> {
                     CupertinoButton(
                       padding: const EdgeInsets.symmetric(
                           horizontal: 12, vertical: 8),
-                      onPressed: _delete,
-                      child: const Text(
+                      onPressed: _delete,                        child: const Text(
                         'Delete',
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
-                          color: AppleTheme.systemRed,
+                          color: Color(0xFFFF3B30),
                         ),
                       ),
                     ),

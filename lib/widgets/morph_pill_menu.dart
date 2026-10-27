@@ -4,7 +4,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 
-import '../theme/apple_theme.dart';
+import '../theme/backdrop_theme.dart';
 import '../theme/lema_motion.dart';
 
 /// Slice 11 — Circle menu dropdown morph.
@@ -247,7 +247,7 @@ class _MorphPillOverlayState extends State<_MorphPillOverlay>
             );
       final eased = _reduceMotion ? itemT : LemaMotion.spring.transform(itemT);
       final color = item.destructive
-          ? AppleTheme.systemRed
+          ? BackdropTheme.statusWarning
           : (isDark ? Colors.white : Colors.black87);
       return Opacity(
         opacity: itemT,
@@ -267,7 +267,7 @@ class _MorphPillOverlayState extends State<_MorphPillOverlay>
                     height: 30,
                     decoration: BoxDecoration(
                       color: (item.destructive
-                              ? AppleTheme.systemRed
+                              ? BackdropTheme.statusWarning
                               : spec.accent)
                           .withAlpha(30),
                       borderRadius: BorderRadius.circular(10),
@@ -276,7 +276,7 @@ class _MorphPillOverlayState extends State<_MorphPillOverlay>
                       item.icon,
                       size: 15,
                       color: item.destructive
-                          ? AppleTheme.systemRed
+                          ? BackdropTheme.statusWarning
                           : spec.accent,
                     ),
                   ),

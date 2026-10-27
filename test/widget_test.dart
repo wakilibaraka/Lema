@@ -22,7 +22,9 @@ void main() {
     // on the Home hero copy instead of a sidebar label.
     expect(find.byType(WindowTitleBar), findsOneWidget);
     expect(find.byType(SidebarNavigation), findsOneWidget);
-    expect(find.textContaining('post today?'), findsOneWidget);
+    // Backdrop header copy (Slice 23) replaced "Where should we post
+    // today?" — the smoke test tracks the redesigned prompt.
+    expect(find.textContaining("What's your next post?"), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 }

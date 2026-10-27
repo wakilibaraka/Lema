@@ -7,7 +7,7 @@ import '../models/platform_info.dart';
 import '../models/post_model.dart';
 import '../providers/posts_provider.dart';
 import '../providers/profile_provider.dart';
-import '../theme/apple_theme.dart';
+import '../theme/backdrop_theme.dart';
 import '../widgets/apple_glass_card.dart';
 import '../widgets/device_frames/universal_device_frame.dart';
 import '../widgets/lema_pill.dart';
@@ -261,11 +261,11 @@ class _SimulatorViewState extends State<SimulatorView> {
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                     decoration: BoxDecoration(
                       color: isSelected
-                          ? AppleTheme.systemBlue.withAlpha(isDark ? 60 : 35)
+                          ? BackdropTheme.accent.withAlpha(isDark ? 60 : 35)
                           : (isDark ? Colors.white.withAlpha(10) : Colors.black.withAlpha(6)),
                       borderRadius: BorderRadius.circular(10),
                       border: Border.all(
-                        color: isSelected ? AppleTheme.systemBlue : (isDark ? Colors.white12 : Colors.black12),
+                        color: isSelected ? BackdropTheme.accent : (isDark ? Colors.white12 : Colors.black12),
                         width: isSelected ? 1.5 : 1.0,
                       ),
                     ),
@@ -275,7 +275,7 @@ class _SimulatorViewState extends State<SimulatorView> {
                         Icon(
                           d.icon,
                           size: 14,
-                          color: isSelected ? AppleTheme.systemBlue : (isDark ? Colors.white70 : Colors.black87),
+                          color: isSelected ? BackdropTheme.accent : (isDark ? Colors.white70 : Colors.black87),
                         ),
                         const SizedBox(width: 6),
                         Text(
@@ -283,7 +283,7 @@ class _SimulatorViewState extends State<SimulatorView> {
                           style: TextStyle(
                             fontSize: 11.5,
                             fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                            color: isSelected ? (isDark ? Colors.white : AppleTheme.systemBlue) : (isDark ? Colors.white70 : Colors.black87),
+                            color: isSelected ? (isDark ? Colors.white : BackdropTheme.accent) : (isDark ? Colors.white70 : Colors.black87),
                           ),
                         ),
                       ],
@@ -340,17 +340,17 @@ class _SimulatorViewState extends State<SimulatorView> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
-                color: AppleTheme.systemGreen.withAlpha(30),
+                color: BackdropTheme.statusOnline.withAlpha(30),
                 borderRadius: BorderRadius.circular(6),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Container(width: 5, height: 5, decoration: const BoxDecoration(color: AppleTheme.systemGreen, shape: BoxShape.circle)),
+                  Container(width: 5, height: 5, decoration: const BoxDecoration(color: BackdropTheme.statusOnline, shape: BoxShape.circle)),
                   const SizedBox(width: 5),
                   Text(
                     '${DeviceSpec.byCategory(_selectedDeviceCategory).brand} Live Canvas',
-                    style: const TextStyle(color: AppleTheme.systemGreen, fontSize: 10, fontWeight: FontWeight.w700),
+                    style: const TextStyle(color: BackdropTheme.statusOnline, fontSize: 10, fontWeight: FontWeight.w700),
                   ),
                 ],
               ),
@@ -463,12 +463,12 @@ class _SimulatorViewState extends State<SimulatorView> {
                   Container(
                     padding: const EdgeInsets.all(6),
                     decoration: BoxDecoration(
-                      color: (isVideo ? AppleTheme.systemPurple : AppleTheme.systemTeal).withAlpha(35),
+                      color: (isVideo ? BackdropTheme.violet : const Color(0xFF30B0C7)).withAlpha(35),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Icon(
                       isVideo ? CupertinoIcons.videocam_fill : CupertinoIcons.photo_fill,
-                      color: isVideo ? AppleTheme.systemPurple : AppleTheme.systemTeal,
+                      color: isVideo ? BackdropTheme.violet : const Color(0xFF30B0C7),
                       size: 16,
                     ),
                   ),
@@ -513,14 +513,14 @@ class _SimulatorViewState extends State<SimulatorView> {
                   height: 38,
                   decoration: BoxDecoration(
                     gradient: const LinearGradient(
-                      colors: [AppleTheme.systemBlue, Color(0xFF0056B3)],
+                      colors: [BackdropTheme.accent, Color(0xFF0056B3)],
                       begin: Alignment.topCenter,
                       end: Alignment.bottomCenter,
                     ),
                     borderRadius: BorderRadius.circular(10),
                     boxShadow: [
                       BoxShadow(
-                        color: AppleTheme.systemBlue.withAlpha(60),
+                        color: BackdropTheme.accent.withAlpha(60),
                         blurRadius: 8,
                         offset: const Offset(0, 2),
                       ),
@@ -590,12 +590,12 @@ class _SimulatorViewState extends State<SimulatorView> {
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
                   color: isSelected
-                      ? AppleTheme.systemBlue.withAlpha(isDark ? 45 : 25)
+                      ? BackdropTheme.accent.withAlpha(isDark ? 45 : 25)
                       : (isDark ? Colors.white.withAlpha(8) : Colors.black.withAlpha(5)),
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
                     color: isSelected
-                        ? AppleTheme.systemBlue
+                        ? BackdropTheme.accent
                         : (isDark ? Colors.white.withAlpha(12) : Colors.black.withAlpha(8)),
                     width: isSelected ? 1.5 : 1.0,
                   ),
@@ -651,7 +651,7 @@ class _SimulatorViewState extends State<SimulatorView> {
                                 Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1.5),
                                   decoration: BoxDecoration(
-                                    color: AppleTheme.systemPurple.withAlpha(30),
+                                    color: BackdropTheme.violet.withAlpha(30),
                                     borderRadius: BorderRadius.circular(4),
                                   ),
                                   child: const Text(
@@ -659,7 +659,7 @@ class _SimulatorViewState extends State<SimulatorView> {
                                     style: TextStyle(
                                       fontSize: 9,
                                       fontWeight: FontWeight.w800,
-                                      color: AppleTheme.systemPurple,
+                                      color: BackdropTheme.violet,
                                     ),
                                   ),
                                 ),
@@ -673,7 +673,7 @@ class _SimulatorViewState extends State<SimulatorView> {
                               fontSize: 12,
                               fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
                               color: isSelected
-                                  ? (isDark ? Colors.white : AppleTheme.systemBlue)
+                                  ? (isDark ? Colors.white : BackdropTheme.accent)
                                   : (isDark ? Colors.white70 : Colors.black87),
                             ),
                             maxLines: 1,
@@ -735,12 +735,12 @@ class _SimulatorViewState extends State<SimulatorView> {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
                     decoration: BoxDecoration(
-                      color: AppleTheme.systemGreen.withAlpha(35),
+                      color: BackdropTheme.statusOnline.withAlpha(35),
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: const Text(
                       'VIRAL GRADE',
-                      style: TextStyle(color: AppleTheme.systemGreen, fontSize: 9.5, fontWeight: FontWeight.w700),
+                      style: TextStyle(color: BackdropTheme.statusOnline, fontSize: 9.5, fontWeight: FontWeight.w700),
                     ),
                   ),
                 ],
@@ -754,7 +754,7 @@ class _SimulatorViewState extends State<SimulatorView> {
                     style: TextStyle(
                       fontSize: 32,
                       fontWeight: FontWeight.w900,
-                      color: AppleTheme.systemGreen,
+                      color: BackdropTheme.statusOnline,
                       height: 1.0,
                     ),
                   ),
@@ -764,7 +764,7 @@ class _SimulatorViewState extends State<SimulatorView> {
                     style: TextStyle(fontSize: 14, color: isDark ? Colors.white38 : Colors.black38),
                   ),
                   const Spacer(),
-                  const Icon(CupertinoIcons.flame_fill, color: AppleTheme.systemOrange, size: 22),
+                  const Icon(CupertinoIcons.flame_fill, color: BackdropTheme.statusWarning, size: 22),
                 ],
               ),
               const SizedBox(height: 8),
@@ -774,7 +774,7 @@ class _SimulatorViewState extends State<SimulatorView> {
                   value: 0.94,
                   minHeight: 5,
                   backgroundColor: Colors.white12,
-                  valueColor: AlwaysStoppedAnimation<Color>(AppleTheme.systemGreen),
+                  valueColor: AlwaysStoppedAnimation<Color>(BackdropTheme.statusOnline),
                 ),
               ),
               const SizedBox(height: 10),
@@ -796,7 +796,7 @@ class _SimulatorViewState extends State<SimulatorView> {
             children: [
               Row(
                 children: [
-                  const Icon(CupertinoIcons.clock_fill, color: AppleTheme.systemBlue, size: 16),
+                  const Icon(CupertinoIcons.clock_fill, color: BackdropTheme.accent, size: 16),
                   const SizedBox(width: 8),
                   Text(
                     'OPTIMAL PUBLISHING WINDOW',

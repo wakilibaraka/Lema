@@ -7,7 +7,7 @@ import '../models/platform_info.dart';
 import '../models/post_model.dart';
 import '../models/queue_slot_model.dart';
 import '../providers/posts_provider.dart';
-import '../theme/apple_theme.dart';
+import '../theme/backdrop_theme.dart';
 import '../widgets/apple_glass_card.dart';
 import '../widgets/lema_pill.dart';
 import '../widgets/lema_toast.dart';
@@ -243,7 +243,7 @@ class _QueueViewState extends State<QueueView> {
           Icon(
             CupertinoIcons.exclamationmark_triangle_fill,
             size: 18,
-            color: AppleTheme.systemOrange,
+            color: BackdropTheme.statusWarning,
           ),
           const SizedBox(width: 10),
           Expanded(
@@ -273,14 +273,14 @@ class _QueueViewState extends State<QueueView> {
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: (slot.isActive ? AppleTheme.systemBlue : Colors.grey)
+              color: (slot.isActive ? BackdropTheme.accent : Colors.grey)
                   .withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(10),
             ),
             child: Icon(
               CupertinoIcons.clock_fill,
               size: 16,
-              color: slot.isActive ? AppleTheme.systemBlue : Colors.grey,
+              color: slot.isActive ? BackdropTheme.accent : Colors.grey,
             ),
           ),
           const SizedBox(width: 12),
@@ -450,7 +450,7 @@ class _QueueViewState extends State<QueueView> {
                                   vertical: 3,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: AppleTheme.systemGreen.withValues(
+                                  color: BackdropTheme.statusOnline.withValues(
                                     alpha: 0.15,
                                   ),
                                   borderRadius: BorderRadius.circular(6),
@@ -458,7 +458,7 @@ class _QueueViewState extends State<QueueView> {
                                 child: const Text(
                                   'SENT',
                                   style: TextStyle(
-                                    color: AppleTheme.systemGreen,
+                                    color: BackdropTheme.statusOnline,
                                     fontSize: 10,
                                     fontWeight: FontWeight.w700,
                                   ),
@@ -473,7 +473,7 @@ class _QueueViewState extends State<QueueView> {
                                   vertical: 3,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: AppleTheme.systemOrange.withValues(
+                                  color: BackdropTheme.statusWarning.withValues(
                                     alpha: 0.15,
                                   ),
                                   borderRadius: BorderRadius.circular(6),
@@ -481,7 +481,7 @@ class _QueueViewState extends State<QueueView> {
                                 child: const Text(
                                   'OVERDUE',
                                   style: TextStyle(
-                                    color: AppleTheme.systemOrange,
+                                    color: BackdropTheme.statusWarning,
                                     fontSize: 10,
                                     fontWeight: FontWeight.w700,
                                   ),
@@ -574,7 +574,7 @@ class _QueueViewState extends State<QueueView> {
                       'Remove',
                       style: TextStyle(
                         fontSize: 11,
-                        color: AppleTheme.systemRed.withValues(alpha: 0.9),
+                        color: Colors.red.withValues(alpha: 0.9),
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -628,7 +628,7 @@ class _QueueViewState extends State<QueueView> {
         message: _failed[post.id]!,
         child: CupertinoButton(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-          color: AppleTheme.systemRed.withValues(alpha: 0.12),
+          color: Colors.red.withValues(alpha: 0.12),
           borderRadius: BorderRadius.circular(10),
           onPressed: () => _dispatch(post),
           child: const Row(
@@ -637,7 +637,7 @@ class _QueueViewState extends State<QueueView> {
               Icon(
                 CupertinoIcons.refresh,
                 size: 13,
-                color: AppleTheme.systemRed,
+                color: Colors.red,
               ),
               SizedBox(width: 6),
               Text(
@@ -645,7 +645,7 @@ class _QueueViewState extends State<QueueView> {
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
-                  color: AppleTheme.systemRed,
+                  color: Colors.red,
                 ),
               ),
             ],
@@ -655,7 +655,7 @@ class _QueueViewState extends State<QueueView> {
     }
     return CupertinoButton(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-      color: AppleTheme.systemBlue,
+      color: BackdropTheme.accent,
       // A plain (non-.filled) CupertinoButton defaults its foreground to
       // CupertinoTheme.primaryColor — #007AFF, the same value as the
       // background above — which rendered the label invisible.
@@ -742,7 +742,7 @@ class _ComposePostModalState extends State<_ComposePostModal> {
             margin: const EdgeInsets.all(20),
             decoration: BoxDecoration(
               color: isDark ? const Color(0xFF1E1E24) : Colors.white,
-              borderRadius: BorderRadius.circular(AppleTheme.radiusXl),
+              borderRadius: BorderRadius.circular(BackdropTheme.radiusCard),
               boxShadow: [
                 BoxShadow(
                   color: Colors.black.withValues(alpha: 0.4),
@@ -934,7 +934,7 @@ class _ComposePostModalState extends State<_ComposePostModal> {
                           'Change',
                           style: TextStyle(
                             fontSize: 11,
-                            color: AppleTheme.systemBlue,
+                            color: BackdropTheme.accent,
                           ),
                         ),
                       ),

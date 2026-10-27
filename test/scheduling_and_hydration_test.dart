@@ -267,6 +267,9 @@ void main() {
 
     testWidgets('the shared picker returns the chosen time', (tester) async {
       DateTime? chosen;
+      // A week out at a fixed wall time so the slot cannot rot into the past.
+      final slot = DateTime.now().add(const Duration(days: 7));
+      final target = DateTime(slot.year, slot.month, slot.day, 14, 30);
       await tester.pumpWidget(
         MaterialApp(
           home: Builder(
@@ -275,7 +278,7 @@ void main() {
                 onTap: () async {
                   chosen = await showScheduleTimePicker(
                     context: context,
-                    initial: DateTime(2026, 10, 20, 14, 30),
+                    initial: target,
                   );
                 },
               ),
@@ -293,7 +296,39 @@ void main() {
 
       await tester.tap(find.text('Done'));
       await tester.pumpAndSettle();
-      expect(chosen, DateTime(2026, 10, 20, 14, 30));
+      expect(chosen, target);
+    });
+
+    testWidgets('an overdue slot opens at today instead of crashing',
+        (tester) async {
+      DateTime? chosen;
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Builder(
+            builder: (context) => Center(
+              child: CupertinoLikeButton(
+                onTap: () async {
+                  chosen = await showScheduleTimePicker(
+                    context: context,
+                    initial: DateTime(2020, 1, 1, 9, 0),
+                  );
+                },
+              ),
+            ),
+          ),
+        ),
+      );
+
+      await tester.tap(find.byType(CupertinoLikeButton));
+      await tester.pumpAndSettle();
+
+      // CupertinoDatePicker asserts when its initial date is before its
+      // minimum; the clamp lands an overdue slot on today instead.
+      expect(find.text('Schedule'), findsOneWidget);
+      final now = DateTime.now();
+      await tester.tap(find.text('Done'));
+      await tester.pumpAndSettle();
+      expect(chosen, DateTime(now.year, now.month, now.day));
     });
   });
 

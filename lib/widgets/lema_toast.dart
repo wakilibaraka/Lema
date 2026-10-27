@@ -1,7 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import '../theme/apple_theme.dart';
 
 /// Frosted transient feedback (Slice 4, density rule §5).
 ///
@@ -25,15 +24,15 @@ class LemaToast {
     final IconData icon;
     switch (kind) {
       case LemaToastKind.saved:
-        accent = AppleTheme.systemGreen;
+        accent = const Color(0xFF34C759);
         icon = CupertinoIcons.checkmark_alt_circle_fill;
         break;
       case LemaToastKind.moved:
-        accent = AppleTheme.systemBlue;
+        accent = const Color(0xFFD62976);
         icon = CupertinoIcons.arrow_2_squarepath;
         break;
       case LemaToastKind.error:
-        accent = AppleTheme.systemRed;
+        accent = const Color(0xFFFF3B30);
         icon = CupertinoIcons.exclamationmark_circle_fill;
         break;
     }

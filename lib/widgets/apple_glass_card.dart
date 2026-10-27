@@ -1,6 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
-import '../theme/apple_theme.dart';
+
 
 class AppleGlassCard extends StatelessWidget {
   final Widget child;
@@ -17,8 +17,8 @@ class AppleGlassCard extends StatelessWidget {
     required this.child,
     this.padding = const EdgeInsets.all(16),
     this.margin,
-    this.borderRadius = AppleTheme.radiusLg,
-    this.blur = AppleTheme.blurCard,
+    this.borderRadius = 16,
+    this.blur = 18,
     this.customBackground,
     this.customBorder,
     this.onTap,
@@ -27,9 +27,9 @@ class AppleGlassCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final bg = customBackground ?? AppleTheme.cardBg(isDark);
+    final bg = customBackground ?? (isDark ? const Color(0xFF1C1C22) : Colors.white);
     final border = customBorder ?? Border.all(
-      color: AppleTheme.cardBorder(isDark),
+      color: isDark ? Colors.white10 : Colors.black.withAlpha(20),
       width: 1.0,
     );
 
