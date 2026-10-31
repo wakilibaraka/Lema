@@ -10,11 +10,9 @@ import 'providers/profile_provider.dart';
 import 'services/demo_mode_service.dart';
 import 'services/storage_service.dart';
 import 'theme/backdrop_theme.dart';
-import 'views/ai_studio_view.dart';
 import 'views/analytics_view.dart';
 import 'views/calendar_view.dart';
 import 'views/composer_view.dart';
-import 'views/hooks_pipeline_view.dart';
 import 'views/lema_grid_view.dart';
 import 'views/queue_view.dart';
 import 'views/settings_view.dart';
@@ -88,10 +86,8 @@ class _MainLayoutScreenState extends State<MainLayoutScreen> {
     LemaGridView(),
     QueueView(),
     CalendarView(),
-    AiStudioView(),
     ComposerView(),
     AnalyticsView(),
-    HooksPipelineView(),
     TasksView(),
     SettingsView(),
   ];

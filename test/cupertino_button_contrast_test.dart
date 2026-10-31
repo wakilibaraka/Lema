@@ -21,7 +21,7 @@ import 'package:lema/services/storage_service.dart';
 /// effective foreground of each Text/Icon against the resolved background of
 /// its enclosing enabled button, so it catches new occurrences too.
 void main() {
-  const viewCount = 9; // Home … Settings.
+  const viewCount = 7; // Home … Settings.
 
   List<String> scan(WidgetTester tester) {
     final violations = <String>[];

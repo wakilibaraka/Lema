@@ -6,7 +6,6 @@ A content operating system for creators. Plan posts, keep a consistent publishin
 
 - **Queue and calendar.** Preset peak-hour slots, drag to reorder, and a month view of everything scheduled.
 - **Composer.** Write once, pick platforms, attach images or video, schedule or share now.
-- **AI assistant.** Hook variations, script structure and caption rewrites (Gemini, optional key).
 - **Analytics.** Per-post likes, views, comments and shares.
 
 Publishing goes through a local daemon on port 3001. With no daemon running, turn on Demo Mode in Settings to simulate dispatches. Demo data lives in `lib/core/demo_seed.dart`.

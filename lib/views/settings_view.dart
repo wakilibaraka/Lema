@@ -23,14 +23,12 @@ class SettingsView extends StatefulWidget {
 }
 
 class _SettingsViewState extends State<SettingsView> {
-  final TextEditingController _apiKeyController = TextEditingController();
   final TextEditingController _daemonUrlController = TextEditingController(
     text: 'http://localhost:3001',
   );
 
   @override
   void dispose() {
-    _apiKeyController.dispose();
     _daemonUrlController.dispose();
     super.dispose();
   }
@@ -437,7 +435,7 @@ class _SettingsViewState extends State<SettingsView> {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          'Configure auto-poster daemon, AI engine, and testing environments.',
+                          'Configure the publishing daemon and demo mode.',
                           maxLines: 3,
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
@@ -704,86 +702,6 @@ class _SettingsViewState extends State<SettingsView> {
                           onChanged: (_) => app.toggleAutoplay(),
                         ),
                       ],
-                    ),
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: 20),
-
-              // AI Configuration Card
-              AppleGlassCard(
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(10),
-                          decoration: BoxDecoration(
-                            color: BackdropTheme.violet.withValues(alpha: 0.12),
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: const Icon(
-                            CupertinoIcons.sparkles,
-                            color: BackdropTheme.violet,
-                            size: 20,
-                          ),
-                        ),
-                        const SizedBox(width: 14),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Gemini AI Logic Engine (Content_AI)',
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w700,
-                                  color: isDark ? Colors.white : Colors.black,
-                                ),
-                              ),
-                              const SizedBox(height: 2),
-                              Text(
-                                'Powers viral caption generation, storytelling hooks, and 7-day campaigns.',
-                                maxLines: 3,
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: isDark
-                                      ? Colors.white60
-                                      : Colors.black54,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-
-                    const SizedBox(height: 16),
-
-                    TextField(
-                      controller: _apiKeyController,
-                      obscureText: true,
-                      decoration: InputDecoration(
-                        hintText: 'Enter Gemini API Key (Optional - Heuristic fallbacks enabled)',
-                        filled: true,
-                        fillColor: isDark
-                            ? Colors.white.withValues(alpha: 0.05)
-                            : Colors.black.withValues(alpha: 0.04),
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 14,
-                          vertical: 12,
-                        ),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide.none,
-                        ),
-                      ),
                     ),
                   ],
                 ),

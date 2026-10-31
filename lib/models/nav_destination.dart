@@ -40,11 +40,6 @@ const List<NavDestination> lemaDestinations = [
     icon: CupertinoIcons.calendar,
   ),
   NavDestination(
-    label: 'AI Studio',
-    shortLabel: 'AI Studio',
-    icon: CupertinoIcons.sparkles,
-  ),
-  NavDestination(
     label: 'Composer',
     shortLabel: 'Composer',
     icon: CupertinoIcons.pencil_circle,
@@ -53,11 +48,6 @@ const List<NavDestination> lemaDestinations = [
     label: 'Analytics',
     shortLabel: 'Analytics',
     icon: CupertinoIcons.chart_bar,
-  ),
-  NavDestination(
-    label: 'Hooks',
-    shortLabel: 'Hooks',
-    icon: CupertinoIcons.film,
   ),
   NavDestination(
     label: 'Daily Tick',

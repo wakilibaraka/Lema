@@ -9,9 +9,7 @@ import 'package:lema/providers/posts_provider.dart';
 import 'package:lema/providers/profile_provider.dart';
 import 'package:lema/services/storage_service.dart';
 import 'package:lema/theme/backdrop_theme.dart';
-import 'package:lema/views/ai_studio_view.dart';
 import 'package:lema/views/calendar_view.dart';
-import 'package:lema/views/hooks_pipeline_view.dart';
 import 'package:lema/views/lema_grid_view.dart';
 import 'package:lema/views/queue_view.dart';
 import 'package:lema/views/settings_view.dart';
@@ -105,13 +103,7 @@ void main() {
       await pumpMatrix(tester, const QueueView(), 'Queue');
     });
 
-    testWidgets('AI Studio survives all ratios', (tester) async {
-      await pumpMatrix(tester, const AiStudioView(), 'AI Studio');
-    });
 
-    testWidgets('Hooks survives all ratios', (tester) async {
-      await pumpMatrix(tester, const HooksPipelineView(), 'Hooks');
-    });
 
     testWidgets('Settings survives all ratios', (tester) async {
       await pumpMatrix(tester, const SettingsView(), 'Settings');

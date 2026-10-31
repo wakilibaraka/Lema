@@ -8,7 +8,6 @@ import 'package:lema/providers/app_provider.dart';
 import 'package:lema/providers/auth_provider.dart';
 import 'package:lema/providers/posts_provider.dart';
 import 'package:lema/providers/profile_provider.dart';
-import 'package:lema/services/ai_service.dart';
 import 'package:lema/services/demo_mode_service.dart';
 import 'package:lema/services/storage_service.dart';
 import 'package:lema/views/composer_view.dart';
@@ -170,33 +169,6 @@ void main() {
       expect(app.demoMode, isFalse);
       // The old second flag is gone from the provider surface.
       expect(app.toString(), isNot(contains('sandbox')));
-    });
-  });
-
-  group('Demo mode gates the AI engine', () {
-    Future<Map<String, dynamic>> generate(String topic) async {
-      final profile = ProfileProvider().activeProfile;
-      return AiService.instance.generatePostData(
-        topic: topic,
-        profile: profile,
-        platforms: const ['instagram'],
-      );
-    }
-
-    test('demo mode answers locally and says so', () async {
-      await _storage();
-      await DemoModeService.setEnabled(true);
-
-      final result = await generate('coffee shop reels');
-      expect(result['source'], 'demo');
-      expect(result['caption'], contains('coffee shop reels'));
-    });
-
-    test('without demo mode the offline engine labels itself local', () async {
-      await _storage();
-      final result = await generate('coffee shop reels');
-      // No API key is configured in tests, so no model call happens either.
-      expect(result['source'], anyOf('local', 'gemini'));
     });
   });
 

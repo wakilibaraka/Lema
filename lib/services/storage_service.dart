@@ -5,7 +5,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../models/profile_model.dart';
 import '../models/post_model.dart';
 import '../models/task_model.dart';
-import '../models/script_model.dart';
 import '../core/demo_seed.dart';
 
 class StorageService {
@@ -13,7 +12,6 @@ class StorageService {
   static const String _keyActiveProfileId = 'lema_active_profile_id';
   static const String _keyPosts = 'lema_posts';
   static const String _keyTasks = 'lema_tasks';
-  static const String _keyScripts = 'lema_scripts';
   static const String _keyThemeMode = 'lema_theme_mode';
   static const String _keyAutoplay = 'lema_video_autoplay';
 
@@ -131,24 +129,6 @@ class StorageService {
     await _prefs.setString(_keyTasks, encoded);
   }
 
-  // --- Scripts ---
-  List<ScriptModel> loadScripts() {
-    final raw = _prefs.getString(_keyScripts);
-    if (raw == null || raw.isEmpty) {
-      return List<ScriptModel>.from(defaultScriptsList);
-    }
-    try {
-      final List decoded = jsonDecode(raw);
-      return decoded.map((e) => ScriptModel.fromJson(e)).toList();
-    } catch (_) {
-      return List<ScriptModel>.from(defaultScriptsList);
-    }
-  }
-
-  Future<void> saveScripts(List<ScriptModel> scripts) async {
-    final encoded = jsonEncode(scripts.map((s) => s.toJson()).toList());
-    await _prefs.setString(_keyScripts, encoded);
-  }
 
   // --- Theme Mode ---
   bool isDarkMode() {

@@ -3,7 +3,6 @@
 import '../models/post_model.dart';
 import '../models/profile_model.dart';
 import '../models/queue_slot_model.dart';
-import '../models/script_model.dart';
 import '../models/task_model.dart';
 
 /// Seeded posts directly extracted from Emms Digital Media dataset
@@ -128,50 +127,6 @@ final List<PostModel> defaultSeedPosts = [
     views: '0',
     likes: '0',
     comments: 0,
-  ),
-];
-
-final List<ScriptModel> defaultScriptsList = [
-  ScriptModel(
-    id: 'h1',
-    title: 'Stop Blending In: The 3-Second Rule',
-    hook: 'Stop blending in. If your video doesn’t hook someone in 3 seconds, they are gone.',
-    problem: 'Most business owners start by introducing themselves. Nobody cares yet.',
-    solution:
-        'Start with the specific pain point your client felt this morning.',
-    cta: 'DM me "STORY" or call 0757 638 846 to fix your reels.',
-    mediaAsset: 'assets/samples/emms_storytelling_reel.mp4',
-    stage: ScriptStage.readyToRecord,
-  ),
-  ScriptModel(
-    id: 'h2',
-    title: 'Selling Feelings vs Selling Product',
-    hook: 'People don’t buy your camera resolution or your software features. They buy how it makes them feel.',
-    problem: 'Listing features triggers rational skepticism and comparison shopping.',
-    solution: 'Paint the picture of relief, pride, and authority after their problem is solved.',
-    cta: 'Contact Emms Digital Media to craft stories that actually convert.',
-    mediaAsset: 'assets/samples/emms_story_features.mp4',
-    stage: ScriptStage.recorded,
-  ),
-  ScriptModel(
-    id: 'h3',
-    title: 'The 30-Minute Case Study Framework',
-    hook: 'How to turn a satisfied customer into a 30-second client-magnet video.',
-    problem: 'Asking clients for testimonials produces boring, generic praise.',
-    solution: 'Ask them: Where were you before? What was the breaking point? How is life today?',
-    cta: 'Save this reel for your next client interview.',
-    mediaAsset: 'assets/samples/emms_post1_story30mins.png',
-    stage: ScriptStage.published,
-  ),
-  ScriptModel(
-    id: 'h4',
-    title: 'The One-Sentence Transformation Pitch',
-    hook: 'If you can’t describe your business value in one sentence, your clients can’t either.',
-    problem: 'Over-explaining creates friction and kills sales momentum.',
-    solution: 'Use this formula: We help [Target Audience] achieve [Dream Result] without [Painful Obstacle].',
-    cta: 'Drop your one-sentence pitch in the comments and I will critique it.',
-    mediaAsset: 'assets/samples/emms_post3_onesentence.png',
-    stage: ScriptStage.draft,
   ),
 ];
 
