@@ -81,7 +81,6 @@ class PostModel {
   bool get isOverdue => status == 'scheduled' && scheduledTime.isBefore(DateTime.now());
 
   /// The calendar day the post belongs to.
-  ///
   /// When the schedule is held as a real `DateTime` the day is derived from
   /// it, so `copyWith(scheduledTime: ...)` can never leave the two halves of
   /// the date/time pair disagreeing. Legacy "HH:MM" payloads keep the

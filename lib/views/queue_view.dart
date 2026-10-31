@@ -25,9 +25,8 @@ class QueueView extends StatefulWidget {
 class _QueueViewState extends State<QueueView> {
   int _selectedSegment = 0; // 0: Queue, 1: Published History
 
-  /// Slice 18: local dispatch states. Queued → Sending → Sent, or
+  /// Local dispatch states. Queued → Sending → Sent, or
   /// Failed → Retry when the daemon refuses or is not listening.
-  ///
   /// The post is only moved to Published by `publishNow` when the dispatch
   /// really succeeded, so this map is now reachable: a dead daemon keeps
   /// the post in the queue instead of pretending it went out.
@@ -86,7 +85,7 @@ class _QueueViewState extends State<QueueView> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Top Bar (Slice 3 drive-by: bound the title column so the
+            // Top Bar (bound the title column so the
             // 263px subtitle can never overflow narrow mobile widths).
             Row(
               children: [
@@ -99,7 +98,7 @@ class _QueueViewState extends State<QueueView> {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
-                          // Slice 18: compact 22pt H1 fits beside Create Post
+                          // Compact 22pt H1 fits beside Create Post
                           // at 402pt (the 26pt title truncated to "Qu…").
                           fontSize: 22,
                           fontWeight: FontWeight.w800,
@@ -163,7 +162,7 @@ class _QueueViewState extends State<QueueView> {
 
             const SizedBox(height: 20),
 
-            // Segment pills (Slice 18, Home language): the sliding control's
+            // Segment pills (Home language): the sliding control's
             // fixed labels clipped at 402pt ("Published History (0…"), so the
             // segments become scrollable pills with the same edge fade.
             SizedBox(
@@ -363,7 +362,7 @@ class _QueueViewState extends State<QueueView> {
 
         return AppleGlassCard(
           padding: const EdgeInsets.all(16),
-          // Slice 18: details row on top, actions span full width below.
+          // Details row on top, actions span full width below.
           // Side-by-side actions squeezed the middle column to ~80pt at
           // 402pt and overflowed; stacked actions have no width pressure.
           child: Column(
@@ -535,7 +534,7 @@ class _QueueViewState extends State<QueueView> {
 
                         const SizedBox(height: 8),
 
-                        // Media File Info (Slice 18: clamped — the unclamped
+                        // Media File Info (clamped — the unclamped
                         // filename was the 61px right-overflow).
                         Text(
                           'Asset: ${post.mediaUrl.split('/').last}',
@@ -553,7 +552,7 @@ class _QueueViewState extends State<QueueView> {
               ),
               const SizedBox(height: 12),
 
-              // Action Buttons (Slice 18: dispatch states — Sending
+              // Action Buttons (dispatch states — Sending
               // spinner, Failed → Retry — fronting the parked daemon).
               // Actions span full width below the details: side-by-side
               // buttons squeezed the middle column at 402pt.
@@ -589,7 +588,6 @@ class _QueueViewState extends State<QueueView> {
   }
 
   /// The next slot, computed from the real queue.
-  ///
   /// This row used to read "Next post scheduled in approx. 45 mins" for every
   /// queue, whatever it actually held.
   String _nextSlotLabel(List<PostModel> scheduled, int overdueCount) {
@@ -611,7 +609,7 @@ class _QueueViewState extends State<QueueView> {
     return 'Next post in $when · ${upcoming.first.platformInfo.name}';
   }
 
-  /// Slice 18: the dispatch button renders Queued → Sending → Sent, and
+  /// The dispatch button renders Queued → Sending → Sent, and
   /// Failed → Retry when `publishNow` reports a failed dispatch.
   Widget _dispatchButton(PostModel post, bool isDark) {
     if (_sending.contains(post.id)) {

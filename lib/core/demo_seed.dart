@@ -83,7 +83,7 @@ final List<PostModel> defaultSeedPosts = [
     likes: '1540',
     comments: 112,
   ),
-  // --- Slice 5: draft seeds (multi-platform to exercise tile dots) ---
+  // --- Draft seeds (multi-platform to exercise tile dots) ---
   PostModel(
     id: 'draft-1',
     title: 'Behind the Edit: Sisterhood Cut',

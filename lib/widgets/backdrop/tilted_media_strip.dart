@@ -7,8 +7,7 @@ import '../media_player_widget.dart';
 
 /// Backdrop's tilted photo strip: up to four post thumbnails, each rotated a
 /// few degrees inside a white print border with a soft shadow, plus the
-/// dashed "add" tile that opens the composer (LEMA_DESIGN_PLAN.md §2).
-///
+/// dashed "add" tile that opens the composer.
 /// Every player runs `thumbnail: true, autoPlay: false` — the media matrix
 /// test pins exactly one autoplay player in the app (the hero).
 class TiltedMediaStrip extends StatelessWidget {

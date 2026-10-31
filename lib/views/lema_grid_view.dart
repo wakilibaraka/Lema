@@ -21,7 +21,6 @@ import '../widgets/media_player_widget.dart';
 import '../widgets/schedule_time_picker.dart';
 
 /// Lema Grid — visually-driven drag-and-drop feed planner.
-///
 /// Backdrop design language (Instagram-inspired events feed):
 ///  * off-white canvas (#F5F5F8) + near-black type, 24pt card radii
 ///  * header row: avatar + prompt + circular glass search/bell buttons
@@ -29,7 +28,7 @@ import '../widgets/schedule_time_picker.dart';
 ///  * day accordions styled as event cards: bold title, platform chips,
 ///    tilted media strip (post thumbnails) + dashed add tile
 ///  * floating dark "New post" pill over the feed
-/// Full spec: LEMA_DESIGN_PLAN.md §2–3. Data/behavior unchanged — this is
+/// Data/behavior unchanged — this is
 /// presentation over PostModel/PostsProvider.
 class LemaGridView extends StatefulWidget {
   const LemaGridView({super.key});
@@ -47,12 +46,12 @@ class _LemaGridViewState extends State<LemaGridView>
   final Set<String> _expandedDays = {};
   bool _timelineSeeded = false;
   String? _draggingId;
-  int _gridColumns = 3; // Slice 4: 3-col (3:4) or 4-col (1:1)
+  int _gridColumns = 3; // 3-col (3:4) or 4-col (1:1)
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    // Slice 6: default-open the first timeline day (plus today) once.
+    // Default-open the first timeline day (plus today) once.
     // Runs before first build; later user collapses are respected.
     if (!_timelineSeeded) {
       final all = context.read<PostsProvider>().posts;
@@ -87,7 +86,7 @@ class _LemaGridViewState extends State<LemaGridView>
   int _hashtagCount(String caption) =>
       RegExp(r'#\w+').allMatches(caption).length;
 
-  /// Slice 4: status badge (label + color) for grid tiles.
+  /// Status badge (label + color) for grid tiles.
   (String, Color) _statusBadge(PostModel post) {
     switch (post.status.toLowerCase()) {
       case 'draft':
@@ -166,7 +165,7 @@ class _LemaGridViewState extends State<LemaGridView>
     // Off-white canvas on light mode keeps the travel-ref contrast.
     final canvas = isDark ? null : const Color(0xFFF5F5F8);
 
-    // Slice 10: clamp text scaling so clamped titles survive max sizes.
+    // Clamp text scaling so clamped titles survive max sizes.
     final media = MediaQuery.of(context);
     // The reference's floating create pill belongs to the phone surface: the
     // dock reserves a clearance band under the scroll view and the pill sits
@@ -212,7 +211,7 @@ class _LemaGridViewState extends State<LemaGridView>
                     ),
                   ),
                   const SizedBox(width: 8),
-                  // Slice 4 density toggle: 3-col 3:4 tiles, 4-col 1:1 tiles.
+                  // Density toggle: 3-col 3:4 tiles, 4-col 1:1 tiles.
                   Container(
                     padding: const EdgeInsets.all(3),
                     decoration: BoxDecoration(
@@ -242,7 +241,7 @@ class _LemaGridViewState extends State<LemaGridView>
               ),
             ),
           ),
-          // Slice 10: error card swaps in for grid + timeline on decode failure.
+          // Error card swaps in for grid + timeline on decode failure.
           if (postsProvider.loadError)
             SliverToBoxAdapter(
               child: _buildErrorCard(context, isDark),
@@ -472,7 +471,7 @@ class _LemaGridViewState extends State<LemaGridView>
   }
 
   // ── Symmetric stat card (Queued | Drafts) ─────────────────────────────
-  // Slice 16: two equal cells with centered content and the shuffle control
+  // Two equal cells with centered content and the shuffle control
   // sitting exactly on the divider, so the card is mirror-symmetric. The
   // hero sheet keeps its own "Shuffle again" affordance.
   Widget _buildStatsStrip(
@@ -576,7 +575,7 @@ class _LemaGridViewState extends State<LemaGridView>
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 4),
       child: Stack(
         children: [
-          // Slice 14: the hero card is the morph source for the card detail
+          // The hero card is the morph source for the card detail
           // view. The Hero sits OUTSIDE the decorated clip so the whole
           // 400pt-tall slab travels rather than only its rounded corners.
           GestureDetector(
@@ -686,7 +685,7 @@ class _LemaGridViewState extends State<LemaGridView>
               ),
             ),
           ),
-          // Bottom-anchored stack (Slice 2, deduped Slice 17): the sheet
+          // Bottom-anchored stack: the sheet
           // owns the single title, so the overlay carries only the meta
           // pill — no doubled title, no face collision, no mid-word clip.
           Positioned(
@@ -745,7 +744,7 @@ class _LemaGridViewState extends State<LemaGridView>
                         children: [
                       Row(
                         children: [
-                          // Slice 17: single shuffle lives on the stats
+                          // Single shuffle lives on the stats
                           // divider, so the sheet keeps only its label.
                           Expanded(
                             child: Text(
@@ -951,7 +950,7 @@ class _LemaGridViewState extends State<LemaGridView>
         ),
         SizedBox(
           height: 44,
-          // Slice 16: trailing edge fade so a mid-scroll row never ends in a
+          // Trailing edge fade so a mid-scroll row never ends in a
           // hard-clipped chip ("Publishe…").
           child: ShaderMask(
             shaderCallback: (rect) => const LinearGradient(
@@ -1018,7 +1017,7 @@ class _LemaGridViewState extends State<LemaGridView>
           crossAxisCount: _gridColumns,
           mainAxisSpacing: 10,
           crossAxisSpacing: 10,
-          // Slice 4 aspect policy: 3-col 3:4 tiles, 4-col 1:1 tiles.
+          // Aspect policy: 3-col 3:4 tiles, 4-col 1:1 tiles.
           childAspectRatio: _gridColumns == 3 ? 0.75 : 1.0,
         ),
         delegate: SliverChildBuilderDelegate(
@@ -1032,7 +1031,7 @@ class _LemaGridViewState extends State<LemaGridView>
                       .read<PostsProvider>()
                       .reorderPosts(from, index, _platformFilter,
                           _statusFilter, _formatFilter);
-                  // Slice 4: Moved toast carries the Undo action (5s).
+                  // Moved toast carries the Undo action (5s).
                   if (mounted) {
                     LemaToast.show(
                       context,
@@ -1090,7 +1089,7 @@ class _LemaGridViewState extends State<LemaGridView>
       bool isDark, PostModel post, bool isFeedback, bool isTarget) {
     final tags = _hashtagCount(post.caption);
     final badge = _statusBadge(post);
-    // Slice 10 audit: 14px dots; max 3 at 3-col, max 2 at 4-col so the
+    // 14px dots; max 3 at 3-col, max 2 at 4-col so the
     // timestamp never squeezes out (16px crowds 4-col tiles).
     final maxDots = _gridColumns == 4 ? 2 : 3;
     return AnimatedContainer(
@@ -1114,7 +1113,7 @@ class _LemaGridViewState extends State<LemaGridView>
             blurRadius: isFeedback ? 24 : 14,
             offset: Offset(0, isFeedback ? 12 : 6),
           ),
-          // Slice 5: draft stack backplate (stacked-album language) —
+          // Draft stack backplate (stacked-album language) —
           // a hard offset shadow doubles as the second card. No structural
           // change, so the tile bracket balance is untouched.
           if (!isFeedback &&
@@ -1139,14 +1138,14 @@ class _LemaGridViewState extends State<LemaGridView>
               showControls: false,
               thumbnail: true,
             ),
-            // Slice 4: drop-target tint (insertion placeholder feel).
+            // Drop-target tint (insertion placeholder feel).
             if (isTarget)
               Positioned.fill(
                 child: Container(
                   color: BackdropTheme.accent.withAlpha(55),
                 ),
               ),
-            // Slice 4: status pill, top-left (never color-alone: label text).
+            // Status pill, top-left (never color-alone: label text).
             Positioned(
               top: 7,
               left: 7,
@@ -1217,7 +1216,7 @@ class _LemaGridViewState extends State<LemaGridView>
                 ),
               ),
             ),
-            // Slice 4: video glass play badge under the status pill.
+            // Video glass play badge under the status pill.
             if (post.isVideo)
               Positioned(
                 top: 36,
@@ -1280,7 +1279,7 @@ class _LemaGridViewState extends State<LemaGridView>
                       children: [
                         Row(
                           children: [
-                            // Slice 4/10: platform dots (brand ring).
+                            // Platform dots (brand ring).
                             for (int i = 0;
                                 i < post.platforms.length &&
                                     i < maxDots;
@@ -1355,7 +1354,7 @@ class _LemaGridViewState extends State<LemaGridView>
     );
   }
 
-  /// Slice 10: auction-countdown language — nearest upcoming post due
+  /// Auction-countdown language — nearest upcoming post due
   /// within 2h. Returns an empty box when nothing is imminent.
   Widget _countdownChip(List<PostModel> pool, bool isDark) {
     final now = DateTime.now();
@@ -1399,7 +1398,7 @@ class _LemaGridViewState extends State<LemaGridView>
     );
   }
 
-  /// Slice 10: on-brand frosted error card replacing grid + timeline when
+  /// On-brand frosted error card replacing grid + timeline when
   /// the stored queue failed to decode. Never a red screen.
   Widget _buildErrorCard(BuildContext context, bool isDark) {
     return Padding(
@@ -1611,7 +1610,7 @@ class _LemaGridViewState extends State<LemaGridView>
                 ),
               ),
             ),
-            // Slice 6: animated expand + slot grouping.
+            // Animated expand + slot grouping.
             ClipRect(
               child: AnimatedSize(
                 duration: const Duration(milliseconds: 280),
@@ -1662,7 +1661,7 @@ class _LemaGridViewState extends State<LemaGridView>
     return platformsMap.keys.where(present.contains).toList();
   }
 
-  /// Slice 6: bucket a day's posts into Morning / Afternoon / Evening.
+  /// Bucket a day's posts into Morning / Afternoon / Evening.
   /// Empty buckets are omitted — no hollow headers.
   List<Widget> _groupedSlots(
       BuildContext context, bool isDark, List<PostModel> sorted) {
@@ -1823,7 +1822,7 @@ class _QuickEditSheet extends StatefulWidget {
 class _QuickEditSheetState extends State<_QuickEditSheet> {
   late TextEditingController _caption;
   late String _status;
-  // Slice 7: editable publish time + platform set.
+  // Editable publish time + platform set.
   late DateTime _time;
   late Set<String> _platforms;
 
@@ -2035,7 +2034,7 @@ class _QuickEditSheetState extends State<_QuickEditSheet> {
                                       ? Colors.white
                                       : Colors.black)),
                           Text(
-                            // Slice 7: live summary of stepped time + platforms.
+                            // Live summary of stepped time + platforms.
                             '${DateFormat('EEE, MMM d · h:mm a').format(_time)} · ${_platformSummary()}',
                             style: TextStyle(
                                 fontSize: 11.5,
@@ -2082,7 +2081,7 @@ class _QuickEditSheetState extends State<_QuickEditSheet> {
                   ),
                 ),
                 const SizedBox(height: 12),
-                // Slice 7: time stepper (±15 min, live summary above).
+                // Time stepper (±15 min, live summary above).
                 Container(
                   padding: const EdgeInsets.symmetric(
                       horizontal: 6, vertical: 6),
@@ -2135,7 +2134,7 @@ class _QuickEditSheetState extends State<_QuickEditSheet> {
                   ),
                 ),
                 const SizedBox(height: 12),
-                // Slice 7: platform multi-toggle (min 1 selected).
+                // Platform multi-toggle (min 1 selected).
                 Wrap(
                   spacing: 8,
                   runSpacing: 8,
@@ -2206,7 +2205,7 @@ class _QuickEditSheetState extends State<_QuickEditSheet> {
                                     ? widget.post.caption
                                     : _caption.text.trim(),
                                 status: _status,
-                                // Slice 7: write both halves of the
+                                // Write both halves of the
                                 // date/time duality.
                                 scheduledTime: _time,
                                 scheduledDate:
@@ -2215,7 +2214,7 @@ class _QuickEditSheetState extends State<_QuickEditSheet> {
                                 platforms: _platforms.toList(),
                               ));
                           Navigator.of(context).pop();
-                          // Slice 4: every write surfaces a toast.
+                          // Every write surfaces a toast.
                           LemaToast.show(
                             context,
                             'Changes saved to queue',
@@ -2230,7 +2229,7 @@ class _QuickEditSheetState extends State<_QuickEditSheet> {
                     ),
                   ],
                 ),
-                // Slice 7: tertiary viewer actions.
+                // Tertiary viewer actions.
                 const SizedBox(height: 4),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,

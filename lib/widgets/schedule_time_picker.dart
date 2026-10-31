@@ -3,12 +3,10 @@ import 'package:flutter/material.dart';
 
 
 /// The one schedule picker all three scheduling surfaces use.
-///
 /// Before this, the omnichannel composer could only choose a day (the time
 /// stayed frozen at "three hours from now"), the queue's Create Post modal
 /// had no picker at all, and the grid editor could only step 15 minutes at a
 /// time — so moving a post to next Tuesday meant 96 taps.
-///
 /// Returns the chosen local time, or null when dismissed.
 Future<DateTime?> showScheduleTimePicker({
   required BuildContext context,

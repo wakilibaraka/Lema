@@ -416,7 +416,7 @@ class _SettingsViewState extends State<SettingsView> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Top Bar (Slice 22: bounded — the 26pt title striped at 402pt).
+              // Top Bar (bounded — the 26pt title striped at 402pt).
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -611,7 +611,7 @@ class _SettingsViewState extends State<SettingsView> {
 
               const SizedBox(height: 20),
 
-              // Slice 22: Media playback card — video autoplay lives here.
+              // Media playback card — video autoplay lives here.
               AppleGlassCard(
                 padding: const EdgeInsets.all(20),
                 child: Column(

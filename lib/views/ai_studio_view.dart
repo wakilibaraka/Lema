@@ -26,7 +26,7 @@ class _AiStudioViewState extends State<AiStudioView> {
   String? _generatedContent;
   List<Map<String, dynamic>>? _generatedBatch;
 
-  /// Slice 19: failures render as an in-place error card with Retry instead
+  /// Failures render as an in-place error card with Retry instead
   /// of a transient snackbar, so the studio degrades gracefully offline.
   String? _error;
   Future<void> Function()? _lastAction;
@@ -134,7 +134,7 @@ class _AiStudioViewState extends State<AiStudioView> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final profile = context.watch<ProfileProvider>().activeProfile;
-    // Slice 19: phones (< 700pt, same breakpoint as Calendar) stack the
+    // Phones (< 700pt, same breakpoint as Calendar) stack the
     // controls above the output in one scroll; desktop keeps side-by-side.
     final isNarrow = MediaQuery.of(context).size.width < 700;
 
@@ -197,9 +197,9 @@ class _AiStudioViewState extends State<AiStudioView> {
     );
   }
 
-  /// Slice 19: page header shared by both layouts. The compact variant uses
+  /// Page header shared by both layouts. The compact variant uses
   /// the short product title so it fits 402pt; both carry product copy
-  /// instead of the old ported-engine subtitle (§4 AI Studio copy).
+  /// instead of the old ported-engine subtitle.
   Widget _buildPageHeader(bool isDark, {required bool compact}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -263,7 +263,7 @@ class _AiStudioViewState extends State<AiStudioView> {
     );
   }
 
-  /// Slice 19: generation controls shared by both layouts. Compact stacks
+  /// Generation controls shared by both layouts. Compact stacks
   /// the two generate actions full-width (they overflow side-by-side at
   /// 402pt); desktop keeps them side by side.
   Widget _buildControls(bool isDark, ProfileModel profile,
@@ -455,7 +455,7 @@ class _AiStudioViewState extends State<AiStudioView> {
     );
   }
 
-  /// Slice 19: persona avatar with an initials fallback so a missing bundled
+  /// Persona avatar with an initials fallback so a missing bundled
   /// asset degrades to a monogram instead of an error box.
   Widget _buildAvatar(bool isDark, ProfileModel profile) {
     final initial =
@@ -484,7 +484,7 @@ class _AiStudioViewState extends State<AiStudioView> {
     );
   }
 
-  /// Slice 19: output card shared by both layouts. On phones the body gets a
+  /// Output card shared by both layouts. On phones the body gets a
   /// fixed height so the empty/loading states center and batch lists scroll
   /// internally instead of overflowing.
   Widget _buildOutputCard(bool isDark, {required bool fixedHeight}) {
@@ -548,7 +548,7 @@ class _AiStudioViewState extends State<AiStudioView> {
       );
     }
 
-    // Slice 19: failures render in place with Retry (graceful offline).
+    // Failures render in place with Retry (graceful offline).
     if (_error != null) {
       return Center(
         child: Column(

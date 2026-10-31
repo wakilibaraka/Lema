@@ -3,11 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 /// Lema's unified motion language.
-///
 /// Every signature interaction (Slices 11-15) draws its durations, curves,
 /// stagger maths and haptics from here, so any future screen animates with
 /// the same rhythm as the existing ones.
-///
 /// **Extend this file instead of hard-coding durations inline.** If a new
 /// animation needs a timing that does not exist yet, add it here first — that
 /// is what keeps Lema feeling like one app rather than a pile of widgets.
@@ -67,16 +65,13 @@ class LemaMotion {
       Duration(milliseconds: index * stepMs);
 
   /// Maps one shared animation [t] (0..1) onto item [index]'s sub-interval.
-  ///
   /// This is the workhorse for staggered reveals driven by a single
   /// controller — cheaper and less error-prone than one controller per row.
-  ///
   /// ```dart
   /// final t = LemaMotion.stagger(controller.value, i, count: rows.length);
   /// final opacity = t;
   /// final dy = (1 - t) * 12;
   /// ```
-  ///
   /// [overlap] is how much consecutive items share of the timeline:
   /// `0` = fully sequential, `1` = all items start together.
   static double stagger(
@@ -105,7 +100,6 @@ class LemaMotion {
 
   // ── Reduced motion ──────────────────────────────────────────────────
   /// True when the user has asked the OS to reduce motion.
-  ///
   /// Every signature animation should branch on this and fall back to a
   /// crossfade or an instant swap — never simply play at a faster speed.
   static bool reduceMotionOf(BuildContext context) =>

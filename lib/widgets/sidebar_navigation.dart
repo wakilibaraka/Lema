@@ -22,7 +22,6 @@ class _NavBadge {
 
 /// The desktop navigation rail (tablet widths) and the full sidebar (desktop)
 /// in the Backdrop language.
-///
 /// These were two near-identical ~200-line branches that had already drifted
 /// apart, so every colour change had to be made twice. One body now renders
 /// both: [isRail] switches the width and the per-row presentation, never the

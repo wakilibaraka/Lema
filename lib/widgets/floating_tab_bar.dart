@@ -7,8 +7,7 @@ import '../models/nav_destination.dart';
 import '../theme/backdrop_theme.dart';
 import '../theme/lema_motion.dart';
 
-/// Docked glass tab bar (Slice 3 floating pill → Slice 20 Photos dock).
-///
+/// Docked glass tab bar.
 /// Apple Photos language: full-width frosted bar, rounded top corners,
 /// background extending under the home indicator (manual bottom inset, no
 /// SafeArea gap). Selected tab keeps the raised bubble (Backdrop magenta —
@@ -39,7 +38,7 @@ class FloatingTabBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    // Slice 20: extend under the home indicator like Photos — the inset is
+    // Extend under the home indicator like Photos — the inset is
     // absorbed inside the frost instead of a SafeArea gap below the bar.
     final bottomInset = MediaQuery.of(context).viewPadding.bottom;
     const radius = BorderRadius.only(
@@ -122,7 +121,7 @@ class _TabItem extends StatelessWidget {
       child: AnimatedContainer(
         duration: LemaMotion.quick,
         curve: LemaMotion.standardCurve,
-        // Slice 12: padding tightened to absorb the reflection height so the
+        // Padding tightened to absorb the reflection height so the
         // bar's overall footprint does not shift.
         padding: const EdgeInsets.symmetric(vertical: 3),
         decoration: BoxDecoration(

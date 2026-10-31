@@ -28,9 +28,8 @@ class StoryRingData {
 }
 
 /// Horizontal row of gradient story rings (Instagram feed pattern).
-///
 /// First ring is the compose affordance; the rest are platform filters
-/// driven by `platformsMap` (LEMA_DESIGN_PLAN.md §2). Selection mirrors the
+/// driven by `platformsMap`. Selection mirrors the
 /// grid's existing platform filter pills — tapping a ring is the same
 /// filter, in feed language.
 class StoryRingsRow extends StatelessWidget {

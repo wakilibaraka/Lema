@@ -69,7 +69,7 @@ class StorageService {
   }
 
   // --- Posts ---
-  // Slice 10: decode failures are surfaced (not silently swallowed) so the
+  // Decode failures are surfaced (not silently swallowed) so the
   // UI can show an on-brand error card with a reset action.
   bool _postsDecodeError = false;
   bool get hadPostsDecodeError => _postsDecodeError;
@@ -85,7 +85,7 @@ class StorageService {
     if (raw == null || raw.isEmpty) {
       _postsDecodeError = false;
       _postsWereMissing = true;
-      // Slice 22 fix: return a COPY — callers mutate the list (add,
+      // Return a COPY — callers mutate the list (add,
       // reorder, migrate) and must never corrupt the seed template.
       return List<PostModel>.from(defaultSeedPosts);
     }
@@ -159,7 +159,7 @@ class StorageService {
     await _prefs.setBool(_keyThemeMode, isDark);
   }
 
-  // --- Video autoplay (Slice 22) ---
+  // --- Video autoplay ---
   /// Default OFF: feeds stay silent until the user enables motion.
   bool autoplayVideos() {
     return _prefs.getBool(_keyAutoplay) ?? false;

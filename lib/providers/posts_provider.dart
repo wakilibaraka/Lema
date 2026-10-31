@@ -13,12 +13,12 @@ class PostsProvider extends ChangeNotifier {
   final List<QueueSlotModel> _queueSlots = defaultQueueSlots;
   PostModel? _activeSimulatorPost;
 
-  // Slice 4: pre-move snapshot for one-tap undo of grid reorders.
+  // Pre-move snapshot for one-tap undo of grid reorders.
   List<PostModel>? _lastOrderSnapshot;
 
   bool get canUndoReorder => _lastOrderSnapshot != null;
 
-  // Slice 10: surfaced when the stored queue failed to decode.
+  // Surfaced when the stored queue failed to decode.
   bool _loadError = false;
   bool get loadError => _loadError;
 
@@ -35,7 +35,7 @@ class PostsProvider extends ChangeNotifier {
       // relative slot times) on every start, so the schedule drifted.
       _storage.savePosts(_posts);
     } else {
-      // Slice 5 seed migration: merge any seed ids missing from storage
+      // Merge any seed ids missing from storage
       // (e.g. new draft seeds on existing installs), then persist.
       var merged = false;
       for (final seed in defaultSeedPosts) {
@@ -146,7 +146,7 @@ class PostsProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Slice 10: discards the corrupted cache and restores seed posts.
+  /// Discards the corrupted cache and restores seed posts.
   Future<void> retryLoad() async {
     await _storage.clearPosts();
     _posts = List.from(defaultSeedPosts);
@@ -156,7 +156,6 @@ class PostsProvider extends ChangeNotifier {
   }
 
   /// Hands a post to the daemon and reports what happened.
-  ///
   /// The post only becomes `published` once the dispatch actually
   /// succeeded. It used to be flipped to `published` *before* the request
   /// and the daemon's answer was discarded, so a dead daemon still emptied

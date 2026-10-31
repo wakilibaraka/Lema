@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 /// Backdrop design tokens — the Instagram-inspired event-feed language
-/// (LEMA_DESIGN_PLAN.md §1). The Home surface uses these; other screens
+///. The Home surface uses these; other screens
 /// keep [AppleTheme] until they migrate.
 class BackdropTheme {
   BackdropTheme._();
@@ -63,7 +63,6 @@ class BackdropTheme {
   }
 
   // ── Shell tokens ────────────────────────────────────────────────────
-  //
   // The sidebar / title bar chrome. Close to the canvas in value so the frame
   // reads as one surface with the content, separated by a hairline rather than
   // by a colour step.

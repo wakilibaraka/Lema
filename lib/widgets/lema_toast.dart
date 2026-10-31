@@ -2,8 +2,7 @@ import 'dart:ui';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
-/// Frosted transient feedback (Slice 4, density rule §5).
-///
+/// Frosted transient feedback.
 /// Single-instance (clears previous), floats above the tab bar,
 /// three variants: Saved (green) / Moved (blue, hosts the Undo action)
 /// / Error (red). Sub-500ms ops never show blocking spinners.

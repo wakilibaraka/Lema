@@ -2,8 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../theme/lema_motion.dart';
 
-/// Slice 23 — the single filter-pill implementation for the whole app.
-///
+/// The single filter-pill implementation for the whole app.
 /// Home, Queue and Simulator previously carried three copies of this exact
 /// widget (radius 20, 16/9 padding, black/white selected fill). New filter
 /// rows must use this instead of copying it again.

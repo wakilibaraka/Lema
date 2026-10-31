@@ -65,7 +65,6 @@ class AnalyticsResult {
             : 0;
 
   /// Rows keyed by post id.
-  ///
   /// Callers must pair by id, never by list position: the published set can
   /// gain or lose a post between the fetch and the build, and an index pair
   /// silently relabels one post's numbers as another's.
@@ -104,7 +103,6 @@ class AnalyticsService {
 
   /// Parses the compact counters the seeds and platform APIs use:
   /// `'84.2K'` → 84200, `'1.2M'` → 1200000, `'1,240'` → 1240.
-  ///
   /// Stripping non-digits turned "84.2K" into 842 views, understating every
   /// offline figure by two orders of magnitude.
   static int parseCompactCount(String raw) {

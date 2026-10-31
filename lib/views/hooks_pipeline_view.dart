@@ -50,7 +50,7 @@ class _HooksPipelineViewState extends State<HooksPipelineView> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    // Slice 21: phones (< 700pt, same breakpoint as Calendar/AI Studio)
+    // Phones (< 700pt, same breakpoint as Calendar/AI Studio)
     // stack full-width script cards; tapping one opens the detail sheet.
     // Desktop keeps the master-detail split. Both share the same builders.
     final isNarrow = MediaQuery.of(context).size.width < 700;
@@ -130,7 +130,7 @@ class _HooksPipelineViewState extends State<HooksPipelineView> {
     );
   }
 
-  /// Slice 21: page header shared by both layouts. The destination is named
+  /// Page header shared by both layouts. The destination is named
   /// "Hooks" everywhere now, so the header matches the sidebar, title bar and
   /// dock instead of inventing "Hooks & Video Scripts Pipeline".
   Widget _buildPageHeader(bool isDark, {required bool compact}) {
@@ -172,7 +172,7 @@ class _HooksPipelineViewState extends State<HooksPipelineView> {
     );
   }
 
-  /// Slice 21: script card shared by the mobile list and the desktop pane.
+  /// Script card shared by the mobile list and the desktop pane.
   /// All type is clamped so narrow columns degrade with ellipsis, never
   /// with overflow stripes.
   Widget _scriptCard(
@@ -241,7 +241,7 @@ class _HooksPipelineViewState extends State<HooksPipelineView> {
     );
   }
 
-  /// Slice 21: detail + teleprompter, shared by the desktop pane and the
+  /// Detail + teleprompter, shared by the desktop pane and the
   /// mobile bottom sheet.
   Widget _scriptDetail(ScriptModel script, bool isDark) {
     return AppleGlassCard(
@@ -324,7 +324,7 @@ class _HooksPipelineViewState extends State<HooksPipelineView> {
     );
   }
 
-  /// Slice 21: mobile detail opens as a bottom sheet (quick-edit pattern).
+  /// Mobile detail opens as a bottom sheet (quick-edit pattern).
   void _openDetailSheet(BuildContext context, ScriptModel script, bool isDark) {
     showModalBottomSheet<void>(
       context: context,
@@ -380,7 +380,7 @@ class _HooksPipelineViewState extends State<HooksPipelineView> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              // Slice 21: bounded so long section labels ellipsize instead
+              // Bounded so long section labels ellipsize instead
               // of striping at 402pt.
               Flexible(
                 child: Text(

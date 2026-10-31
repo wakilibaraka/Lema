@@ -28,7 +28,6 @@ class AppProvider extends ChangeNotifier {
 
   /// Which dock tab should read as selected, or -1 when the active screen is
   /// not one of the docked tabs (Composer, Analytics, Settings, …).
-  ///
   /// The mobile shell used to clamp every out-of-range index to 0, so the dock
   /// highlighted Home while Settings was on screen.
   int get selectedTabIndex =>
@@ -40,7 +39,6 @@ class AppProvider extends ChangeNotifier {
   /// Demo mode is owned by [DemoModeService] because the dispatch path and the
   /// AI service read it directly; this provider only surfaces it to the UI and
   /// republishes changes.
-  ///
   /// It replaces the separate `sandboxMode` flag, which was a second switch
   /// claiming the same thing ("posts are simulated safely") without any code
   /// behind it.
@@ -87,7 +85,7 @@ class AppProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Slice 22: video autoplay, persisted. Default OFF.
+  /// Video autoplay, persisted. Default OFF.
   void toggleAutoplay() {
     _autoplayVideos = !_autoplayVideos;
     _storage.setAutoplayVideos(_autoplayVideos);

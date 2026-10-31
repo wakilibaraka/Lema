@@ -25,7 +25,6 @@ class UniversalMediaPlayer extends StatefulWidget {
   /// Thumbnail treatment for small previews (grid tiles, queue cards, pickers):
   /// a small glass play badge instead of the 58pt playback overlay, and a
   /// compact failure state instead of the full "Video Preview Standby" card.
-  ///
   /// A 58pt play circle covered most of a 3-column tile's artwork, and a
   /// failed decode painted an error card with a button inside a 78pt box.
   final bool thumbnail;
@@ -116,7 +115,7 @@ class _UniversalMediaPlayerState extends State<UniversalMediaPlayer> {
       await _controller!.initialize();
       _controller!.setLooping(true);
       _controller!.setVolume(_isMuted ? 0.0 : 1.0);
-      // Slice 22: explicit autoPlay means *eligible*; the Settings toggle
+      // Explicit autoPlay means *eligible*; the Settings toggle
       // has the final word (read without watching — initState-safe).
       if (widget.autoPlay && _autoplayAllowed()) {
         await _controller!.play();
@@ -144,7 +143,7 @@ class _UniversalMediaPlayerState extends State<UniversalMediaPlayer> {
     super.dispose();
   }
 
-  /// Slice 22: Settings toggle read without registering a dependency
+  /// Settings toggle read without registering a dependency
   /// (initState-safe). Missing provider degrades to the old behavior.
   bool _autoplayAllowed() {
     try {
@@ -173,7 +172,7 @@ class _UniversalMediaPlayerState extends State<UniversalMediaPlayer> {
 
   @override
   Widget build(BuildContext context) {
-    // Slice 22: live-sync playback with the Settings toggle, so flipping it
+    // Live-sync playback with the Settings toggle, so flipping it
     // stops (or starts) already-mounted videos on the next frame.
     if (widget.isVideo) {
       final shouldPlay =

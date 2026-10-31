@@ -39,7 +39,7 @@ class _CalendarViewState extends State<CalendarView> {
     final selectedPosts = _getPostsForDay(_selectedDay ?? _focusedDay, allPosts);
 
     // Mobile stacked layout (< 700pt): calendar card on top, day feed below.
-    // Desktop side-by-side Row is untouched below (Slice 5 unblock).
+    // Desktop side-by-side Row is untouched below.
     final screenWidth = MediaQuery.of(context).size.width;
     if (screenWidth < 700) {
       return Scaffold(
@@ -67,8 +67,6 @@ class _CalendarViewState extends State<CalendarView> {
                 ),
               ),
               const SizedBox(height: 16),
-              // Slice 15: the day header page-flips when the selected day
-              // changes, and its accent rolls across the month boundary.
               AppleGlassCard(
                 padding: const EdgeInsets.all(16),
                 child: Column(
@@ -178,7 +176,7 @@ class _CalendarViewState extends State<CalendarView> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Header (Slice 3 drive-by: bound for narrow mobile widths).
+            // Header (bound for narrow mobile widths).
             Row(
               children: [
                 Expanded(

@@ -7,7 +7,6 @@ import '../models/post_model.dart';
 import 'demo_mode_service.dart';
 
 /// What actually happened when a post was handed to the daemon.
-///
 /// A `bool` could not express this: it collapsed "the daemon said no" and
 /// "nothing is listening on 3001" into the same `false`, and every caller
 /// dropped it on the floor.
@@ -127,7 +126,6 @@ class ApiService {
   }
 
   /// Hands [post] to the local daemon and reports the real outcome.
-  ///
   /// The publish POST deliberately bypasses [_withRetry]: a timed-out or
   /// 5xx'd publish may already have gone out, so retrying it would post the
   /// same content twice (review finding 2). The dispatch UI owns Retry.
@@ -136,7 +134,7 @@ class ApiService {
 
   Future<DispatchResult> _dispatch(String postId) async {
     // Demo mode answers locally: no daemon and no platform APIs are touched,
-    // which is what the app-review walkthroughs need (TECHNICAL_PLAN §4).
+    // which is what the app-review walkthroughs need.
     // The result is labelled so the UI never claims a real send.
     if (DemoModeService.isEnabled) {
       return const DispatchResult(

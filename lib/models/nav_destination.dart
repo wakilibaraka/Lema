@@ -1,7 +1,6 @@
 import 'package:flutter/cupertino.dart';
 
 /// One entry in Lema's navigation, named once.
-///
 /// The sidebar, the window title bar, the mobile app bar and the dock tab bar
 /// all render the same destination, so they all read from this list. They used
 /// to keep three parallel label lists and drifted: the same screen was

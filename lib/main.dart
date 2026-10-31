@@ -73,7 +73,6 @@ class _MainLayoutScreenState extends State<MainLayoutScreen> {
   }
 
   /// Reads the state that lives behind services rather than providers.
-  ///
   /// Both were saved but never loaded, so every launch booted as if demo mode
   /// had never been switched on and no platform had ever been connected —
   /// the settings screen contradicted what the user had chosen.
@@ -83,7 +82,7 @@ class _MainLayoutScreenState extends State<MainLayoutScreen> {
     await context.read<AuthProvider>().loadTokens();
   }
 
-  // Slice 25: the view order must line up with `lemaDestinations`, which now
+  // The view order must line up with `lemaDestinations`, which now
   // supplies every label (sidebar, app bar, dock) from one list.
   final List<Widget> _views = const [
     LemaGridView(),
@@ -130,8 +129,8 @@ class _MainLayoutScreenState extends State<MainLayoutScreen> {
     }
 
     // Mobile Layout (< 768px) with Drawer & Top Capsule Bar
-    // extendBody lets content scroll visibly beneath the floating bar (Slice 3).
-    // Slice 10: the whole mobile shell shares the 1.2x text clamp so the
+    // extendBody lets content scroll visibly beneath the floating bar.
+    // The whole mobile shell shares the 1.2x text clamp so the
     // app bar + tab bar survive max accessibility sizes without truncation.
     final media = MediaQuery.of(context);
     return MediaQuery(
@@ -196,7 +195,7 @@ class _MainLayoutScreenState extends State<MainLayoutScreen> {
           padding: EdgeInsets.only(bottom: FloatingTabBar.clearance(context)),
           child: _views[app.selectedNavIndex],
         ),
-        // Floating glass pill (Slice 3) replaces the docked CupertinoTabBar.
+        // Floating glass pill replaces the docked CupertinoTabBar.
         bottomNavigationBar: FloatingTabBar(
           currentIndex: app.selectedTabIndex,
           onTap: (index) => app.setNavIndex(index),

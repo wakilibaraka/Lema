@@ -6,10 +6,7 @@ import '../theme/backdrop_theme.dart';
 import '../theme/lema_motion.dart';
 
 /// Tag helper so every hero in the app is uniquely addressable.
-///
-/// Slice 14 acceptance requires "no hero-tag collisions with grid tiles
-/// (unique tags per post id)" — funnelling every tag through here is what
-/// guarantees that, now and for any future screen that adds a hero.
+/// Every hero tag goes through here so no two screens collide on a post id.
 class LemaHero {
   const LemaHero._();
 
@@ -24,12 +21,10 @@ class LemaHero {
 /// *virtual* card Lema generates and the light-gray card you print.
 enum CardStock { virtual, physical }
 
-/// Slice 14 — Virtual card morph slide-up.
-///
+/// Virtual card morph slide-up.
 /// Tapping the hero card in the feed morphs it (Hero) into this view, where
 /// it becomes the top hero of a paged swipe between the virtual and physical
 /// card. Detail rows stagger in on arrival.
-///
 /// Motion contract: everything reads from [LemaMotion] — the route fades
 /// with `enter`, rows stagger via `LemaMotion.stagger`, the stock pill
 /// springs via `LemaMotion.spring`, and reduced motion degrades to a
