@@ -116,26 +116,3 @@ class ScriptModel {
     );
   }
 }
-
-final List<ScriptModel> defaultScriptsList = [
-  const ScriptModel(
-    id: 'script-1',
-    title: 'Stop Blending In: The 3-Second Rule',
-    hook: 'Stop blending in. If your video doesn’t hook someone in 3 seconds, they are gone.',
-    problem: 'Most business owners start by introducing themselves. Nobody cares yet.',
-    solution: 'Start with the specific pain point your client felt this morning.',
-    cta: 'DM me "STORY" or call 0757 638 846 to fix your reels.',
-    mediaAsset: 'assets/samples/emms_storytelling_reel.mp4',
-    stage: ScriptStage.readyToRecord,
-  ),
-  const ScriptModel(
-    id: 'script-2',
-    title: 'Selling Feelings vs Selling Product',
-    hook: 'People don’t buy your camera resolution or your software features. They buy how it makes them feel.',
-    problem: 'Listing features triggers rational skepticism and comparison shopping.',
-    solution: 'Paint the picture of relief, pride, and authority after their problem is solved.',
-    cta: 'Contact Emms Digital Media to craft stories that actually convert.',
-    mediaAsset: 'assets/samples/emms_story_features.mp4',
-    stage: ScriptStage.recorded,
-  ),
-];

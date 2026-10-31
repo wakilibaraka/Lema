@@ -3,6 +3,7 @@ import '../models/post_model.dart';
 import '../models/queue_slot_model.dart';
 import '../services/storage_service.dart';
 import '../services/api_service.dart';
+import '../core/demo_seed.dart';
 
 class PostsProvider extends ChangeNotifier {
   final StorageService _storage;

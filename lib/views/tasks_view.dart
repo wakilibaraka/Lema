@@ -1,8 +1,10 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+
 import '../models/task_model.dart';
 import '../theme/backdrop_theme.dart';
 import '../widgets/apple_glass_card.dart';
+import '../services/storage_service.dart';
 
 class TasksView extends StatefulWidget {
   const TasksView({super.key});
@@ -12,48 +14,9 @@ class TasksView extends StatefulWidget {
 }
 
 class _TasksViewState extends State<TasksView> {
-  final List<TaskModel> _tasks = [
-    TaskModel(
-      id: 't1',
-      title: 'Verify Morning Peak Queue Dispatch (09:00 AM)',
-      description: 'Check daemon sync on Instagram Reels and TikTok auto-poster.',
-      isCompleted: true,
-      priority: TaskPriority.high,
-      dueDate: DateTime.now(),
-    ),
-    TaskModel(
-      id: 't2',
-      title: 'Engage with First 15 Comments on Emms Storytelling Reel',
-      description: 'Reply to comments within first 60 minutes to trigger algorithm reach.',
-      isCompleted: true,
-      priority: TaskPriority.high,
-      dueDate: DateTime.now(),
-    ),
-    TaskModel(
-      id: 't3',
-      title: 'Record 60s "Selling Feelings vs Features" Reel',
-      description: 'Use the 3-second hook teleprompter in Hooks Pipeline.',
-      isCompleted: false,
-      priority: TaskPriority.urgent,
-      dueDate: DateTime.now(),
-    ),
-    TaskModel(
-      id: 't4',
-      title: 'Generate Next Week’s 7-Day Batch in AI Studio',
-      description: 'Review and queue Gemini suggestions for Mon-Sun calendar.',
-      isCompleted: false,
-      priority: TaskPriority.medium,
-      dueDate: DateTime.now().add(const Duration(days: 1)),
-    ),
-    TaskModel(
-      id: 't5',
-      title: 'Inspect Device Simulator Mockup for Facebook Feed',
-      description: 'Ensure link previews and thumbnail aspect ratio are pixel-perfect.',
-      isCompleted: false,
-      priority: TaskPriority.low,
-      dueDate: DateTime.now().add(const Duration(days: 2)),
-    ),
-  ];
+  final List<TaskModel> _tasks = StorageService.instance.loadTasks();
+
+  void _save() => StorageService.instance.saveTasks(_tasks);
 
   final TextEditingController _taskController = TextEditingController();
 
@@ -65,6 +28,7 @@ class _TasksViewState extends State<TasksView> {
         _tasks[index] = task.copyWith(isCompleted: !task.isCompleted);
       }
     });
+    _save();
   }
 
   void _addTask() {
@@ -85,6 +49,7 @@ class _TasksViewState extends State<TasksView> {
       );
       _taskController.clear();
     });
+    _save();
   }
 
   @override
@@ -153,7 +118,11 @@ class _TasksViewState extends State<TasksView> {
                       color: BackdropTheme.statusOnline.withValues(alpha: 0.12),
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(CupertinoIcons.checkmark_seal_fill, color: Color(0xFF34C759), size: 24),
+                    child: const Icon(
+                      CupertinoIcons.checkmark_seal_fill,
+                      color: Color(0xFF34C759),
+                      size: 24,
+                    ),
                   ),
                   const SizedBox(width: 16),
                   Expanded(
@@ -187,8 +156,12 @@ class _TasksViewState extends State<TasksView> {
                           child: LinearProgressIndicator(
                             value: progress,
                             minHeight: 6,
-                            backgroundColor: isDark ? Colors.white12 : Colors.black12,
-                            valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF34C759)),
+                            backgroundColor: isDark
+                                ? Colors.white12
+                                : Colors.black12,
+                            valueColor: const AlwaysStoppedAnimation<Color>(
+                              Color(0xFF34C759),
+                            ),
                           ),
                         ),
                       ],
@@ -210,8 +183,13 @@ class _TasksViewState extends State<TasksView> {
                     decoration: InputDecoration(
                       hintText: 'Add a new operational task or tick item...',
                       filled: true,
-                      fillColor: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.04),
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                      fillColor: isDark
+                          ? Colors.white.withValues(alpha: 0.05)
+                          : Colors.black.withValues(alpha: 0.04),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 14,
+                      ),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                         borderSide: BorderSide.none,
@@ -221,14 +199,23 @@ class _TasksViewState extends State<TasksView> {
                 ),
                 const SizedBox(width: 12),
                 CupertinoButton.filled(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 14,
+                  ),
                   borderRadius: BorderRadius.circular(12),
                   onPressed: _addTask,
                   child: const Row(
                     children: [
                       Icon(CupertinoIcons.add, size: 16),
                       SizedBox(width: 6),
-                      Text('Add Task', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+                      Text(
+                        'Add Task',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 13,
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -260,15 +247,25 @@ class _TasksViewState extends State<TasksView> {
                             width: 24,
                             height: 24,
                             decoration: BoxDecoration(
-                              color: isDone ? BackdropTheme.statusOnline : Colors.transparent,
+                              color: isDone
+                                  ? BackdropTheme.statusOnline
+                                  : Colors.transparent,
                               borderRadius: BorderRadius.circular(7),
                               border: Border.all(
-                                color: isDone ? BackdropTheme.statusOnline : (isDark ? Colors.white38 : Colors.black26),
+                                color: isDone
+                                    ? BackdropTheme.statusOnline
+                                    : (isDark
+                                          ? Colors.white38
+                                          : Colors.black26),
                                 width: 2,
                               ),
                             ),
                             child: isDone
-                                ? const Icon(CupertinoIcons.checkmark, size: 15, color: Colors.white)
+                                ? const Icon(
+                                    CupertinoIcons.checkmark,
+                                    size: 15,
+                                    color: Colors.white,
+                                  )
                                 : null,
                           ),
                         ),
@@ -286,9 +283,13 @@ class _TasksViewState extends State<TasksView> {
                                   fontSize: 14,
                                   fontWeight: FontWeight.w600,
                                   color: isDone
-                                      ? (isDark ? Colors.white38 : Colors.black38)
+                                      ? (isDark
+                                            ? Colors.white38
+                                            : Colors.black38)
                                       : (isDark ? Colors.white : Colors.black),
-                                  decoration: isDone ? TextDecoration.lineThrough : null,
+                                  decoration: isDone
+                                      ? TextDecoration.lineThrough
+                                      : null,
                                 ),
                               ),
                               if (task.description.isNotEmpty) ...[
@@ -297,7 +298,9 @@ class _TasksViewState extends State<TasksView> {
                                   task.description,
                                   style: TextStyle(
                                     fontSize: 11.5,
-                                    color: isDark ? Colors.white54 : Colors.black54,
+                                    color: isDark
+                                        ? Colors.white54
+                                        : Colors.black54,
                                   ),
                                 ),
                               ],
@@ -309,9 +312,13 @@ class _TasksViewState extends State<TasksView> {
 
                         // Priority Badge
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 7,
+                            vertical: 2.5,
+                          ),
                           decoration: BoxDecoration(
-                            color: _priorityColor(task.priority).withValues(alpha: 0.12),
+                            color: _priorityColor(task.priority)
+                                .withValues(alpha: 0.12),
                             borderRadius: BorderRadius.circular(6),
                           ),
                           child: Text(
@@ -329,6 +336,7 @@ class _TasksViewState extends State<TasksView> {
                           color: isDark ? Colors.white30 : Colors.black26,
                           onPressed: () {
                             setState(() => _tasks.removeAt(index));
+                            _save();
                           },
                         ),
                       ],

@@ -22,6 +22,7 @@ import 'package:lema/views/queue_view.dart';
 import 'package:lema/views/settings_view.dart';
 import 'package:lema/widgets/floating_tab_bar.dart';
 import 'package:lema/widgets/lema_toast.dart';
+import 'package:lema/core/demo_seed.dart';
 
 /// Slice 9: Lema grid logic + provider coverage.
 ///

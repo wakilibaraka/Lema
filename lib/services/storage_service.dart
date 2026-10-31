@@ -6,6 +6,7 @@ import '../models/profile_model.dart';
 import '../models/post_model.dart';
 import '../models/task_model.dart';
 import '../models/script_model.dart';
+import '../core/demo_seed.dart';
 
 class StorageService {
   static const String _keyProfiles = 'lema_profiles';

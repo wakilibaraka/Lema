@@ -27,10 +27,3 @@ class QueueSlotModel {
     );
   }
 }
-
-const List<QueueSlotModel> defaultQueueSlots = [
-  QueueSlotModel(id: 'slot-1', time: '09:00 AM', label: 'Morning Peak'),
-  QueueSlotModel(id: 'slot-2', time: '01:15 PM', label: 'Lunch Break'),
-  QueueSlotModel(id: 'slot-3', time: '06:30 PM', label: 'Evening Prime'),
-  QueueSlotModel(id: 'slot-4', time: '09:45 PM', label: 'Late Night Scroll'),
-];
