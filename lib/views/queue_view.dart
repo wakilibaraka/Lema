@@ -3,10 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
-import '../models/platform_info.dart';
-import '../models/post_model.dart';
-import '../models/queue_slot_model.dart';
-import '../providers/posts_provider.dart';
+import '../core/models/platform_info.dart';
+import '../core/models/post_model.dart';
+import '../core/models/queue_slot_model.dart';
+import '../core/providers/posts_provider.dart';
 import '../theme/backdrop_theme.dart';
 import '../widgets/apple_glass_card.dart';
 import '../widgets/lema_pill.dart';

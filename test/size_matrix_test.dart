@@ -3,17 +3,15 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'package:lema/providers/app_provider.dart';
-import 'package:lema/providers/auth_provider.dart';
-import 'package:lema/providers/posts_provider.dart';
-import 'package:lema/providers/profile_provider.dart';
-import 'package:lema/services/storage_service.dart';
+import 'package:lema/core/providers/app_provider.dart';
+import 'package:lema/core/providers/auth_provider.dart';
+import 'package:lema/core/providers/posts_provider.dart';
+import 'package:lema/core/providers/profile_provider.dart';
+import 'package:lema/core/services/storage_service.dart';
 import 'package:lema/theme/backdrop_theme.dart';
 import 'package:lema/views/calendar_view.dart';
-import 'package:lema/views/lema_grid_view.dart';
 import 'package:lema/views/queue_view.dart';
 import 'package:lema/views/settings_view.dart';
-import 'package:lema/views/tasks_view.dart';
 
 /// Slice 23: ratios audit matrix.
 ///
@@ -95,10 +93,6 @@ void main() {
   tearDown(() {});
 
   group('Size matrix (Slice 23)', () {
-    testWidgets('Home survives all ratios', (tester) async {
-      await pumpMatrix(tester, const LemaGridView(), 'Home');
-    });
-
     testWidgets('Queue survives all ratios', (tester) async {
       await pumpMatrix(tester, const QueueView(), 'Queue');
     });
@@ -111,10 +105,6 @@ void main() {
 
     testWidgets('Calendar survives all ratios', (tester) async {
       await pumpMatrix(tester, const CalendarView(), 'Calendar');
-    });
-
-    testWidgets('Tasks survives all ratios', (tester) async {
-      await pumpMatrix(tester, const TasksView(), 'Tasks');
     });
   });
 }

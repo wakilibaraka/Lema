@@ -9,7 +9,7 @@ import 'package:video_player/video_player.dart';
 
 import 'dart:io' show File;
 
-import '../providers/app_provider.dart';
+import '../core/providers/app_provider.dart';
 import '../theme/backdrop_theme.dart';
 
 class UniversalMediaPlayer extends StatefulWidget {

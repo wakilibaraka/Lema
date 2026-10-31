@@ -3,13 +3,13 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'package:lema/models/nav_destination.dart';
-import 'package:lema/providers/app_provider.dart';
-import 'package:lema/providers/auth_provider.dart';
-import 'package:lema/providers/posts_provider.dart';
-import 'package:lema/providers/profile_provider.dart';
-import 'package:lema/services/demo_mode_service.dart';
-import 'package:lema/services/storage_service.dart';
+import 'package:lema/core/destinations.dart';
+import 'package:lema/core/providers/app_provider.dart';
+import 'package:lema/core/providers/auth_provider.dart';
+import 'package:lema/core/providers/posts_provider.dart';
+import 'package:lema/core/providers/profile_provider.dart';
+import 'package:lema/core/services/demo_mode_service.dart';
+import 'package:lema/core/services/storage_service.dart';
 import 'package:lema/views/composer_view.dart';
 import 'package:lema/widgets/schedule_time_picker.dart';
 

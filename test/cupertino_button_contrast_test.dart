@@ -4,8 +4,8 @@ import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:lema/main.dart';
-import 'package:lema/providers/app_provider.dart';
-import 'package:lema/services/storage_service.dart';
+import 'package:lema/core/providers/app_provider.dart';
+import 'package:lema/core/services/storage_service.dart';
 
 /// Guards against the invisible-CupertinoButton regression.
 ///
@@ -21,7 +21,7 @@ import 'package:lema/services/storage_service.dart';
 /// effective foreground of each Text/Icon against the resolved background of
 /// its enclosing enabled button, so it catches new occurrences too.
 void main() {
-  const viewCount = 7; // Home … Settings.
+  const viewCount = 5; // Analytics … Settings.
 
   List<String> scan(WidgetTester tester) {
     final violations = <String>[];

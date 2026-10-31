@@ -1,9 +1,8 @@
 // Demo seed data: the sample creator workspace shown on first launch.
 // Kept in one place so it can be swapped or dropped without touching models.
-import '../models/post_model.dart';
-import '../models/profile_model.dart';
-import '../models/queue_slot_model.dart';
-import '../models/task_model.dart';
+import 'models/post_model.dart';
+import 'models/profile_model.dart';
+import 'models/queue_slot_model.dart';
 
 /// Seeded posts directly extracted from Emms Digital Media dataset
 final List<PostModel> defaultSeedPosts = [
@@ -210,56 +209,6 @@ const List<ProfileModel> defaultProfilesList = [
       '#salonsecrets',
     ],
     bio: 'Master Balayage & Lived-In Blonde Specialist in the heart of the city.',
-  ),
-];
-
-final List<TaskModel> defaultTasksList = [
-  TaskModel(
-    id: 'task-1',
-    title: 'Verify Morning Peak Queue Dispatch (09:00 AM)',
-    description: 'Check daemon sync on Instagram Reels and TikTok auto-poster.',
-    category: 'Operations',
-    priority: TaskPriority.high,
-    isCompleted: true,
-    dueDate: DateTime.now(),
-  ),
-  TaskModel(
-    id: 'task-2',
-    title: 'Engage with First 15 Comments on Emms Storytelling Reel',
-    description:
-        'Reply to comments within first 60 minutes to trigger algorithm reach.',
-    category: 'Engagement',
-    priority: TaskPriority.high,
-    isCompleted: true,
-    dueDate: DateTime.now(),
-  ),
-  TaskModel(
-    id: 'task-3',
-    title: 'Record 60s "Selling Feelings vs Features" Reel',
-    description: 'Use the 3-second hook teleprompter in Hooks Pipeline.',
-    category: 'Creation',
-    priority: TaskPriority.urgent,
-    isCompleted: false,
-    dueDate: DateTime.now(),
-  ),
-  TaskModel(
-    id: 'task-4',
-    title: 'Generate Next Week’s 7-Day Batch in AI Studio',
-    description: 'Review and queue Gemini suggestions for Mon-Sun calendar.',
-    category: 'Planning',
-    priority: TaskPriority.medium,
-    isCompleted: false,
-    dueDate: DateTime.now().add(const Duration(days: 1)),
-  ),
-  TaskModel(
-    id: 'task-5',
-    title: 'Inspect Device Simulator Mockup for Facebook Feed',
-    description:
-        'Ensure link previews and thumbnail aspect ratio are pixel-perfect.',
-    category: 'QA',
-    priority: TaskPriority.low,
-    isCompleted: false,
-    dueDate: DateTime.now().add(const Duration(days: 2)),
   ),
 ];
 

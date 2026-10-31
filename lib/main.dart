@@ -1,24 +1,14 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import 'models/nav_destination.dart';
-import 'providers/app_provider.dart';
-import 'providers/auth_provider.dart';
-import 'providers/posts_provider.dart';
-import 'providers/profile_provider.dart';
-import 'services/demo_mode_service.dart';
-import 'services/storage_service.dart';
-import 'theme/backdrop_theme.dart';
-import 'views/analytics_view.dart';
-import 'views/calendar_view.dart';
-import 'views/composer_view.dart';
-import 'views/lema_grid_view.dart';
-import 'views/queue_view.dart';
-import 'views/settings_view.dart';
-import 'views/tasks_view.dart';
-import 'widgets/floating_tab_bar.dart';
-import 'widgets/sidebar_navigation.dart';
+import 'core/providers/app_provider.dart';
+import 'core/providers/auth_provider.dart';
+import 'core/providers/posts_provider.dart';
+import 'core/providers/profile_provider.dart';
+import 'core/services/demo_mode_service.dart';
+import 'core/services/storage_service.dart';
+import 'core/shell.dart';
+import 'core/theme.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -39,21 +29,21 @@ class LemaApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => PostsProvider()),
       ],
       child: Consumer<AppProvider>(
-        builder: (context, app, child) {
-          return MaterialApp(
-            title: 'Lema',
-            debugShowCheckedModeBanner: false,
-            themeMode: app.themeMode,
-            theme: BackdropTheme.lightTheme,
-            darkTheme: BackdropTheme.darkTheme,
-            home: const MainLayoutScreen(),
-          );
-        },
+        builder: (context, app, child) => MaterialApp(
+          title: 'Lema',
+          debugShowCheckedModeBanner: false,
+          themeMode: app.themeMode,
+          theme: LemaTheme.light,
+          darkTheme: LemaTheme.dark,
+          home: const MainLayoutScreen(),
+        ),
       ),
     );
   }
 }
 
+/// Loads the state that lives behind services rather than providers, then
+/// shows the shell.
 class MainLayoutScreen extends StatefulWidget {
   const MainLayoutScreen({super.key});
 
@@ -62,141 +52,20 @@ class MainLayoutScreen extends StatefulWidget {
 }
 
 class _MainLayoutScreenState extends State<MainLayoutScreen> {
-  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
-
   @override
   void initState() {
     super.initState();
     _hydratePersistedState();
   }
 
-  /// Reads the state that lives behind services rather than providers.
-  /// Both were saved but never loaded, so every launch booted as if demo mode
-  /// had never been switched on and no platform had ever been connected —
-  /// the settings screen contradicted what the user had chosen.
+  // Demo mode and platform tokens are saved by services, so without this
+  // every launch would boot as if neither had ever been set.
   Future<void> _hydratePersistedState() async {
     await DemoModeService.load();
     if (!mounted) return;
     await context.read<AuthProvider>().loadTokens();
   }
 
-  // The view order must line up with `lemaDestinations`, which now
-  // supplies every label (sidebar, app bar, dock) from one list.
-  final List<Widget> _views = const [
-    LemaGridView(),
-    QueueView(),
-    CalendarView(),
-    ComposerView(),
-    AnalyticsView(),
-    TasksView(),
-    SettingsView(),
-  ];
-
   @override
-  Widget build(BuildContext context) {
-    final app = context.watch<AppProvider>();
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final screenWidth = MediaQuery.of(context).size.width;
-
-    final isMobile = screenWidth < 768;
-    final isTablet = screenWidth >= 768 && screenWidth < 1100;
-
-    // Desktop / Tablet Layout with Adaptive Sidebar
-    if (!isMobile) {
-      return Scaffold(
-        body: SafeArea(
-          child: Row(
-            children: [
-              SidebarNavigation(
-                selectedIndex: app.selectedNavIndex,
-                onDestinationSelected: (index) => app.setNavIndex(index),
-                isRail: isTablet,
-              ),
-              Expanded(
-                child: AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 200),
-                  child: _views[app.selectedNavIndex],
-                ),
-              ),
-            ],
-          ),
-        ),
-      );
-    }
-
-    // Mobile Layout (< 768px) with Drawer & Top Capsule Bar
-    // extendBody lets content scroll visibly beneath the floating bar.
-    // The whole mobile shell shares the 1.2x text clamp so the
-    // app bar + tab bar survive max accessibility sizes without truncation.
-    final media = MediaQuery.of(context);
-    return MediaQuery(
-      data: media.copyWith(
-        textScaler: media.textScaler.clamp(maxScaleFactor: 1.2),
-      ),
-      child: Scaffold(
-        key: _scaffoldKey,
-        extendBody: true,
-        drawer: Drawer(
-          child: SafeArea(
-            child: SidebarNavigation(
-              selectedIndex: app.selectedNavIndex,
-              onDestinationSelected: (index) {
-                app.setNavIndex(index);
-                Navigator.of(context).pop();
-              },
-              isRail: false,
-            ),
-          ),
-        ),
-        appBar: PreferredSize(
-          preferredSize: const Size.fromHeight(56),
-          child: Container(
-            decoration: BoxDecoration(
-              color: BackdropTheme.chrome(isDark),
-              border: Border(
-                bottom: BorderSide(color: BackdropTheme.hairline(isDark)),
-              ),
-            ),
-            child: SafeArea(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 10),
-                child: Row(
-                  children: [
-                    IconButton(
-                      icon: const Icon(CupertinoIcons.bars, size: 22),
-                      onPressed: () => _scaffoldKey.currentState?.openDrawer(),
-                    ),
-                    const SizedBox(width: 4),
-                    Expanded(
-                      child: Text(
-                        lemaDestinations[app.selectedNavIndex].shortLabel,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w700,
-                          fontSize: 15,
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ),
-        // The dock floats over the canvas, so the page reserves the bar's
-        // height itself — otherwise the last row of every screen sits behind
-        // the frost and cannot be reached.
-        body: Padding(
-          key: const ValueKey('mobile_body_clearance'),
-          padding: EdgeInsets.only(bottom: FloatingTabBar.clearance(context)),
-          child: _views[app.selectedNavIndex],
-        ),
-        // Floating glass pill replaces the docked CupertinoTabBar.
-        bottomNavigationBar: FloatingTabBar(
-          currentIndex: app.selectedTabIndex,
-          onTap: (index) => app.setNavIndex(index),
-        ),
-      ),
-    );
-  }
+  Widget build(BuildContext context) => const LemaShell();
 }

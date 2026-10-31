@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/profile_model.dart';
 import '../services/storage_service.dart';
-import '../core/demo_seed.dart';
+import '../demo_seed.dart';
 
 class ProfileProvider extends ChangeNotifier {
   final StorageService _storage;

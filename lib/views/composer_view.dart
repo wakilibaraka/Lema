@@ -2,12 +2,12 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../models/nav_destination.dart';
-import '../models/platform_info.dart';
-import '../models/post_model.dart';
-import '../providers/app_provider.dart';
-import '../providers/posts_provider.dart';
-import '../providers/auth_provider.dart';
+import '../core/destinations.dart';
+import '../core/models/platform_info.dart';
+import '../core/models/post_model.dart';
+import '../core/providers/app_provider.dart';
+import '../core/providers/posts_provider.dart';
+import '../core/providers/auth_provider.dart';
 import '../theme/backdrop_theme.dart';
 import '../widgets/apple_glass_card.dart';
 import '../widgets/error_banner.dart';
@@ -465,14 +465,16 @@ class _ComposerViewState extends State<ComposerView>
           color: isDark ? Colors.white54 : Colors.black45,
         ),
         const SizedBox(width: 8),
-        Text(
-          'Schedule: ${formatScheduleSlot(_scheduledTime)}',
-          style: TextStyle(
-            fontSize: 12,
-            color: isDark ? Colors.white70 : Colors.black87,
+        Expanded(
+          child: Text(
+            'Schedule: ${formatScheduleSlot(_scheduledTime)}',
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontSize: 12,
+              color: isDark ? Colors.white70 : Colors.black87,
+            ),
           ),
         ),
-        const Spacer(),
         CupertinoButton(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
           onPressed: () async {

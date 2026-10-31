@@ -1,6 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import '../services/media_upload_service.dart';
+import '../core/services/media_upload_service.dart';
 import '../theme/backdrop_theme.dart';
 
 class MediaPickerResult {

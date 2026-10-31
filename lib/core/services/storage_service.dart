@@ -4,16 +4,15 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/profile_model.dart';
 import '../models/post_model.dart';
-import '../models/task_model.dart';
-import '../core/demo_seed.dart';
+import '../demo_seed.dart';
 
 class StorageService {
   static const String _keyProfiles = 'lema_profiles';
   static const String _keyActiveProfileId = 'lema_active_profile_id';
   static const String _keyPosts = 'lema_posts';
-  static const String _keyTasks = 'lema_tasks';
   static const String _keyThemeMode = 'lema_theme_mode';
   static const String _keyAutoplay = 'lema_video_autoplay';
+  static const String _keySidebarCollapsed = 'lema_sidebar_collapsed';
 
   final SharedPreferences _prefs;
   static StorageService? _instance;
@@ -110,25 +109,6 @@ class StorageService {
     await _prefs.remove(_keyPosts);
   }
 
-  // --- Tasks ---
-  List<TaskModel> loadTasks() {
-    final raw = _prefs.getString(_keyTasks);
-    if (raw == null || raw.isEmpty) {
-      return List<TaskModel>.from(defaultTasksList);
-    }
-    try {
-      final List decoded = jsonDecode(raw);
-      return decoded.map((e) => TaskModel.fromJson(e)).toList();
-    } catch (_) {
-      return List<TaskModel>.from(defaultTasksList);
-    }
-  }
-
-  Future<void> saveTasks(List<TaskModel> tasks) async {
-    final encoded = jsonEncode(tasks.map((t) => t.toJson()).toList());
-    await _prefs.setString(_keyTasks, encoded);
-  }
-
 
   // --- Theme Mode ---
   bool isDarkMode() {
@@ -147,5 +127,11 @@ class StorageService {
 
   Future<void> setAutoplayVideos(bool enabled) async {
     await _prefs.setBool(_keyAutoplay, enabled);
+  }
+
+  bool sidebarCollapsed() => _prefs.getBool(_keySidebarCollapsed) ?? false;
+
+  Future<void> setSidebarCollapsed(bool collapsed) async {
+    await _prefs.setBool(_keySidebarCollapsed, collapsed);
   }
 }

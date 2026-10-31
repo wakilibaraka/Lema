@@ -6,19 +6,16 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'package:lema/models/post_model.dart';
-import 'package:lema/providers/app_provider.dart';
-import 'package:lema/providers/auth_provider.dart';
-import 'package:lema/providers/posts_provider.dart';
-import 'package:lema/providers/profile_provider.dart';
-import 'package:lema/services/api_service.dart';
-import 'package:lema/services/demo_mode_service.dart';
-import 'package:lema/services/storage_service.dart';
-import 'package:lema/views/card_detail_view.dart';
-import 'package:lema/views/lema_grid_view.dart';
+import 'package:lema/core/models/post_model.dart';
+import 'package:lema/core/providers/app_provider.dart';
+import 'package:lema/core/providers/auth_provider.dart';
+import 'package:lema/core/providers/posts_provider.dart';
+import 'package:lema/core/providers/profile_provider.dart';
+import 'package:lema/core/services/api_service.dart';
+import 'package:lema/core/services/demo_mode_service.dart';
+import 'package:lema/core/services/storage_service.dart';
 import 'package:lema/views/queue_view.dart';
 import 'package:lema/views/settings_view.dart';
-import 'package:lema/widgets/floating_tab_bar.dart';
 import 'package:lema/widgets/lema_toast.dart';
 import 'package:lema/core/demo_seed.dart';
 
@@ -59,8 +56,6 @@ Future<PostsProvider> _freshProvider(
   await Future<void>.delayed(const Duration(milliseconds: 100));
   return provider;
 }
-
-void _noop(int _) {}
 
 String _postsJson(List<PostModel> posts) =>
     jsonEncode(posts.map((p) => p.toJson()).toList());
@@ -200,256 +195,6 @@ void main() {
       final dt = DateTime(2026, 11, 1, 7, 45);
       expect(_tPost('t').copyWith(scheduledTime: dt).scheduledTime,
           dt);
-    });
-  });
-
-  group('Lema grid widgets', () {
-    Future<void> pumpGrid(WidgetTester tester) async {
-      tester.view.physicalSize = const Size(1170, 6000);
-      tester.view.devicePixelRatio = 3.0;
-      addTearDown(tester.view.resetPhysicalSize);
-      SharedPreferences.setMockInitialValues({});
-      final prefs = await SharedPreferences.getInstance();
-      StorageService(prefs);
-      // Slice 22: media players watch AppProvider (autoplay toggle), so it
-      // must be above every pumped view. Created before pumpWidget so its
-      // constructor-time notify has no listeners yet.
-      final app = AppProvider();
-      await tester.pumpWidget(
-        MaterialApp(
-          home: MultiProvider(
-            providers: [
-              ChangeNotifierProvider.value(value: app),
-              ChangeNotifierProvider(create: (_) => PostsProvider()),
-            ],
-            child: const LemaGridView(),
-          ),
-        ),
-      );
-      await tester.pump(const Duration(milliseconds: 500));
-      await tester.pump(const Duration(milliseconds: 500));
-    }
-
-    testWidgets('header, pills, tiles and timeline render', (tester) async {
-      await pumpGrid(tester);
-      expect(find.text('LEMA'), findsOneWidget);
-      expect(find.text('FEED GRID · DRAG TO REORDER'), findsOneWidget);
-      // 5 scheduled tiles carry QUEUED pills.
-      expect(find.text('QUEUED'), findsWidgets);
-      // Density toggle labels ('3' also appears as the drafts stat).
-      expect(find.text('3'), findsNWidgets(2));
-      expect(find.text('4'), findsOneWidget);
-      // Timeline section below the grid.
-      expect(find.text("Today's timeline"), findsOneWidget);
-    });
-
-    testWidgets('stats strip is symmetric with shuffle on the divider',
-        (tester) async {
-      await pumpGrid(tester);
-
-      // Both stat captions are center-aligned in equal cells.
-      for (final caption in ['Queued posts', 'Draft ideas']) {
-        final text = tester.widget<Text>(find.text(caption));
-        expect(text.textAlign, TextAlign.center);
-      }
-
-      // The shuffle control sits exactly on the horizontal center axis.
-      final shuffle = find.byKey(const ValueKey('home_stats_shuffle'));
-      expect(shuffle, findsOneWidget);
-      final center = tester.getCenter(shuffle);
-      expect(center.dx, moreOrLessEquals(1170 / 3 / 2, epsilon: 1));
-    });
-
-    testWidgets('dedup: single shuffle, trimmed subcopy, no overlay title',
-        (tester) async {
-      await pumpGrid(tester);
-
-      // The sheet's "Shuffle again" is gone; the divider circle is the
-      // single shuffle control.
-      expect(find.text('Shuffle again'), findsNothing);
-      expect(
-          find.byKey(const ValueKey('home_stats_shuffle')), findsOneWidget);
-
-      // Header subcopy no longer repeats the stats-strip counts.
-      expect(find.text('Tap, drag, ship.'), findsOneWidget);
-      expect(find.textContaining('queued posts ·'), findsNothing);
-    });
-
-    testWidgets('Drafts filter narrows grid to draft tiles', (tester) async {
-      await pumpGrid(tester);
-      // Huge test surface lays out all slivers; ensureVisible scrolls the
-      // chip into the hit-testable viewport (bare taps miss off-screen).
-      await tester.ensureVisible(find.text('Drafts'));
-      await tester.pump(const Duration(milliseconds: 300));
-      await tester.tap(find.text('Drafts'));
-      await tester.pump(const Duration(milliseconds: 300));
-      expect(find.text('DRAFT'), findsNWidgets(3));
-      expect(find.text('QUEUED'), findsNothing);
-    });
-
-    testWidgets('decode failure shows error card; retry clears it',
-        (tester) async {
-      tester.view.physicalSize = const Size(1170, 3000);
-      tester.view.devicePixelRatio = 3.0;
-      addTearDown(tester.view.resetPhysicalSize);
-      SharedPreferences.setMockInitialValues(
-          {'lema_posts': '[[corrupt'});
-      final prefs = await SharedPreferences.getInstance();
-      StorageService(prefs);
-      final app = AppProvider();
-      await tester.pumpWidget(
-        MaterialApp(
-          home: MultiProvider(
-            providers: [
-              ChangeNotifierProvider.value(value: app),
-              ChangeNotifierProvider(create: (_) => PostsProvider()),
-            ],
-            child: const LemaGridView(),
-          ),
-        ),
-      );
-      await tester.pump(const Duration(milliseconds: 500));
-      expect(find.text("Couldn't load your queue"), findsOneWidget);
-      expect(find.text('QUEUED'), findsNothing);
-      await tester.ensureVisible(find.text('Reset to starter posts'));
-      await tester.pump(const Duration(milliseconds: 300));
-      await tester.tap(find.text('Reset to starter posts'));
-      await tester.pump(const Duration(milliseconds: 500));
-      expect(find.text("Couldn't load your queue"), findsNothing);
-      expect(find.text('QUEUED'), findsWidgets);
-    });
-  });
-
-  group('Floating tab bar (Slice 12)', () {
-    testWidgets('renders 5 tabs', (tester) async {
-      await tester.pumpWidget(
-        const MaterialApp(
-          home: Scaffold(
-            body: FloatingTabBar(currentIndex: 0, onTap: _noop),
-          ),
-        ),
-      );
-      await tester.pump(const Duration(milliseconds: 300));
-
-      expect(find.byType(Icon), findsNWidgets(5));
-      for (final label in ['Home', 'Queue', 'Calendar', 'Composer', 'Analytics']) {
-        expect(find.text(label), findsOneWidget);
-      }
-
-      // Tab switch reports the tapped index.
-      await tester.tap(find.text('Calendar'));
-      await tester.pump(const Duration(milliseconds: 300));
-      expect(find.text('Calendar'), findsOneWidget);
-    });
-
-    testWidgets('Slice 20 docks full-width with rounded top corners only',
-        (tester) async {
-      await tester.pumpWidget(
-        const MaterialApp(
-          home: Scaffold(
-            body: FloatingTabBar(currentIndex: 0, onTap: _noop),
-          ),
-        ),
-      );
-      await tester.pump(const Duration(milliseconds: 300));
-
-      // Photos dock: rounded top, square bottom, edge to edge.
-      final clip = tester.widget<ClipRRect>(find.byType(ClipRRect).first);
-      final radius = clip.borderRadius.resolve(TextDirection.ltr);
-      expect(radius.topLeft, const Radius.circular(28));
-      expect(radius.topRight, const Radius.circular(28));
-      expect(radius.bottomLeft, Radius.zero);
-      expect(radius.bottomRight, Radius.zero);
-      final barWidth = tester.getSize(find.byType(FloatingTabBar)).width;
-      expect(barWidth, moreOrLessEquals(800, epsilon: 1));
-
-      // Selection bubble, reflections and labels all survive the move.
-      expect(find.text('Home'), findsOneWidget);
-    });
-  });
-
-  group('Card detail morph (Slice 14)', () {
-    PostModel samplePost() => PostModel(
-          id: 'p1',
-          caption: 'Northern lights over Tromso',
-          platforms: const ['instagram'],
-          mediaType: 'video',
-          mediaUrl: 'assets/samples/emms_story_features.mp4',
-          scheduledTime: DateTime(2026, 8, 11, 19, 30),
-          status: 'scheduled',
-        );
-
-    testWidgets('morphs in and swipes between virtual and physical',
-        (tester) async {
-      final post = samplePost();
-
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: Builder(
-              builder: (context) => ElevatedButton(
-                onPressed: () =>
-                    Navigator.of(context).push(CardDetailView.route(post)),
-                child: const Text('open'),
-              ),
-            ),
-          ),
-        ),
-      );
-
-      await tester.tap(find.text('open'));
-      await tester.pump();
-      await tester.pump(const Duration(seconds: 1));
-
-      // Virtual card is the landing state.
-      expect(find.text('Virtual card'), findsOneWidget);
-      expect(find.text('Virtual card · 1080 × 1350'), findsOneWidget);
-      // Title appears twice: the nav bar and the card face itself.
-      expect(find.text('Northern lights over Tromso'), findsNWidgets(2));
-
-      // Swipe to the physical twin.
-      await tester.drag(find.text('Virtual card · 1080 × 1350'),
-          const Offset(-400, 0));
-      await tester.pump();
-      await tester.pump(const Duration(seconds: 1));
-
-      expect(find.text('Physical card · 85 × 55 mm'), findsOneWidget);
-      expect(find.text('85×55'), findsOneWidget);
-
-      // No hero-tag collision: the tag is namespaced per post id.
-      expect(LemaHero.card('p1'), 'lema.card.p1');
-      expect(LemaHero.card('p1'), isNot(LemaHero.card('p2')));
-    });
-
-    testWidgets('back pops the detail view; no overflow at 402pt',
-        (tester) async {
-      tester.view.physicalSize = const Size(1206, 2622);
-      tester.view.devicePixelRatio = 3;
-      addTearDown(tester.view.reset);
-
-      final post = samplePost();
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: Builder(
-              builder: (context) => ElevatedButton(
-                onPressed: () =>
-                    Navigator.of(context).push(CardDetailView.route(post)),
-                child: const Text('open'),
-              ),
-            ),
-          ),
-        ),
-      );
-      await tester.tap(find.text('open'));
-      await tester.pump();
-      await tester.pump(const Duration(seconds: 1));
-      expect(tester.takeException(), isNull);
-
-      await tester.tap(find.byIcon(CupertinoIcons.chevron_left));
-      await tester.pump();
-      await tester.pump(const Duration(seconds: 1));
-      expect(find.text('open'), findsOneWidget);
     });
   });
 

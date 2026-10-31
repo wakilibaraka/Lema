@@ -1,9 +1,9 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../models/post_model.dart';
-import '../providers/posts_provider.dart';
-import '../services/analytics_service.dart';
+import '../core/models/post_model.dart';
+import '../core/providers/posts_provider.dart';
+import '../core/services/analytics_service.dart';
 import '../theme/backdrop_theme.dart';
 import '../widgets/apple_glass_card.dart';
 

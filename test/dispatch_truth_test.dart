@@ -5,12 +5,12 @@ import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'package:lema/models/post_model.dart';
-import 'package:lema/providers/posts_provider.dart';
-import 'package:lema/services/analytics_service.dart';
-import 'package:lema/services/api_service.dart';
-import 'package:lema/services/demo_mode_service.dart';
-import 'package:lema/services/storage_service.dart';
+import 'package:lema/core/models/post_model.dart';
+import 'package:lema/core/providers/posts_provider.dart';
+import 'package:lema/core/services/analytics_service.dart';
+import 'package:lema/core/services/api_service.dart';
+import 'package:lema/core/services/demo_mode_service.dart';
+import 'package:lema/core/services/storage_service.dart';
 
 /// Pins the difference between "the daemon took it" and "nothing happened".
 ///
