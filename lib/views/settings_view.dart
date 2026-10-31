@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
+
 import '../models/platform_info.dart';
 import '../providers/app_provider.dart';
 import '../providers/auth_provider.dart';
@@ -13,7 +14,6 @@ import '../services/queue_autofill_service.dart';
 import '../theme/backdrop_theme.dart';
 import '../widgets/apple_glass_card.dart';
 import '../widgets/connection_status_dot.dart';
-import '../widgets/showcase_carousel.dart';
 
 class SettingsView extends StatefulWidget {
   const SettingsView({super.key});
@@ -24,7 +24,9 @@ class SettingsView extends StatefulWidget {
 
 class _SettingsViewState extends State<SettingsView> {
   final TextEditingController _apiKeyController = TextEditingController();
-  final TextEditingController _daemonUrlController = TextEditingController(text: 'http://localhost:3001');
+  final TextEditingController _daemonUrlController = TextEditingController(
+    text: 'http://localhost:3001',
+  );
 
   @override
   void dispose() {
@@ -48,7 +50,11 @@ class _SettingsViewState extends State<SettingsView> {
                   color: BackdropTheme.statusWarning.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: const Icon(CupertinoIcons.wand_stars, color: BackdropTheme.statusWarning, size: 20),
+                child: const Icon(
+                  CupertinoIcons.wand_stars,
+                  color: BackdropTheme.statusWarning,
+                  size: 20,
+                ),
               ),
               const SizedBox(width: 14),
               Expanded(
@@ -105,7 +111,10 @@ class _SettingsViewState extends State<SettingsView> {
                           : 'Off: nothing is faked. Share Now reports a failed dispatch while no daemon is running.',
                       maxLines: 3,
                       overflow: TextOverflow.ellipsis,
-                      style: TextStyle(fontSize: 11.5, color: isDark ? Colors.white54 : Colors.black45),
+                      style: TextStyle(
+                        fontSize: 11.5,
+                        color: isDark ? Colors.white54 : Colors.black45,
+                      ),
                     ),
                   ],
                 ),
@@ -142,13 +151,19 @@ class _SettingsViewState extends State<SettingsView> {
                       'Suggest recycled content for empty calendar slots.',
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
-                      style: TextStyle(fontSize: 11.5, color: isDark ? Colors.white54 : Colors.black45),
+                      style: TextStyle(
+                        fontSize: 11.5,
+                        color: isDark ? Colors.white54 : Colors.black45,
+                      ),
                     ),
                   ],
                 ),
               ),
               CupertinoButton(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
                 color: BackdropTheme.accent,
                 // Plain CupertinoButton defaults its foreground to the
                 // same #007AFF as this background; set it explicitly.
@@ -159,10 +174,16 @@ class _SettingsViewState extends State<SettingsView> {
                   final gaps = QueueAutofillService.findGapsInRange(
                     start: DateTime.now(),
                     end: DateTime.now().add(const Duration(days: 7)),
-                    scheduledPosts: posts.where((p) => p.status == 'scheduled').toList(),
+                    scheduledPosts: posts
+                        .where((p) => p.status == 'scheduled')
+                        .toList(),
                   );
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Found ${gaps.length} empty slots in the next 7 days.')),
+                    SnackBar(
+                      content: Text(
+                        'Found ${gaps.length} empty slots in the next 7 days.',
+                      ),
+                    ),
                   );
                 },
                 child: const Text(
@@ -193,7 +214,11 @@ class _SettingsViewState extends State<SettingsView> {
                   color: BackdropTheme.violet.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: const Icon(CupertinoIcons.link, color: BackdropTheme.violet, size: 20),
+                child: const Icon(
+                  CupertinoIcons.link,
+                  color: BackdropTheme.violet,
+                  size: 20,
+                ),
               ),
               const SizedBox(width: 14),
               Expanded(
@@ -263,18 +288,19 @@ class _SettingsViewState extends State<SettingsView> {
                           isConnected
                               ? 'Connected as ${info.handle}'
                               : isExpired
-                                  ? 'Token expired — reconnect required'
-                                  : isExpiringSoon
-                                      ? 'Token expiring soon'
-                                      : 'Not connected',
+                              ? 'Token expired — reconnect required'
+                              : isExpiringSoon
+                              ? 'Token expiring soon'
+                              : 'Not connected',
                           style: TextStyle(
-                            fontSize: 11,                              color: isExpired
+                            fontSize: 11,
+                            color: isExpired
                                 ? BackdropTheme.statusWarning
                                 : isExpiringSoon
-                                    ? BackdropTheme.statusWarning
-                                    : isConnected
-                                        ? BackdropTheme.statusOnline
-                                        : (isDark ? Colors.white38 : Colors.black38),
+                                ? BackdropTheme.statusWarning
+                                : isConnected
+                                ? BackdropTheme.statusOnline
+                                : (isDark ? Colors.white38 : Colors.black38),
                           ),
                         ),
                       ],
@@ -286,9 +312,13 @@ class _SettingsViewState extends State<SettingsView> {
                   ),
                   const SizedBox(width: 8),
                   CupertinoButton(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),                        color: isConnected
-                            ? BackdropTheme.statusWarning.withValues(alpha: 0.12)
-                            : BackdropTheme.accent,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
+                    color: isConnected
+                        ? BackdropTheme.statusWarning.withValues(alpha: 0.12)
+                        : BackdropTheme.accent,
                     borderRadius: BorderRadius.circular(8),
                     onPressed: () {
                       if (isConnected) {
@@ -302,7 +332,9 @@ class _SettingsViewState extends State<SettingsView> {
                       style: TextStyle(
                         fontSize: 11.5,
                         fontWeight: FontWeight.w600,
-                        color: isConnected ? BackdropTheme.statusWarning : Colors.white,
+                        color: isConnected
+                            ? BackdropTheme.statusWarning
+                            : Colors.white,
                       ),
                     ),
                   ),
@@ -348,10 +380,10 @@ class _SettingsViewState extends State<SettingsView> {
               final token = controller.text.trim();
               if (token.isNotEmpty) {
                 context.read<AuthProvider>().connectPlatform(
-                      platform,
-                      accessToken: token,
-                      expiresAt: DateTime.now().add(const Duration(days: 60)),
-                    );
+                  platform,
+                  accessToken: token,
+                  expiresAt: DateTime.now().add(const Duration(days: 60)),
+                );
               }
               Navigator.of(context).pop();
             },
@@ -421,78 +453,6 @@ class _SettingsViewState extends State<SettingsView> {
 
               const SizedBox(height: 24),
 
-              // Slice 13: replay the intro showcase.
-              AppleGlassCard(
-                padding: const EdgeInsets.all(18),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 44,
-                      height: 44,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(14),
-                        gradient: LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: [
-                            const Color(0xFF6C5CE7),
-                            const Color(0xFFF56040),
-                          ],
-                        ),
-                      ),
-                      child: const Icon(
-                        CupertinoIcons.sparkles,
-                        color: Colors.white,
-                        size: 22,
-                      ),
-                    ),
-                    const SizedBox(width: 14),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Intro showcase',
-                            style: TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w700,
-                              color: isDark ? Colors.white : Colors.black,
-                            ),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            'Replay the swipe-through camera-click tour.',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: isDark
-                                  ? Colors.white60
-                                  : Colors.black54,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    CupertinoButton(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 8),
-                      color: BackdropTheme.accent,
-                      borderRadius: BorderRadius.circular(20),
-                      onPressed: () => ShowcaseCarousel.present(context),
-                      child: const Text(
-                        'Replay',
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: 24),
-
               // Auto-Poster Daemon Card
               AppleGlassCard(
                 padding: const EdgeInsets.all(20),
@@ -504,12 +464,18 @@ class _SettingsViewState extends State<SettingsView> {
                         Container(
                           padding: const EdgeInsets.all(10),
                           decoration: BoxDecoration(
-                            color: (app.isDaemonOnline ? BackdropTheme.statusOnline : BackdropTheme.statusWarning).withValues(alpha: 0.12),
+                            color:
+                                (app.isDaemonOnline
+                                        ? BackdropTheme.statusOnline
+                                        : BackdropTheme.statusWarning)
+                                    .withValues(alpha: 0.12),
                             borderRadius: BorderRadius.circular(10),
                           ),
                           child: Icon(
                             CupertinoIcons.antenna_radiowaves_left_right,
-                            color: app.isDaemonOnline ? BackdropTheme.statusOnline : BackdropTheme.statusWarning,
+                            color: app.isDaemonOnline
+                                ? BackdropTheme.statusOnline
+                                : BackdropTheme.statusWarning,
                             size: 20,
                           ),
                         ),
@@ -533,20 +499,25 @@ class _SettingsViewState extends State<SettingsView> {
                                 app.isDaemonOnline
                                     ? 'Connected to the daemon on port 3001 — scheduled posts will be dispatched.'
                                     : DemoModeService.isEnabled
-                                        ? 'No daemon on port 3001. Demo mode is on, so publishes are simulated locally.'
-                                        : 'No daemon on port 3001. Share Now will report a failed dispatch until it is running (or turn on Demo Mode).',
+                                    ? 'No daemon on port 3001. Demo mode is on, so publishes are simulated locally.'
+                                    : 'No daemon on port 3001. Share Now will report a failed dispatch until it is running (or turn on Demo Mode).',
                                 maxLines: 3,
                                 overflow: TextOverflow.ellipsis,
                                 style: TextStyle(
                                   fontSize: 12,
-                                  color: isDark ? Colors.white60 : Colors.black54,
+                                  color: isDark
+                                      ? Colors.white60
+                                      : Colors.black54,
                                 ),
                               ),
                             ],
                           ),
                         ),
                         CupertinoButton(
-                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 8,
+                          ),
                           color: BackdropTheme.accent,
                           // Plain CupertinoButton defaults its foreground to
                           // the same #007AFF as this background.
@@ -557,11 +528,21 @@ class _SettingsViewState extends State<SettingsView> {
                             if (!mounted || !context.mounted) return;
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
-                                content: Text(app.isDaemonOnline ? 'Daemon Ping Succeeded! (Port 3001)' : 'Daemon offline or unreachable'),
+                                content: Text(
+                                  app.isDaemonOnline
+                                      ? 'Daemon Ping Succeeded! (Port 3001)'
+                                      : 'Daemon offline or unreachable',
+                                ),
                               ),
                             );
                           },
-                          child: const Text('Ping Daemon', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+                          child: const Text(
+                            'Ping Daemon',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
                         ),
                       ],
                     ),
@@ -596,7 +577,12 @@ class _SettingsViewState extends State<SettingsView> {
                                     : 'No daemon answered on port 3001. Start it, or switch Demo Mode on to rehearse a publish locally.',
                                 maxLines: 3,
                                 overflow: TextOverflow.ellipsis,
-                                style: TextStyle(fontSize: 11.5, color: isDark ? Colors.white54 : Colors.black45),
+                                style: TextStyle(
+                                  fontSize: 11.5,
+                                  color: isDark
+                                      ? Colors.white54
+                                      : Colors.black45,
+                                ),
                               ),
                             ],
                           ),
@@ -639,7 +625,11 @@ class _SettingsViewState extends State<SettingsView> {
                             color: BackdropTheme.accent.withValues(alpha: 0.12),
                             borderRadius: BorderRadius.circular(10),
                           ),
-                          child: const Icon(CupertinoIcons.play_rectangle_fill, color: BackdropTheme.accent, size: 20),
+                          child: const Icon(
+                            CupertinoIcons.play_rectangle_fill,
+                            color: BackdropTheme.accent,
+                            size: 20,
+                          ),
                         ),
                         const SizedBox(width: 14),
                         Expanded(
@@ -663,7 +653,9 @@ class _SettingsViewState extends State<SettingsView> {
                                 overflow: TextOverflow.ellipsis,
                                 style: TextStyle(
                                   fontSize: 12,
-                                  color: isDark ? Colors.white60 : Colors.black54,
+                                  color: isDark
+                                      ? Colors.white60
+                                      : Colors.black54,
                                 ),
                               ),
                             ],
@@ -694,7 +686,12 @@ class _SettingsViewState extends State<SettingsView> {
                                 'When off, videos stay paused until you press play.',
                                 maxLines: 3,
                                 overflow: TextOverflow.ellipsis,
-                                style: TextStyle(fontSize: 11.5, color: isDark ? Colors.white54 : Colors.black45),
+                                style: TextStyle(
+                                  fontSize: 11.5,
+                                  color: isDark
+                                      ? Colors.white54
+                                      : Colors.black45,
+                                ),
                               ),
                             ],
                           ),
@@ -728,7 +725,11 @@ class _SettingsViewState extends State<SettingsView> {
                             color: BackdropTheme.violet.withValues(alpha: 0.12),
                             borderRadius: BorderRadius.circular(10),
                           ),
-                          child: const Icon(CupertinoIcons.sparkles, color: BackdropTheme.violet, size: 20),
+                          child: const Icon(
+                            CupertinoIcons.sparkles,
+                            color: BackdropTheme.violet,
+                            size: 20,
+                          ),
                         ),
                         const SizedBox(width: 14),
                         Expanded(
@@ -752,7 +753,9 @@ class _SettingsViewState extends State<SettingsView> {
                                 overflow: TextOverflow.ellipsis,
                                 style: TextStyle(
                                   fontSize: 12,
-                                  color: isDark ? Colors.white60 : Colors.black54,
+                                  color: isDark
+                                      ? Colors.white60
+                                      : Colors.black54,
                                 ),
                               ),
                             ],
@@ -769,8 +772,13 @@ class _SettingsViewState extends State<SettingsView> {
                       decoration: InputDecoration(
                         hintText: 'Enter Gemini API Key (Optional - Heuristic fallbacks enabled)',
                         filled: true,
-                        fillColor: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.04),
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                        fillColor: isDark
+                            ? Colors.white.withValues(alpha: 0.05)
+                            : Colors.black.withValues(alpha: 0.04),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 12,
+                        ),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
                           borderSide: BorderSide.none,
@@ -810,12 +818,18 @@ class _SettingsViewState extends State<SettingsView> {
                                       style: TextStyle(
                                         fontSize: 15,
                                         fontWeight: FontWeight.w700,
-                                        color: isDark ? Colors.white : Colors.black,
+                                        color: isDark
+                                            ? Colors.white
+                                            : Colors.black,
                                       ),
                                     ),
                                   ),
                                   const SizedBox(width: 6),
-                                  const Icon(CupertinoIcons.checkmark_seal_fill, color: BackdropTheme.accent, size: 14),
+                                  const Icon(
+                                    CupertinoIcons.checkmark_seal_fill,
+                                    color: BackdropTheme.accent,
+                                    size: 14,
+                                  ),
                                 ],
                               ),
                               const SizedBox(height: 2),
@@ -823,36 +837,62 @@ class _SettingsViewState extends State<SettingsView> {
                                 '${profile.instagramHandle} • Nairobi, Kenya',
                                 style: TextStyle(
                                   fontSize: 12,
-                                  color: isDark ? Colors.white60 : Colors.black54,
+                                  color: isDark
+                                      ? Colors.white60
+                                      : Colors.black54,
                                 ),
                               ),
                             ],
                           ),
                         ),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 3,
+                          ),
                           decoration: BoxDecoration(
-                            color: BackdropTheme.statusOnline.withValues(alpha: 0.15),
+                            color: BackdropTheme.statusOnline.withValues(
+                              alpha: 0.15,
+                            ),
                             borderRadius: BorderRadius.circular(6),
                           ),
-                          child: const Text('BASE PROFILE', style: TextStyle(color: BackdropTheme.statusOnline, fontSize: 10, fontWeight: FontWeight.w700)),
+                          child: const Text(
+                            'BASE PROFILE',
+                            style: TextStyle(
+                              color: BackdropTheme.statusOnline,
+                              fontSize: 10,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
                         ),
                       ],
                     ),
                     const Divider(height: 20),
                     Text(
                       'Bio & Focus:',
-                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: isDark ? Colors.white70 : Colors.black87),
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: isDark ? Colors.white70 : Colors.black87,
+                      ),
                     ),
                     const SizedBox(height: 4),
                     Text(
                       profile.bio ?? 'Storytelling reels tailored for businesses to grab attention & convert.',
-                      style: TextStyle(fontSize: 12, color: isDark ? Colors.white60 : Colors.black54, height: 1.3),
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: isDark ? Colors.white60 : Colors.black54,
+                        height: 1.3,
+                      ),
                     ),
                     const SizedBox(height: 10),
                     Text(
                       'Contact Channels: 0757 638 846 • emmahsonny@gmail.com',
-                      style: TextStyle(fontSize: 11.5, color: BackdropTheme.accent, fontWeight: FontWeight.w600),
+                      style: TextStyle(
+                        fontSize: 11.5,
+                        color: BackdropTheme.accent,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ],
                 ),
@@ -904,8 +944,13 @@ class _SettingsViewState extends State<SettingsView> {
                       ),
                     ),
                     CupertinoButton(
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                      color: isDark ? Colors.white.withValues(alpha: 0.12) : Colors.black.withValues(alpha: 0.08),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 8,
+                      ),
+                      color: isDark
+                          ? Colors.white.withValues(alpha: 0.12)
+                          : Colors.black.withValues(alpha: 0.08),
                       borderRadius: BorderRadius.circular(10),
                       onPressed: _openGitHub,
                       child: Text(

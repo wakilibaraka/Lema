@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+
 import 'models/nav_destination.dart';
 import 'providers/app_provider.dart';
 import 'providers/auth_provider.dart';
@@ -17,14 +18,9 @@ import 'views/hooks_pipeline_view.dart';
 import 'views/lema_grid_view.dart';
 import 'views/queue_view.dart';
 import 'views/settings_view.dart';
-import 'views/simulation_view.dart';
-import 'views/simulator_view.dart';
 import 'views/tasks_view.dart';
-import 'widgets/dynamic_capsule.dart';
 import 'widgets/floating_tab_bar.dart';
 import 'widgets/sidebar_navigation.dart';
-import 'widgets/showcase_carousel.dart';
-import 'widgets/window_title_bar.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -47,7 +43,7 @@ class LemaApp extends StatelessWidget {
       child: Consumer<AppProvider>(
         builder: (context, app, child) {
           return MaterialApp(
-            title: 'Lema - Social Auto-Poster & AI Studio',
+            title: 'Lema',
             debugShowCheckedModeBanner: false,
             themeMode: app.themeMode,
             theme: BackdropTheme.lightTheme,
@@ -74,7 +70,6 @@ class _MainLayoutScreenState extends State<MainLayoutScreen> {
   void initState() {
     super.initState();
     _hydratePersistedState();
-    _maybeShowIntro();
   }
 
   /// Reads the state that lives behind services rather than providers.
@@ -88,26 +83,10 @@ class _MainLayoutScreenState extends State<MainLayoutScreen> {
     await context.read<AuthProvider>().loadTokens();
   }
 
-  /// Slice 13: play the intro showcase once, on the very first cold start.
-  /// Deferred to the first frame so it paints over a ready app rather than
-  /// fighting the initial build.
-  Future<void> _maybeShowIntro() async {
-    WidgetsBinding.instance.addPostFrameCallback((_) async {
-      if (!mounted) return;
-      try {
-        if (StorageService.instance.hasSeenIntroShowcase()) return;
-        await ShowcaseCarousel.present(context);
-      } catch (_) {
-        // Never let a showcase failure block the app from starting.
-      }
-    });
-  }
-
   // Slice 25: the view order must line up with `lemaDestinations`, which now
-  // supplies every label (sidebar, title bar, app bar, dock) from one list.
+  // supplies every label (sidebar, app bar, dock) from one list.
   final List<Widget> _views = const [
     LemaGridView(),
-    SimulatorView(),
     QueueView(),
     CalendarView(),
     AiStudioView(),
@@ -116,7 +95,6 @@ class _MainLayoutScreenState extends State<MainLayoutScreen> {
     HooksPipelineView(),
     TasksView(),
     SettingsView(),
-    SimulationView(),
   ];
 
   @override
@@ -131,29 +109,22 @@ class _MainLayoutScreenState extends State<MainLayoutScreen> {
     // Desktop / Tablet Layout with Adaptive Sidebar
     if (!isMobile) {
       return Scaffold(
-        body: Column(
-          children: [
-            WindowTitleBar(
-              title: lemaDestinations[app.selectedNavIndex].label,
-            ),
-            Expanded(
-              child: Row(
-                children: [
-                  SidebarNavigation(
-                    selectedIndex: app.selectedNavIndex,
-                    onDestinationSelected: (index) => app.setNavIndex(index),
-                    isRail: isTablet,
-                  ),
-                  Expanded(
-                    child: AnimatedSwitcher(
-                      duration: const Duration(milliseconds: 200),
-                      child: _views[app.selectedNavIndex],
-                    ),
-                  ),
-                ],
+        body: SafeArea(
+          child: Row(
+            children: [
+              SidebarNavigation(
+                selectedIndex: app.selectedNavIndex,
+                onDestinationSelected: (index) => app.setNavIndex(index),
+                isRail: isTablet,
               ),
-            ),
-          ],
+              Expanded(
+                child: AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 200),
+                  child: _views[app.selectedNavIndex],
+                ),
+              ),
+            ],
+          ),
         ),
       );
     }
@@ -168,74 +139,68 @@ class _MainLayoutScreenState extends State<MainLayoutScreen> {
         textScaler: media.textScaler.clamp(maxScaleFactor: 1.2),
       ),
       child: Scaffold(
-      key: _scaffoldKey,
-      extendBody: true,
-      drawer: Drawer(
-        child: SafeArea(
-          child: SidebarNavigation(
-            selectedIndex: app.selectedNavIndex,
-            onDestinationSelected: (index) {
-              app.setNavIndex(index);
-              Navigator.of(context).pop();
-            },
-            isRail: false,
-          ),
-        ),
-      ),
-      appBar: PreferredSize(
-        preferredSize: const Size.fromHeight(56),
-        child: Container(
-          decoration: BoxDecoration(
-            color: BackdropTheme.chrome(isDark),
-            border: Border(
-              bottom: BorderSide(color: BackdropTheme.hairline(isDark)),
+        key: _scaffoldKey,
+        extendBody: true,
+        drawer: Drawer(
+          child: SafeArea(
+            child: SidebarNavigation(
+              selectedIndex: app.selectedNavIndex,
+              onDestinationSelected: (index) {
+                app.setNavIndex(index);
+                Navigator.of(context).pop();
+              },
+              isRail: false,
             ),
           ),
-          child: SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 10),
-              child: Row(
-                children: [
-                  IconButton(
-                    icon: const Icon(CupertinoIcons.bars, size: 22),
-                    onPressed: () => _scaffoldKey.currentState?.openDrawer(),
-                  ),
-                  const SizedBox(width: 4),
-                  Expanded(
-                    child: Text(
-                      lemaDestinations[app.selectedNavIndex].shortLabel,
-                      style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
-                      overflow: TextOverflow.ellipsis,
+        ),
+        appBar: PreferredSize(
+          preferredSize: const Size.fromHeight(56),
+          child: Container(
+            decoration: BoxDecoration(
+              color: BackdropTheme.chrome(isDark),
+              border: Border(
+                bottom: BorderSide(color: BackdropTheme.hairline(isDark)),
+              ),
+            ),
+            child: SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 10),
+                child: Row(
+                  children: [
+                    IconButton(
+                      icon: const Icon(CupertinoIcons.bars, size: 22),
+                      onPressed: () => _scaffoldKey.currentState?.openDrawer(),
                     ),
-                  ),
-                  const SizedBox(width: 8),
-                  // Compact capsule: dot + handle only, capped width so the
-                  // title never truncates at 402pt (Slice 1).
-                  ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 190),
-                    child: const DynamicCapsule(compact: true),
-                  ),
-                ],
+                    const SizedBox(width: 4),
+                    Expanded(
+                      child: Text(
+                        lemaDestinations[app.selectedNavIndex].shortLabel,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 15,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
         ),
-      ),
-      // The dock floats over the canvas, so the page reserves the bar's
-      // height itself — otherwise the last row of every screen sits behind
-      // the frost and cannot be reached.
-      body: Padding(
-        key: const ValueKey('mobile_body_clearance'),
-        padding: EdgeInsets.only(
-          bottom: FloatingTabBar.clearance(context),
+        // The dock floats over the canvas, so the page reserves the bar's
+        // height itself — otherwise the last row of every screen sits behind
+        // the frost and cannot be reached.
+        body: Padding(
+          key: const ValueKey('mobile_body_clearance'),
+          padding: EdgeInsets.only(bottom: FloatingTabBar.clearance(context)),
+          child: _views[app.selectedNavIndex],
         ),
-        child: _views[app.selectedNavIndex],
-      ),
-      // Floating glass pill (Slice 3) replaces the docked CupertinoTabBar.
-      bottomNavigationBar: FloatingTabBar(
-        currentIndex: app.selectedTabIndex,
-        onTap: (index) => app.setNavIndex(index),
-      ),
+        // Floating glass pill (Slice 3) replaces the docked CupertinoTabBar.
+        bottomNavigationBar: FloatingTabBar(
+          currentIndex: app.selectedTabIndex,
+          onTap: (index) => app.setNavIndex(index),
+        ),
       ),
     );
   }

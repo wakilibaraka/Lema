@@ -8,7 +8,6 @@ import '../providers/posts_provider.dart';
 import '../theme/backdrop_theme.dart';
 import '../widgets/apple_glass_card.dart';
 import '../widgets/media_player_widget.dart';
-import '../widgets/page_flip_day.dart';
 
 class CalendarView extends StatefulWidget {
   const CalendarView({super.key});
@@ -70,11 +69,6 @@ class _CalendarViewState extends State<CalendarView> {
               const SizedBox(height: 16),
               // Slice 15: the day header page-flips when the selected day
               // changes, and its accent rolls across the month boundary.
-              DayFlipHeader(
-                day: _selectedDay ?? _focusedDay,
-                isDark: isDark,
-              ),
-              const SizedBox(height: 16),
               AppleGlassCard(
                 padding: const EdgeInsets.all(16),
                 child: Column(

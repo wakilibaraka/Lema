@@ -21,7 +21,7 @@ import 'package:lema/services/storage_service.dart';
 /// effective foreground of each Text/Icon against the resolved background of
 /// its enclosing enabled button, so it catches new occurrences too.
 void main() {
-  const viewCount = 11; // Home … Settings, Simulation Engine.
+  const viewCount = 9; // Home … Settings.
 
   List<String> scan(WidgetTester tester) {
     final violations = <String>[];
@@ -75,7 +75,6 @@ void main() {
       'no CupertinoButton paints its foreground in its own background colour',
       (tester) async {
     SharedPreferences.setMockInitialValues({
-      'lema_intro_showcase_seen': true,
     });
     await StorageService.init();
 

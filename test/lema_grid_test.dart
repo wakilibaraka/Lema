@@ -22,10 +22,6 @@ import 'package:lema/views/queue_view.dart';
 import 'package:lema/views/settings_view.dart';
 import 'package:lema/widgets/floating_tab_bar.dart';
 import 'package:lema/widgets/lema_toast.dart';
-import 'package:lema/widgets/morph_pill_menu.dart';
-import 'package:lema/widgets/page_flip_day.dart';
-import 'package:lema/widgets/poster_reflection.dart';
-import 'package:lema/widgets/showcase_carousel.dart';
 
 /// Slice 9: Lema grid logic + provider coverage.
 ///
@@ -325,95 +321,8 @@ void main() {
     });
   });
 
-  group('Morph pill menu (Slice 11)', () {
-    MorphPillMenuSpec specFor(void Function() onPick) => MorphPillMenuSpec(
-          title: 'Instagram Channel',
-          subtitle: '3 of 8 posts',
-          icon: CupertinoIcons.camera_fill,
-          accent: const Color(0xFFF56040),
-          items: [
-            MorphPillMenuItem(
-              icon: CupertinoIcons.camera_fill,
-              label: 'Instagram only',
-              detail: 'Reels, feed and carousels',
-              onTap: onPick,
-              selected: true,
-            ),
-            MorphPillMenuItem(
-              icon: CupertinoIcons.play_rectangle_fill,
-              label: 'Vertical video only',
-              detail: '9:16 reels and Shorts',
-              onTap: onPick,
-            ),
-          ],
-        );
-
-    Future<GlobalKey> pumpAnchor(WidgetTester tester) async {
-      final anchor = GlobalKey();
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: Center(
-              child: Container(
-                key: anchor,
-                width: 120,
-                height: 40,
-                color: Colors.black,
-              ),
-            ),
-          ),
-        ),
-      );
-      return anchor;
-    }
-
-    testWidgets('opens from the pill rect, then dismisses on tap',
-        (tester) async {
-      var picked = false;
-      final anchor = await pumpAnchor(tester);
-      final ctx = tester.element(find.byKey(anchor));
-
-      MorphPillMenu.show(ctx, anchorKey: anchor, spec: specFor(() => picked = true));
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 500));
-
-      expect(find.text('Instagram Channel'), findsOneWidget);
-      expect(find.text('Instagram only'), findsOneWidget);
-      expect(find.text('Vertical video only'), findsOneWidget);
-      // Selected row shows a checkmark affordance.
-      expect(find.byIcon(CupertinoIcons.checkmark_alt), findsOneWidget);
-
-      await tester.tap(find.text('Instagram only'));
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 400));
-
-      expect(picked, isTrue);
-      expect(find.text('Instagram Channel'), findsNothing);
-    });
-
-    testWidgets('scrim tap dismisses without firing an action',
-        (tester) async {
-      var picked = false;
-      final anchor = await pumpAnchor(tester);
-      final ctx = tester.element(find.byKey(anchor));
-
-      MorphPillMenu.show(ctx, anchorKey: anchor, spec: specFor(() => picked = true));
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 500));
-      expect(find.text('Instagram Channel'), findsOneWidget);
-
-      // Tap the scrim, top-left corner (away from the card).
-      await tester.tapAt(const Offset(12, 12));
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 400));
-
-      expect(find.text('Instagram Channel'), findsNothing);
-      expect(picked, isFalse);
-    });
-  });
-
   group('Floating tab bar (Slice 12)', () {
-    testWidgets('renders 5 tabs with poster reflections', (tester) async {
+    testWidgets('renders 5 tabs', (tester) async {
       await tester.pumpWidget(
         const MaterialApp(
           home: Scaffold(
@@ -423,11 +332,8 @@ void main() {
       );
       await tester.pump(const Duration(milliseconds: 300));
 
-      // One mirror per tab = 10 icons (5 base + 5 reflections).
-      expect(find.byType(Icon), findsNWidgets(10));
-      // Every reflection is masked with a vertical alpha gradient.
-      expect(find.byType(ShaderMask), findsNWidgets(5));
-      for (final label in ['Home', 'Simulator', 'Queue', 'Calendar', 'AI Studio']) {
+      expect(find.byType(Icon), findsNWidgets(5));
+      for (final label in ['Home', 'Queue', 'Calendar', 'AI Studio', 'Composer']) {
         expect(find.text(label), findsOneWidget);
       }
 
@@ -459,183 +365,7 @@ void main() {
       expect(barWidth, moreOrLessEquals(800, epsilon: 1));
 
       // Selection bubble, reflections and labels all survive the move.
-      expect(find.byType(PosterReflection), findsNWidgets(5));
       expect(find.text('Home'), findsOneWidget);
-    });
-  });
-
-  group('Intro showcase (Slice 13)', () {
-    Future<void> pumpShowcase(WidgetTester tester,
-            {VoidCallback? onFinished}) =>
-        tester.pumpWidget(
-          MaterialApp(
-            home: Scaffold(
-                body: ShowcaseCarousel(
-                    autoPlay: false, onFinished: onFinished)),
-          ),
-        );
-
-    testWidgets('renders slide copy, styles, shutter and skip', (tester) async {
-      await pumpShowcase(tester);
-      await tester.pump(const Duration(milliseconds: 400));
-
-      expect(find.text('Shoot once'), findsOneWidget);
-      expect(find.text('Then let AI style it'), findsOneWidget);
-      expect(find.text('Original'), findsOneWidget);
-      expect(find.byKey(ShowcaseCarousel.skipKey), findsOneWidget);
-      expect(find.byKey(ShowcaseCarousel.enterKey), findsNothing);
-      // 3 style chips on the active slide.
-      expect(find.text('Warm film'), findsOneWidget);
-      expect(find.text('Neon night'), findsOneWidget);
-    });
-
-    testWidgets('shutter runs the shot and advances to slide 2',
-        (tester) async {
-      await pumpShowcase(tester);
-      await tester.pump(const Duration(milliseconds: 400));
-
-      expect(find.text('Shoot once'), findsOneWidget);
-
-      // Tap the floating shutter (the last GestureDetector in the stack).
-      await tester.tap(find.byKey(ShowcaseCarousel.shutterKey));
-      await tester.pump();
-
-      // Blur ramp: the styled frame is layered in with ImageFiltered.
-      expect(find.byType(ImageFiltered), findsWidgets);
-
-      // Complete the shot + the page transition.
-      await tester.pump(const Duration(seconds: 2));
-      await tester.pump(const Duration(milliseconds: 500));
-
-      expect(find.text('Let AI style it'), findsOneWidget);
-    });
-
-    testWidgets('skip is 44pt, finishes, and copy is non-underlined',
-        (tester) async {
-      var finished = false;
-      await pumpShowcase(tester, onFinished: () => finished = true);
-      await tester.pump(const Duration(milliseconds: 400));
-
-      final skip = find.byKey(ShowcaseCarousel.skipKey);
-      expect(skip, findsOneWidget);
-      expect(tester.getSize(skip).height, 44);
-
-      final texts = tester.widgetList<Text>(
-        find.descendant(
-          of: find.byType(ShowcaseCarousel),
-          matching: find.byType(Text),
-        ),
-      );
-      expect(texts, isNotEmpty);
-      for (final text in texts) {
-        expect(text.style?.decoration, TextDecoration.none);
-      }
-
-      await tester.tap(skip);
-      await tester.pump();
-      expect(finished, isTrue);
-    });
-
-    testWidgets('final slide offers Enter Lema and does not loop',
-        (tester) async {
-      var finished = false;
-      await pumpShowcase(tester, onFinished: () => finished = true);
-      await tester.pump(const Duration(milliseconds: 400));
-      expect(find.byKey(ShowcaseCarousel.enterKey), findsNothing);
-
-      for (var i = 0; i < 2; i++) {
-        await tester.drag(find.byType(PageView), const Offset(-500, 0));
-        await tester.pump();
-        await tester.pump(const Duration(milliseconds: 600));
-      }
-
-      expect(find.text('Schedule the drop'), findsOneWidget);
-      expect(find.byKey(ShowcaseCarousel.enterKey), findsOneWidget);
-
-      // The shutter may fire on the final card, but it must not wrap back
-      // to the first slide.
-      await tester.tap(find.byKey(ShowcaseCarousel.shutterKey));
-      await tester.pump(const Duration(seconds: 2));
-      expect(find.text('Schedule the drop'), findsOneWidget);
-
-      await tester.tap(find.byKey(ShowcaseCarousel.enterKey));
-      await tester.pump();
-      expect(finished, isTrue);
-    });
-
-    testWidgets('finishing the presented route persists dismissal',
-        (tester) async {
-      SharedPreferences.setMockInitialValues({});
-      final prefs = await SharedPreferences.getInstance();
-      final storage = StorageService(prefs);
-      expect(storage.hasSeenIntroShowcase(), isFalse);
-
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: Builder(
-              builder: (context) => FilledButton(
-                onPressed: () => ShowcaseCarousel.present(context),
-                child: const Text('launch tour'),
-              ),
-            ),
-          ),
-        ),
-      );
-
-      await tester.tap(find.text('launch tour'));
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 600));
-      expect(find.byKey(ShowcaseCarousel.skipKey), findsOneWidget);
-
-      await tester.tap(find.byKey(ShowcaseCarousel.skipKey));
-      await tester.pump();
-      await tester.pump(const Duration(seconds: 1));
-      expect(find.text('launch tour'), findsOneWidget);
-      expect(storage.hasSeenIntroShowcase(), isTrue);
-    });
-
-    testWidgets('safe controls and final completion fit at 402pt',
-        (tester) async {
-      tester.view.physicalSize = const Size(1206, 2622);
-      tester.view.devicePixelRatio = 3;
-      addTearDown(tester.view.reset);
-
-      var finished = false;
-      await tester.pumpWidget(
-        MaterialApp(
-          home: MediaQuery(
-            data: const MediaQueryData(
-              size: Size(402, 874),
-              padding: EdgeInsets.only(top: 47, bottom: 34),
-            ),
-            child: Scaffold(
-              body: ShowcaseCarousel(
-                autoPlay: false,
-                onFinished: () => finished = true,
-              ),
-            ),
-          ),
-        ),
-      );
-      await tester.pump(const Duration(milliseconds: 200));
-      expect(tester.takeException(), isNull);
-
-      final skipTop =
-          tester.getTopLeft(find.byKey(ShowcaseCarousel.skipKey)).dy;
-      expect(skipTop, greaterThanOrEqualTo(47));
-
-      for (var i = 0; i < 2; i++) {
-        await tester.drag(find.byType(PageView), const Offset(-500, 0));
-        await tester.pump();
-        await tester.pump(const Duration(milliseconds: 600));
-        expect(tester.takeException(), isNull);
-      }
-
-      await tester.tap(find.byKey(ShowcaseCarousel.enterKey));
-      await tester.pump();
-      expect(finished, isTrue);
-      expect(tester.takeException(), isNull);
     });
   });
 
@@ -721,90 +451,6 @@ void main() {
       await tester.pump();
       await tester.pump(const Duration(seconds: 1));
       expect(find.text('open'), findsOneWidget);
-    });
-  });
-
-  group('Day page-flip calendar (Slice 15)', () {
-    Widget host(DateTime day, {bool reduceMotion = false}) => MaterialApp(
-          home: MediaQuery(
-            data: MediaQueryData(disableAnimations: reduceMotion),
-            child: Scaffold(
-              body: DayFlipHeader(day: day, isDark: false),
-            ),
-          ),
-        );
-
-    testWidgets('renders digits, month, weekday and three indicators',
-        (tester) async {
-      await tester.pumpWidget(host(DateTime(2026, 8, 11)));
-      await tester.pump(const Duration(seconds: 1));
-
-      expect(find.text('11'), findsOneWidget);
-      expect(find.text('August 2026'), findsOneWidget);
-      expect(find.text('Tuesday'), findsOneWidget);
-      expect(find.byType(TearLine), findsOneWidget);
-      // Lunar / moon / fortune chips.
-      expect(find.byIcon(CupertinoIcons.moon_stars), findsWidgets);
-      expect(find.byIcon(CupertinoIcons.sparkles), findsOneWidget);
-    });
-
-    testWidgets('advancing the day page-flips the digits', (tester) async {
-      await tester.pumpWidget(host(DateTime(2026, 8, 11)));
-      await tester.pump(const Duration(seconds: 1));
-      expect(find.text('11'), findsOneWidget);
-
-      await tester.pumpWidget(host(DateTime(2026, 8, 12)));
-      await tester.pump(); // start the swap
-      await tester.pump(const Duration(milliseconds: 120));
-      expect(find.byType(PageFlipSwap), findsWidgets);
-
-      await tester.pump(const Duration(seconds: 1));
-      expect(find.text('12'), findsOneWidget);
-      expect(find.text('Wednesday'), findsOneWidget);
-    });
-
-    testWidgets('crosses a month boundary without clipping digits',
-        (tester) async {
-      tester.view.physicalSize = const Size(1206, 2622);
-      tester.view.devicePixelRatio = 3;
-      addTearDown(tester.view.reset);
-
-      await tester.pumpWidget(host(DateTime(2026, 7, 31)));
-      await tester.pump(const Duration(seconds: 1));
-      expect(find.text('31'), findsOneWidget);
-      expect(tester.takeException(), isNull);
-
-      // July red → August blue.
-      await tester.pumpWidget(host(DateTime(2026, 8, 1)));
-      await tester.pump();
-      await tester.pump(const Duration(seconds: 1));
-      expect(find.text('1'), findsOneWidget);
-      expect(find.text('August 2026'), findsOneWidget);
-      expect(tester.takeException(), isNull);
-
-      // July starts red and rolls to blue; the boundary itself is continuous,
-      // so Aug 1 lands on (almost exactly) Jul 31's colour.
-      final jul1 = LemaMonthAccent.resolve(DateTime(2026, 7, 1));
-      final jul31 = LemaMonthAccent.resolve(DateTime(2026, 7, 31));
-      final aug1 = LemaMonthAccent.resolve(DateTime(2026, 8, 1));
-
-      expect(jul1.r, greaterThan(jul1.b)); // red-dominant
-      expect(aug1.b, greaterThan(aug1.r)); // blue-dominant
-      final boundaryGap =
-          ((jul31.r - aug1.r).abs() + (jul31.b - aug1.b).abs());
-      expect(boundaryGap, lessThan(0.02));
-    });
-
-    testWidgets('reduced motion falls back to a crossfade', (tester) async {
-      await tester.pumpWidget(host(DateTime(2026, 8, 11), reduceMotion: true));
-      await tester.pump(const Duration(seconds: 1));
-      expect(find.text('11'), findsOneWidget);
-
-      await tester.pumpWidget(host(DateTime(2026, 8, 12), reduceMotion: true));
-      await tester.pump();
-      await tester.pump(const Duration(seconds: 1));
-      expect(find.text('12'), findsOneWidget);
-      expect(tester.takeException(), isNull);
     });
   });
 

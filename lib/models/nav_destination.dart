@@ -31,11 +31,6 @@ const List<NavDestination> lemaDestinations = [
     icon: CupertinoIcons.house_fill,
   ),
   NavDestination(
-    label: 'Simulator',
-    shortLabel: 'Simulator',
-    icon: CupertinoIcons.device_phone_portrait,
-  ),
-  NavDestination(
     label: 'Queue',
     shortLabel: 'Queue',
     icon: CupertinoIcons.layers_alt,
@@ -74,11 +69,6 @@ const List<NavDestination> lemaDestinations = [
     label: 'Settings',
     shortLabel: 'Settings',
     icon: CupertinoIcons.gear_alt,
-  ),
-  NavDestination(
-    label: 'Simulation',
-    shortLabel: 'Simulation',
-    icon: CupertinoIcons.speedometer,
   ),
 ];
 

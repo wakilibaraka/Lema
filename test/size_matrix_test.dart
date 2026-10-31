@@ -8,14 +8,13 @@ import 'package:lema/providers/auth_provider.dart';
 import 'package:lema/providers/posts_provider.dart';
 import 'package:lema/providers/profile_provider.dart';
 import 'package:lema/services/storage_service.dart';
-import 'package:lema/theme/apple_theme.dart';
+import 'package:lema/theme/backdrop_theme.dart';
 import 'package:lema/views/ai_studio_view.dart';
 import 'package:lema/views/calendar_view.dart';
 import 'package:lema/views/hooks_pipeline_view.dart';
 import 'package:lema/views/lema_grid_view.dart';
 import 'package:lema/views/queue_view.dart';
 import 'package:lema/views/settings_view.dart';
-import 'package:lema/views/simulator_view.dart';
 import 'package:lema/views/tasks_view.dart';
 
 /// Slice 23: ratios audit matrix.
@@ -38,8 +37,8 @@ void main() {
   Widget host(Widget view,
       {double textScale = 1.0, bool dark = false}) {
     return MaterialApp(
-      theme: AppleTheme.lightTheme,
-      darkTheme: AppleTheme.darkTheme,
+      theme: BackdropTheme.lightTheme,
+      darkTheme: BackdropTheme.darkTheme,
       themeMode: dark ? ThemeMode.dark : ThemeMode.light,
       home: Builder(
         builder: (context) {
@@ -124,10 +123,6 @@ void main() {
 
     testWidgets('Tasks survives all ratios', (tester) async {
       await pumpMatrix(tester, const TasksView(), 'Tasks');
-    });
-
-    testWidgets('Simulator survives all ratios', (tester) async {
-      await pumpMatrix(tester, const SimulatorView(), 'Simulator');
     });
   });
 }

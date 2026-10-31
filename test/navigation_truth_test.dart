@@ -23,7 +23,6 @@ Future<void> _boot(WidgetTester tester,
   tester.view.devicePixelRatio = 1;
   addTearDown(tester.view.reset);
   SharedPreferences.setMockInitialValues({
-    'lema_intro_showcase_seen': true,
   });
   final prefs = await SharedPreferences.getInstance();
   StorageService(prefs);
@@ -86,7 +85,7 @@ void main() {
 
     test('a screen outside the dock selects no tab', () async {
       final app = await freshApp();
-      app.setNavIndex(9); // Settings
+      app.setNavIndex(settingsDestinationIndex);
       expect(app.selectedTabIndex, -1);
       app.setNavIndex(lemaDestinations.length - 1);
       expect(app.selectedTabIndex, -1);
@@ -95,7 +94,7 @@ void main() {
     testWidgets('Settings highlights no dock tab', (tester) async {
       await _boot(tester, size: const Size(402, 900));
       final context = tester.element(find.byType(MainLayoutScreen));
-      context.read<AppProvider>().setNavIndex(9);
+      context.read<AppProvider>().setNavIndex(settingsDestinationIndex);
       await tester.pump(const Duration(milliseconds: 400));
 
       final bar = tester.widget<FloatingTabBar>(find.byType(FloatingTabBar));

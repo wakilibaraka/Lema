@@ -1,10 +1,11 @@
 import 'dart:convert';
+
 import 'package:shared_preferences/shared_preferences.dart';
+
 import '../models/profile_model.dart';
 import '../models/post_model.dart';
 import '../models/task_model.dart';
 import '../models/script_model.dart';
-import '../models/simulation_model.dart';
 
 class StorageService {
   static const String _keyProfiles = 'lema_profiles';
@@ -13,10 +14,7 @@ class StorageService {
   static const String _keyTasks = 'lema_tasks';
   static const String _keyScripts = 'lema_scripts';
   static const String _keyThemeMode = 'lema_theme_mode';
-  static const String _keyIntroSeen = 'lema_intro_showcase_seen';
   static const String _keyAutoplay = 'lema_video_autoplay';
-  static const String _keySimulationRun = 'lema_simulation_run';
-  static const String _keySimulationView = 'lema_simulation_view';
 
   final SharedPreferences _prefs;
   static StorageService? _instance;
@@ -160,22 +158,6 @@ class StorageService {
     await _prefs.setBool(_keyThemeMode, isDark);
   }
 
-  // --- Intro showcase (Slice 13) ---
-  /// True once the user has dismissed or completed the intro showcase.
-  bool hasSeenIntroShowcase() {
-    return _prefs.getBool(_keyIntroSeen) ?? false;
-  }
-
-  Future<void> setSeenIntroShowcase() async {
-    await _prefs.setBool(_keyIntroSeen, true);
-  }
-
-  /// Clears the flag so the showcase plays again on next cold start.
-  /// Used by the "Replay showcase" row in Settings.
-  Future<void> resetIntroShowcase() async {
-    await _prefs.remove(_keyIntroSeen);
-  }
-
   // --- Video autoplay (Slice 22) ---
   /// Default OFF: feeds stay silent until the user enables motion.
   bool autoplayVideos() {
@@ -184,38 +166,5 @@ class StorageService {
 
   Future<void> setAutoplayVideos(bool enabled) async {
     await _prefs.setBool(_keyAutoplay, enabled);
-  }
-
-  // --- Simulation run (Slice 25) ---
-  /// Returns the persisted run, or null when nothing is stored or the blob
-  /// is unreadable. The run is disposable demo state, so a corrupt payload
-  /// degrades to a freshly seeded run instead of a red screen.
-  SimulationRun? loadSimulationRun() {
-    final raw = _prefs.getString(_keySimulationRun);
-    if (raw == null || raw.isEmpty) return null;
-    try {
-      final decoded = jsonDecode(raw);
-      if (decoded is! Map) return null;
-      return SimulationRun.fromJson(Map<String, dynamic>.from(decoded));
-    } catch (_) {
-      return null;
-    }
-  }
-
-  Future<void> saveSimulationRun(SimulationRun run) async {
-    await _prefs.setString(_keySimulationRun, jsonEncode(run.toJson()));
-  }
-
-  // --- Simulation view mode (Slice 25) ---
-  SimulationViewMode loadSimulationViewMode() {
-    final raw = _prefs.getString(_keySimulationView);
-    for (final mode in SimulationViewMode.values) {
-      if (mode.name == raw) return mode;
-    }
-    return SimulationViewMode.list;
-  }
-
-  Future<void> setSimulationViewMode(SimulationViewMode mode) async {
-    await _prefs.setString(_keySimulationView, mode.name);
   }
 }

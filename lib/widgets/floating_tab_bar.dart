@@ -6,7 +6,6 @@ import 'package:flutter/services.dart';
 import '../models/nav_destination.dart';
 import '../theme/backdrop_theme.dart';
 import '../theme/lema_motion.dart';
-import 'poster_reflection.dart';
 
 /// Docked glass tab bar (Slice 3 floating pill → Slice 20 Photos dock).
 ///
@@ -163,10 +162,6 @@ class _TabItem extends StatelessWidget {
   }
 }
 
-/// Slice 12 — Netflix-poster style reflection under a tab icon.
-///
-/// Uses the shared [PosterReflection] and the shared icon size so the gloss
-/// matches every other reflection in the app.
 class _TabIcon extends StatelessWidget {
   final IconData icon;
   final Color color;
@@ -182,21 +177,10 @@ class _TabIcon extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        AnimatedScale(
-          scale: scale,
-          duration: LemaMotion.quick,
-          child: Icon(icon, size: _size, color: color),
-        ),
-        PosterReflection(
-          width: _size,
-          // Dark mode dims the reflection to 25%.
-          peakAlpha: Theme.of(context).brightness == Brightness.dark ? 64 : 130,
-          child: Icon(icon, size: _size, color: color),
-        ),
-      ],
+    return AnimatedScale(
+      scale: scale,
+      duration: LemaMotion.quick,
+      child: Icon(icon, size: _size, color: color),
     );
   }
 }
