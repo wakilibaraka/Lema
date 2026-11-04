@@ -50,7 +50,6 @@ class PostsProvider extends ChangeNotifier {
     }
     _loadError = _storage.hadPostsDecodeError;
     _activeSimulatorPost = _posts.first;
-    syncWithBackend();
   }
 
   List<PostModel> get posts => _posts;
@@ -87,7 +86,7 @@ class PostsProvider extends ChangeNotifier {
 
   void addPost(PostModel post) {
     _posts.insert(0, post);
-    _storage.savePosts(_posts);
+    _persist();
     _activeSimulatorPost = post;
     notifyListeners();
   }
@@ -96,7 +95,7 @@ class PostsProvider extends ChangeNotifier {
     final idx = _posts.indexWhere((p) => p.id == updated.id);
     if (idx != -1) {
       _posts[idx] = updated;
-      _storage.savePosts(_posts);
+      _persist();
       if (_activeSimulatorPost?.id == updated.id) {
         _activeSimulatorPost = updated;
       }
@@ -106,7 +105,7 @@ class PostsProvider extends ChangeNotifier {
 
   void deletePost(String id) {
     _posts.removeWhere((p) => p.id == id);
-    _storage.savePosts(_posts);
+    _persist();
     if (_activeSimulatorPost?.id == id && _posts.isNotEmpty) {
       _activeSimulatorPost = _posts.first;
     }
@@ -145,7 +144,7 @@ class PostsProvider extends ChangeNotifier {
     // Adjust when removal shifts the target left.
     if (fromMaster < toMaster) toMaster -= 1;
     _posts.insert(toMaster, item);
-    _storage.savePosts(_posts);
+    _persist();
     notifyListeners();
   }
 
@@ -168,7 +167,7 @@ class PostsProvider extends ChangeNotifier {
       final idx = _posts.indexWhere((p) => p.id == queue[i].id);
       _posts[idx] = queue[i].copyWith(scheduledTime: times[i]);
     }
-    _storage.savePosts(_posts);
+    _persist();
     notifyListeners();
   }
 
@@ -189,7 +188,7 @@ class PostsProvider extends ChangeNotifier {
       final idx = _posts.indexWhere((p) => p.id == drafts[i].id);
       _posts[idx] = drafts[i].copyWith(status: 'scheduled', scheduledTime: times[i]);
     }
-    _storage.savePosts(_posts);
+    _persist();
     notifyListeners();
     return times.length;
   }
@@ -199,7 +198,7 @@ class PostsProvider extends ChangeNotifier {
     if (_lastOrderSnapshot == null) return;
     _posts = List<PostModel>.from(_lastOrderSnapshot!);
     _lastOrderSnapshot = null;
-    _storage.savePosts(_posts);
+    _persist();
     notifyListeners();
   }
 
@@ -207,7 +206,7 @@ class PostsProvider extends ChangeNotifier {
   Future<void> retryLoad() async {
     await _storage.clearPosts();
     _posts = List.from(defaultSeedPosts);
-    _storage.savePosts(_posts);
+    _persist();
     _loadError = false;
     notifyListeners();
   }
@@ -236,7 +235,7 @@ class PostsProvider extends ChangeNotifier {
         status: 'failed',
         failureReason: result.toString(),
       );
-      _storage.savePosts(_posts);
+      _persist();
       notifyListeners();
       return result;
     }
@@ -260,27 +259,66 @@ class PostsProvider extends ChangeNotifier {
         ),
       );
     }
-    _storage.savePosts(_posts);
+    _persist();
     notifyListeners();
     return result;
   }
 
-  /// Scheduled posts whose slot has already passed. The daemon is parked, so
-  /// nothing converts these on its own — the queue has to surface them.
+  /// Scheduled posts whose slot has already passed. The daemon only fires
+  /// while this machine is awake, so the queue still has to surface them.
   List<PostModel> get overduePosts {
     final overdue = _posts.where((p) => p.isOverdue).toList()
       ..sort((a, b) => a.scheduledTime.compareTo(b.scheduledTime));
     return overdue;
   }
 
+  void _persist() {
+    _storage.savePosts(_posts);
+    syncWithBackend();
+  }
+
+  bool _syncing = false;
+  bool _syncAgain = false;
+
+  /// Pushes the queue to the daemon and merges back what it did. Local posts
+  /// are the source of truth except for a scheduled post the daemon has since
+  /// sent or failed, and repeats it queued that the app hasn't seen.
   Future<void> syncWithBackend() async {
-    try {
-      final remote = await _api.fetchQueue();
-      if (remote.isNotEmpty) {
-        _posts = remote;
-        _storage.savePosts(_posts);
-        notifyListeners();
+    // A failed load shows seeds, which must not replace the daemon's queue.
+    if (_loadError) return;
+    if (_syncing) {
+      _syncAgain = true;
+      return;
+    }
+    _syncing = true;
+    final remote = await _api.syncPosts(_posts);
+    _syncing = false;
+    if (remote != null && _merge(remote)) {
+      _storage.savePosts(_posts);
+      notifyListeners();
+    }
+    if (_syncAgain) {
+      _syncAgain = false;
+      await syncWithBackend();
+    }
+  }
+
+  bool _merge(List<Map<String, dynamic>> remote) {
+    var changed = false;
+    for (final json in remote) {
+      final post = PostModel.fromJson(json);
+      final idx = _posts.indexWhere((p) => p.id == post.id);
+      if (idx == -1) {
+        if (json['createdByDaemon'] == true) {
+          _posts.insert(0, post);
+          changed = true;
+        }
+      } else if (_posts[idx].status == 'scheduled' &&
+          (post.status == 'published' || post.status == 'failed')) {
+        _posts[idx] = post;
+        changed = true;
       }
-    } catch (_) {}
+    }
+    return changed;
   }
 }

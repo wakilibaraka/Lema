@@ -4,6 +4,7 @@ import 'dart:io';
 import 'dart:math';
 import 'package:http/http.dart' as http;
 import '../models/post_model.dart';
+import 'daemon_token.dart';
 import 'demo_mode_service.dart';
 
 /// What actually happened when a post was handed to the daemon.
@@ -97,26 +98,36 @@ class ApiService {
     throw Exception('Max retries exceeded');
   }
 
-  Future<List<PostModel>> fetchPosts() async {
+  /// Sends the daemon the app's queue and returns its posts, or null when
+  /// there is no daemon to talk to. Demo mode never touches the daemon.
+  Future<List<Map<String, dynamic>>?> syncPosts(List<PostModel> posts) async {
+    if (DemoModeService.isEnabled) return null;
     try {
-      final res = await _withRetry(() => _http.get(Uri.parse('$baseUrl/api/posts')).timeout(
-            const Duration(seconds: 4),
-          ));
+      final res = await _http
+          .post(
+            Uri.parse('$baseUrl/api/posts/sync'),
+            headers: daemonHeaders(),
+            body: jsonEncode({
+              'posts': [
+                for (final p in posts)
+                  if (p.status == 'scheduled') p.toJson(),
+              ],
+              'ids': [for (final p in posts) p.id],
+            }),
+          )
+          .timeout(const Duration(seconds: 4));
       if (res.statusCode == 200) {
-        final List list = jsonDecode(res.body);
-        return list.map((e) => PostModel.fromJson(e)).toList();
+        return List<Map<String, dynamic>>.from(jsonDecode(res.body) as List);
       }
     } catch (_) {
-      // Local fallback
+      // No daemon: the app keeps working from its own storage.
     }
-    return [];
+    return null;
   }
-
-  Future<List<PostModel>> fetchQueue() => fetchPosts();
 
   Future<bool> checkDaemonStatus() async {
     try {
-      final res = await _withRetry(() => _http.get(Uri.parse('$baseUrl/api/settings')).timeout(
+      final res = await _withRetry(() => _http.get(Uri.parse('$baseUrl/api/settings'), headers: daemonHeaders()).timeout(
             const Duration(seconds: 3),
           ));
       return res.statusCode == 200;
@@ -130,9 +141,9 @@ class ApiService {
   /// 5xx'd publish may already have gone out, so retrying it would post the
   /// same content twice (review finding 2). The dispatch UI owns Retry.
   /// [_withRetry] stays on the GETs, where a repeat is harmless.
-  Future<DispatchResult> dispatchPost(PostModel post) => _dispatch(post.id);
+  Future<DispatchResult> dispatchPost(PostModel post) => _dispatch(post);
 
-  Future<DispatchResult> _dispatch(String postId) async {
+  Future<DispatchResult> _dispatch(PostModel post) async {
     // Demo mode answers locally: no daemon and no platform APIs are touched,
     // which is what the app-review walkthroughs need.
     // The result is labelled so the UI never claims a real send.
@@ -143,7 +154,8 @@ class ApiService {
 
     try {
       final res = await _http
-          .post(Uri.parse('$baseUrl/api/posts/$postId/publish'))
+          .post(Uri.parse('$baseUrl/api/posts/${post.id}/publish'),
+              headers: daemonHeaders(), body: jsonEncode(post.toJson()))
           .timeout(const Duration(seconds: 6));
 
       if (res.statusCode >= 200 && res.statusCode < 300) {
@@ -175,7 +187,7 @@ class ApiService {
     try {
       final res = await _withRetry(() => _http.post(
         Uri.parse('$baseUrl/api/upload'),
-        headers: {'Content-Type': 'application/json'},
+        headers: {'Content-Type': 'application/json', ...daemonHeaders()},
         body: jsonEncode({
           'name': name,
           'type': mimeType,

@@ -17,7 +17,7 @@ class _StubApi extends ApiService {
   Future<DispatchResult> dispatchPost(PostModel post) async => result;
 
   @override
-  Future<List<PostModel>> fetchQueue() async => [];
+  Future<List<Map<String, dynamic>>?> syncPosts(List<PostModel> posts) async => null;
 }
 
 PostModel _post(String id, DateTime at,

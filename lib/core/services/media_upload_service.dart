@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:http/http.dart' as http;
+import 'daemon_token.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class UploadedMediaItem {
@@ -85,7 +86,7 @@ class MediaUploadService {
 
           final response = await http.post(
             Uri.parse(_daemonUploadUrl),
-            headers: {'Content-Type': 'application/json'},
+            headers: {'Content-Type': 'application/json', ...daemonHeaders()},
             body: payload,
           ).timeout(const Duration(seconds: 8));
 

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -54,6 +56,14 @@ class MainLayoutScreen extends StatefulWidget {
 }
 
 class _MainLayoutScreenState extends State<MainLayoutScreen> {
+  Timer? _daemonSync;
+
+  @override
+  void dispose() {
+    _daemonSync?.cancel();
+    super.dispose();
+  }
+
   @override
   void initState() {
     super.initState();
@@ -65,6 +75,11 @@ class _MainLayoutScreenState extends State<MainLayoutScreen> {
   Future<void> _hydratePersistedState() async {
     await DemoModeService.load();
     if (!mounted) return;
+    // After demo mode is known, so a demo session never reaches the daemon.
+    final posts = context.read<PostsProvider>()..syncWithBackend();
+    // Picks up what the daemon published while the app sits open.
+    _daemonSync = Timer.periodic(
+        const Duration(seconds: 30), (_) => posts.syncWithBackend());
     await context.read<AuthProvider>().loadTokens();
   }
 

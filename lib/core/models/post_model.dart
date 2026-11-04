@@ -88,8 +88,8 @@ class PostModel {
   }
 
   /// True when a scheduled post's time has already passed and nothing has
-  /// published it. The daemon is parked, so nothing converts these
-  /// automatically — the UI has to surface them.
+  /// published it. The daemon may be off or asleep, so the UI has to
+  /// surface them.
   bool get isOverdue => status == 'scheduled' && scheduledTime.isBefore(DateTime.now());
 
   /// The calendar day the post belongs to.
