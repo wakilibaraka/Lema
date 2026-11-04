@@ -11,6 +11,9 @@ class PostAnalytics {
   final int shares;
   final DateTime fetchedAt;
 
+  /// True when the daemon didn't answer and these are the post's saved counts.
+  final bool fromStoredCounts;
+
   PostAnalytics({
     required this.postId,
     required this.platform,
@@ -19,6 +22,7 @@ class PostAnalytics {
     this.comments = 0,
     this.shares = 0,
     DateTime? fetchedAt,
+    this.fromStoredCounts = false,
   }) : fetchedAt = fetchedAt ?? DateTime.now();
 
   Map<String, dynamic> toJson() => {
@@ -71,6 +75,8 @@ class AnalyticsResult {
   Map<String, PostAnalytics> get byPostId =>
       {for (final row in perPost) row.postId: row};
 
+  bool get usesStoredCounts => perPost.any((row) => row.fromStoredCounts);
+
   PostAnalytics? forPost(String postId) => byPostId[postId];
 }
 
@@ -98,6 +104,7 @@ class AnalyticsService {
       likes: parseCompactCount(post.likes),
       views: parseCompactCount(post.views),
       comments: post.comments,
+      fromStoredCounts: true,
     );
   }
 

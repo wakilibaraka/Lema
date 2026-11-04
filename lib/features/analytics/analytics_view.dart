@@ -81,6 +81,16 @@ class _AnalyticsViewState extends State<AnalyticsView> {
             onDays: (d) => setState(() => _days = d),
             onRefresh: _loadAnalytics,
           ),
+          if (_result!.usesStoredCounts)
+            Padding(
+              padding: const EdgeInsets.only(top: LemaTheme.s1),
+              child: Text(
+                'Showing saved counts. The publishing daemon did not answer.',
+                style: TextStyle(
+                    fontSize: 13,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant),
+              ),
+            ),
           const SizedBox(height: LemaTheme.s4),
           _StatGrid(
             columns: wide ? 4 : 2,

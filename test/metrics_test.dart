@@ -84,4 +84,24 @@ void main() {
     expect(rows.first.engagements, 6);
     expect(rows.last.views, 0);
   });
+
+  test('a post with no counts adds nothing to reach', () async {
+    final post = PostModel(id: 'new', caption: 'c', mediaUrl: 'x.png');
+    expect(post.views, '0');
+    expect(post.likesCount, 0);
+    expect(post.comments, 0);
+    final parsed = PostModel.fromJson({'id': 'old'});
+    expect(parsed.views, '0');
+    expect(parsed.likes, '0');
+    expect(parsed.comments, 0);
+  });
+
+  test('saved counts are labelled when the daemon does not answer', () async {
+    final post = PostModel(id: 'p', caption: 'c', mediaUrl: 'x.png', views: '10');
+    const dead = AnalyticsService(baseUrl: 'http://127.0.0.1:1');
+    final result = await dead.fetchAggregatedAnalytics([post]);
+    expect(result.usesStoredCounts, isTrue);
+    expect(result.totalViews, 10);
+    expect(AnalyticsResult(perPost: []).usesStoredCounts, isFalse);
+  });
 }
