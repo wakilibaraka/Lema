@@ -92,17 +92,12 @@ class _AnalyticsViewState extends State<AnalyticsView> {
               ),
             ),
           const SizedBox(height: LemaTheme.s4),
-          _StatGrid(
-            columns: wide ? 4 : 2,
+          _Overview(
             days: _days,
             current: PeriodSummary.of(current),
             previous: PeriodSummary.of(previous),
             bestHour: bestHours(current).firstOrNull,
-          ),
-          const SizedBox(height: LemaTheme.s4),
-          _Panel(
-            title: 'Reach',
-            child: TrendChart(points: reachTrend(rows, now, _days)),
+            trend: TrendChart(points: reachTrend(rows, now, _days)),
           ),
           const SizedBox(height: LemaTheme.s4),
           if (wide)
@@ -162,19 +157,20 @@ class _Header extends StatelessWidget {
   }
 }
 
-class _StatGrid extends StatelessWidget {
-  final int columns;
+/// The reach trend leads the screen; the other figures are a line of type.
+class _Overview extends StatelessWidget {
   final int days;
   final PeriodSummary current;
   final PeriodSummary previous;
   final int? bestHour;
+  final Widget trend;
 
-  const _StatGrid({
-    required this.columns,
+  const _Overview({
     required this.days,
     required this.current,
     required this.previous,
     required this.bestHour,
+    required this.trend,
   });
 
   String _vs(double? percent) {
@@ -185,81 +181,78 @@ class _StatGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final compact = NumberFormat.compact();
-    final points = (current.rate - previous.rate) * 100;
-    final cards = [
-      _StatCard(
-        label: 'Reach',
-        value: compact.format(current.reach),
-        note: _vs(percentChange(current.reach, previous.reach)),
-      ),
-      _StatCard(
-        label: 'Engagement rate',
-        value: '${(current.rate * 100).toStringAsFixed(1)}%',
-        note: previous.reach == 0
-            ? 'No earlier data to compare'
-            : '${points >= 0 ? '+' : ''}${points.toStringAsFixed(1)} pts vs previous $days days',
-      ),
-      _StatCard(
-        label: 'Posts published',
-        value: '${current.posts}',
-        note: _vs(percentChange(current.posts, previous.posts)),
-      ),
-      _StatCard(
-        label: 'Best time',
-        value: bestHour == null
-            ? '–'
-            : DateFormat.j().format(DateTime(2000, 1, 1, bestHour!)),
-        note: 'Highest average engagement',
-      ),
-    ];
-    return LayoutBuilder(builder: (context, box) {
-      final width =
-          (box.maxWidth - LemaTheme.s3 * (columns - 1)) / columns;
-      return Wrap(
-        spacing: LemaTheme.s3,
-        runSpacing: LemaTheme.s3,
-        children: [for (final c in cards) SizedBox(width: width, child: c)],
-      );
-    });
-  }
-}
-
-class _StatCard extends StatelessWidget {
-  final String label;
-  final String value;
-  final String note;
-
-  const _StatCard({required this.label, required this.value, required this.note});
-
-  @override
-  Widget build(BuildContext context) {
     final muted = Theme.of(context).colorScheme.onSurfaceVariant;
+    final points = (current.rate - previous.rate) * 100;
     return Card(
       child: Padding(
-        padding: const EdgeInsets.all(LemaTheme.s4),
+        padding: const EdgeInsets.all(LemaTheme.s5),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(label, style: TextStyle(fontSize: 13, color: muted)),
-            const SizedBox(height: LemaTheme.s2),
-            Text(value,
+            Text('Reach', style: TextStyle(fontSize: 13, color: muted)),
+            Text(NumberFormat.compact().format(current.reach),
                 style: const TextStyle(
                     fontSize: 28,
                     fontWeight: FontWeight.w600,
                     fontFeatures: _tabular)),
-            const SizedBox(height: LemaTheme.s1),
-            // Two lines reserved so neighbouring cards stay the same height.
-            SizedBox(
-              height: 32,
-              child: Text(note,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(fontSize: 12, color: muted)),
+            Text(_vs(percentChange(current.reach, previous.reach)),
+                style: TextStyle(fontSize: 12, color: muted)),
+            const SizedBox(height: LemaTheme.s4),
+            trend,
+            const SizedBox(height: LemaTheme.s4),
+            Wrap(
+              spacing: LemaTheme.s6,
+              runSpacing: LemaTheme.s3,
+              children: [
+                _Figure(
+                  label: 'Engagement rate',
+                  value: '${(current.rate * 100).toStringAsFixed(1)}%',
+                  note: previous.reach == 0
+                      ? 'No earlier data to compare'
+                      : '${points >= 0 ? '+' : ''}${points.toStringAsFixed(1)} pts vs previous $days days',
+                ),
+                _Figure(
+                  label: 'Posts published',
+                  value: '${current.posts}',
+                  note: _vs(percentChange(current.posts, previous.posts)),
+                ),
+                _Figure(
+                  label: 'Best time',
+                  value: bestHour == null
+                      ? '–'
+                      : DateFormat.j().format(DateTime(2000, 1, 1, bestHour!)),
+                  note: 'Highest average engagement',
+                ),
+              ],
             ),
           ],
         ),
       ),
+    );
+  }
+}
+
+class _Figure extends StatelessWidget {
+  final String label;
+  final String value;
+  final String note;
+
+  const _Figure({required this.label, required this.value, required this.note});
+
+  @override
+  Widget build(BuildContext context) {
+    final muted = Theme.of(context).colorScheme.onSurfaceVariant;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label, style: TextStyle(fontSize: 13, color: muted)),
+        Text(value,
+            style: const TextStyle(
+                fontSize: 17,
+                fontWeight: FontWeight.w600,
+                fontFeatures: _tabular)),
+        Text(note, style: TextStyle(fontSize: 12, color: muted)),
+      ],
     );
   }
 }

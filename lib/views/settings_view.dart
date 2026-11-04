@@ -473,7 +473,7 @@ class _SettingsViewState extends State<SettingsView> {
                               const SizedBox(height: 2),
                               Text(
                                 app.isDaemonOnline
-                                    ? 'Connected. Scheduled posts go out while this Mac is awake and online. LinkedIn is the only platform so far.'
+                                    ? 'Connected. Scheduled posts need this Mac awake and online, and a connected channel. LinkedIn is the only channel built, and it has not had a live test.'
                                     : DemoModeService.isEnabled
                                     ? 'No daemon on port 3001. Demo mode is on, so publishes are simulated locally.'
                                     : 'No daemon on port 3001. Share Now will report a failed dispatch until it is running (or turn on Demo Mode).',
@@ -549,7 +549,7 @@ class _SettingsViewState extends State<SettingsView> {
                               const SizedBox(height: 2),
                               Text(
                                 app.isDaemonOnline
-                                    ? 'The daemon answered. Posts go out only while this Mac is awake and online, and only to LinkedIn so far.'
+                                    ? 'The daemon answered. Posts need this Mac awake and online. LinkedIn is the only channel built, and it has not had a live test.'
                                     : 'No daemon answered on port 3001. Start it, or switch Demo Mode on to rehearse a publish locally.',
                                 maxLines: 3,
                                 overflow: TextOverflow.ellipsis,
