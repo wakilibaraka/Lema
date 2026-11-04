@@ -121,7 +121,7 @@ void main() {
   });
 
   group('publishNow reports what actually happened', () {
-    test('an offline daemon leaves the post scheduled', () async {
+    test('an offline daemon marks the post failed with its reason', () async {
       final storage = await _storage();
       final api = _StubApi(
           const DispatchResult(DispatchOutcome.offline, 'Daemon unreachable'));
@@ -134,7 +134,7 @@ void main() {
       expect(api.calls, 1);
       expect(
         provider.posts.firstWhere((p) => p.id == 'post-1').status,
-        'scheduled',
+        'failed',
       );
       expect(provider.publishedPosts.where((p) => p.id == 'post-1'), isEmpty);
     });
@@ -151,7 +151,7 @@ void main() {
       expect(result.toString(), 'HTTP 422');
       expect(
         provider.posts.firstWhere((p) => p.id == 'post-1').status,
-        'scheduled',
+        'failed',
       );
     });
 

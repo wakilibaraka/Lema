@@ -217,6 +217,7 @@ void main() {
             providers: [
               ChangeNotifierProvider.value(value: app),
               ChangeNotifierProvider.value(value: provider),
+              ChangeNotifierProvider(create: (_) => AuthProvider()),
             ],
             child: const QueueView(),
           ),
@@ -284,7 +285,7 @@ void main() {
       expect(tester.takeException(), isNull);
     });
 
-    testWidgets('a refused dispatch keeps the post queued and offers Retry',
+    testWidgets('a refused dispatch marks the post failed and offers Retry',
         (tester) async {
       await DemoModeService.setEnabled(false);
 
@@ -295,10 +296,12 @@ void main() {
       await tester.pump(const Duration(seconds: 2));
 
       // Nothing was published, so nothing may claim it was.
-      expect(provider.scheduledPosts.length, 5);
+      expect(provider.failedPosts.length, 1);
+      expect(provider.scheduledPosts.length, 4);
       expect(provider.publishedPosts.length, 36);
       expect(find.textContaining('Dispatched to'), findsNothing);
-      expect(find.textContaining('Not sent'), findsOneWidget);
+      // The saved reason on the row, plus the snackbar.
+      expect(find.textContaining('Not sent'), findsNWidgets(2));
       expect(find.text('Retry'), findsOneWidget);
       expect(tester.takeException(), isNull);
     });

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../models/post_model.dart';
 import '../models/queue_slot_model.dart';
+import '../recurrence.dart';
+import '../services/queue_autofill_service.dart';
 import '../services/storage_service.dart';
 import '../services/api_service.dart';
 import '../demo_seed.dart';
@@ -62,6 +64,16 @@ class PostsProvider extends ChangeNotifier {
       _posts.where((p) => p.status == 'published' || p.status == 'posted').toList();
 
   List<PostModel> get postedPosts => publishedPosts;
+
+  List<PostModel> get failedPosts =>
+      _posts.where((p) => p.status == 'failed').toList();
+
+  List<PostModel> get draftPosts =>
+      _posts.where((p) => p.status == 'draft').toList();
+
+  /// Scheduled posts in the order they will go out.
+  List<PostModel> get queuePosts => scheduledPosts
+    ..sort((a, b) => a.scheduledTime.compareTo(b.scheduledTime));
 
   List<PostModel> filterPostsByChannel(String channel) {
     if (channel == 'all') return _posts;
@@ -137,6 +149,43 @@ class PostsProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Moves a post within [queuePosts]. The slot times stay where they are and
+  /// the posts take new ones, so the new order is the order they go out in.
+  void reorderQueue(int oldIndex, int newIndex) {
+    final queue = queuePosts;
+    final times = queue.map((p) => p.scheduledTime).toList();
+    _lastOrderSnapshot = List<PostModel>.from(_posts);
+    queue.insert(newIndex, queue.removeAt(oldIndex));
+    for (var i = 0; i < queue.length; i++) {
+      final idx = _posts.indexWhere((p) => p.id == queue[i].id);
+      _posts[idx] = queue[i].copyWith(scheduledTime: times[i]);
+    }
+    _storage.savePosts(_posts);
+    notifyListeners();
+  }
+
+  /// Schedules drafts into open days at the best hours, returning how many
+  /// were placed. [undoLastReorder] reverses it.
+  int autoSlotDrafts(List<int> rankedHours) {
+    final drafts = draftPosts;
+    final times = QueueAutofillService.openSlotTimes(
+      now: DateTime.now(),
+      count: drafts.length,
+      scheduledPosts: scheduledPosts,
+      rankedHours: rankedHours,
+      fallbackSlots: _queueSlots,
+    );
+    if (times.isEmpty) return 0;
+    _lastOrderSnapshot = List<PostModel>.from(_posts);
+    for (var i = 0; i < times.length; i++) {
+      final idx = _posts.indexWhere((p) => p.id == drafts[i].id);
+      _posts[idx] = drafts[i].copyWith(status: 'scheduled', scheduledTime: times[i]);
+    }
+    _storage.savePosts(_posts);
+    notifyListeners();
+    return times.length;
+  }
+
   /// Restores the order snapshotted before the last [reorderPosts].
   void undoLastReorder() {
     if (_lastOrderSnapshot == null) return;
@@ -168,17 +217,41 @@ class PostsProvider extends ChangeNotifier {
 
     final post = _posts[idx];
     final result = await _api.dispatchPost(post);
-    if (!result.isSent) return result;
 
     // Re-read: the post may have been edited or deleted while the daemon
     // request was in flight.
     final current = _posts.indexWhere((p) => p.id == id);
     if (current == -1) return result;
 
-    _posts[current] = _posts[current].copyWith(
+    if (!result.isSent) {
+      _posts[current] = _posts[current].copyWith(
+        status: 'failed',
+        failureReason: result.toString(),
+      );
+      _storage.savePosts(_posts);
+      notifyListeners();
+      return result;
+    }
+
+    final sent = _posts[current];
+    final now = DateTime.now();
+    _posts[current] = sent.copyWith(
       status: 'published',
-      postedAt: DateTime.now(),
+      postedAt: now,
+      clearFailure: true,
     );
+    final next = nextOccurrence(sent, now);
+    if (next != null) {
+      _posts.insert(
+        current,
+        sent.copyWith(
+          id: '${sent.id}-${now.millisecondsSinceEpoch}',
+          status: 'scheduled',
+          scheduledTime: next,
+          clearFailure: true,
+        ),
+      );
+    }
     _storage.savePosts(_posts);
     notifyListeners();
     return result;

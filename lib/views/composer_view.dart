@@ -190,7 +190,9 @@ class _ComposerViewState extends State<ComposerView>
               Padding(
                 padding: const EdgeInsets.only(bottom: 12),
                 child: ErrorBanner.tokenExpiredBanner(
-                  platform: auth.expiredPlatforms.first,
+                  platforms: [
+                    for (final p in auth.expiredPlatforms) platformsMap[p]?.name ?? p,
+                  ],
                   // Reconnect lives in Settings (Connected Accounts); the
                   // banner used to be a dead end with an empty callback.
                   onReconnect: () => context.read<AppProvider>().setNavIndex(

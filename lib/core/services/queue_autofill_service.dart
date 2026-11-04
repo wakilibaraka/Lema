@@ -1,3 +1,5 @@
+import 'package:intl/intl.dart';
+
 import '../models/post_model.dart';
 import '../models/queue_slot_model.dart';
 
@@ -13,15 +15,51 @@ class QueueAutofillService {
         .map((p) => DateTime(p.scheduledTime.year, p.scheduledTime.month, p.scheduledTime.day))
         .toSet();
 
+    // Calendar arithmetic: adding 24h repeats a day when the clocks go back.
     for (var day = start;
         day.isBefore(end) || day.isAtSameMomentAs(end);
-        day = day.add(const Duration(days: 1))) {
+        day = DateTime(day.year, day.month, day.day + 1, day.hour, day.minute)) {
       final dayOnly = DateTime(day.year, day.month, day.day);
       if (!scheduledDates.contains(dayOnly)) {
         gaps.add(dayOnly);
       }
     }
     return gaps;
+  }
+
+  /// Up to [count] future times, one per day with nothing scheduled. Each uses
+  /// the best of [rankedHours], or [fallbackSlots] when there is no history.
+  static List<DateTime> openSlotTimes({
+    required DateTime now,
+    required int count,
+    required List<PostModel> scheduledPosts,
+    required List<int> rankedHours,
+    required List<QueueSlotModel> fallbackSlots,
+    int horizonDays = 30,
+  }) {
+    final minutes = rankedHours.isNotEmpty
+        ? rankedHours.map((h) => h * 60).toList()
+        : fallbackSlots.map((s) {
+            final t = DateFormat('hh:mm a', 'en_US').parse(s.time);
+            return t.hour * 60 + t.minute;
+          }).toList();
+    final gaps = findGapsInRange(
+      start: DateTime(now.year, now.month, now.day),
+      end: DateTime(now.year, now.month, now.day + horizonDays),
+      scheduledPosts: scheduledPosts,
+    );
+    final times = <DateTime>[];
+    for (final gap in gaps) {
+      if (times.length == count) break;
+      for (final m in minutes) {
+        final t = DateTime(gap.year, gap.month, gap.day, 0, m);
+        if (t.isAfter(now)) {
+          times.add(t);
+          break;
+        }
+      }
+    }
+    return times;
   }
 
   static List<QueueSlotModel> suggestSlotsForGaps({

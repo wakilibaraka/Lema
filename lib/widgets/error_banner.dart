@@ -83,12 +83,12 @@ class ErrorBanner extends StatelessWidget {
   }
 
   static Widget tokenExpiredBanner({
-    required String platform,
+    required List<String> platforms,
     required VoidCallback onReconnect,
     VoidCallback? onDismiss,
   }) {
     return ErrorBanner(
-      message: '$platform token expired. Reconnect to publish scheduled posts.',
+      message: '${platforms.join(', ')}: connection expired. Reconnect to publish scheduled posts.',
       actionLabel: 'Reconnect',
       onAction: onReconnect,
       onDismiss: onDismiss,

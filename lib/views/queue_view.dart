@@ -3,10 +3,15 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
+import '../core/destinations.dart';
 import '../core/models/platform_info.dart';
 import '../core/models/post_model.dart';
 import '../core/models/queue_slot_model.dart';
+import '../core/providers/app_provider.dart';
+import '../core/providers/auth_provider.dart';
 import '../core/providers/posts_provider.dart';
+import '../core/services/analytics_service.dart';
+import '../features/analytics/metrics.dart';
 import '../theme/backdrop_theme.dart';
 import '../widgets/apple_glass_card.dart';
 import '../widgets/lema_pill.dart';
@@ -25,20 +30,14 @@ class QueueView extends StatefulWidget {
 class _QueueViewState extends State<QueueView> {
   int _selectedSegment = 0; // 0: Queue, 1: Published History
 
-  /// Local dispatch states. Queued → Sending → Sent, or
-  /// Failed → Retry when the daemon refuses or is not listening.
-  /// The post is only moved to Published by `publishNow` when the dispatch
-  /// really succeeded, so this map is now reachable: a dead daemon keeps
-  /// the post in the queue instead of pretending it went out.
+  /// Posts with a request in flight. A failed attempt is saved on the post,
+  /// so it survives a restart and carries its reason.
   final Set<String> _sending = {};
-  final Map<String, String> _failed = {};
+  List<String> _expired = const [];
 
   Future<void> _dispatch(PostModel post) async {
     if (_sending.contains(post.id)) return;
-    setState(() {
-      _sending.add(post.id);
-      _failed.remove(post.id);
-    });
+    setState(() => _sending.add(post.id));
     // Short beat so Sending is perceivable; the request itself is real.
     await Future.delayed(const Duration(milliseconds: 450));
     if (!mounted) return;
@@ -46,34 +45,65 @@ class _QueueViewState extends State<QueueView> {
     final result = await context.read<PostsProvider>().publishNow(post.id);
     if (!mounted) return;
 
-    setState(() {
-      _sending.remove(post.id);
-      if (result.isSent) {
-        _failed.remove(post.id);
-      } else {
-        _failed[post.id] = result.toString();
-      }
-    });
+    setState(() => _sending.remove(post.id));
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
           result.isSent
               // The label travels with the result so demo mode never claims
-              // a real daemon send (review finding 1).
+              // a real daemon send.
               ? (result.detail ??
-                  'Dispatched to ${post.platformInfo.name} via daemon')
+                    'Dispatched to ${post.platformInfo.name} via daemon')
               : 'Not sent — ${result.toString()}',
         ),
       ),
     );
   }
 
+  void _autoSlot(PostsProvider posts) {
+    final rows = buildMetrics(posts.publishedPosts, {
+      for (final p in posts.publishedPosts)
+        p.id: PostAnalytics(
+          postId: p.id,
+          platform: p.primaryPlatform.name,
+          likes: AnalyticsService.parseCompactCount(p.likes),
+          views: AnalyticsService.parseCompactCount(p.views),
+          comments: p.comments,
+          fromStoredCounts: true,
+        ),
+    });
+    final placed = posts.autoSlotDrafts(bestHours(rows));
+    _offerUndo(
+      posts,
+      placed == 0
+          ? 'No open days to slot drafts into'
+          : 'Scheduled $placed drafts into open days',
+      canUndo: placed > 0,
+    );
+  }
+
+  void _offerUndo(PostsProvider posts, String message, {bool canUndo = true}) {
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(message),
+          action: canUndo
+              ? SnackBarAction(label: 'Undo', onPressed: posts.undoLastReorder)
+              : null,
+        ),
+      );
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final postsProvider = context.watch<PostsProvider>();
-    final scheduledPosts = postsProvider.scheduledPosts;
+    final scheduledPosts = postsProvider.queuePosts;
+    final failedPosts = postsProvider.failedPosts;
+    final drafts = postsProvider.draftPosts;
+    _expired = context.watch<AuthProvider>().expiredPlatforms;
     final publishedPosts = postsProvider.publishedPosts;
     final queueSlots = postsProvider.queueSlots;
     final overdue = postsProvider.overduePosts;
@@ -191,6 +221,15 @@ class _QueueViewState extends State<QueueView> {
                       onTap: () => setState(() => _selectedSegment = 1),
                       isDark: isDark,
                     ),
+                    if (_selectedSegment == 0 && drafts.isNotEmpty) ...[
+                      const SizedBox(width: 8),
+                      LemaPill(
+                        label: 'Auto-slot ${drafts.length} drafts',
+                        selected: false,
+                        onTap: () => _autoSlot(postsProvider),
+                        isDark: isDark,
+                      ),
+                    ],
                     if (_selectedSegment == 0 && scheduledPosts.isNotEmpty) ...[
                       const SizedBox(width: 12),
                       Center(
@@ -222,7 +261,12 @@ class _QueueViewState extends State<QueueView> {
             // Content List
             Expanded(
               child: _selectedSegment == 0
-                  ? _buildPostsList(scheduledPosts, isDark, isScheduled: true)
+                  ? _buildPostsList(
+                      scheduledPosts,
+                      isDark,
+                      isScheduled: true,
+                      failed: failedPosts,
+                    )
                   : _buildPostsList(publishedPosts, isDark, isScheduled: false),
             ),
           ],
@@ -315,8 +359,9 @@ class _QueueViewState extends State<QueueView> {
     List<PostModel> posts,
     bool isDark, {
     required bool isScheduled,
+    List<PostModel> failed = const [],
   }) {
-    if (posts.isEmpty) {
+    if (posts.isEmpty && failed.isEmpty) {
       return Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -352,238 +397,317 @@ class _QueueViewState extends State<QueueView> {
       );
     }
 
-    return ListView.separated(
+    if (!isScheduled) {
+      return ListView.separated(
+        itemCount: posts.length,
+        separatorBuilder: (_, _) => const SizedBox(height: 12),
+        itemBuilder: (context, index) =>
+            _buildPostCard(posts[index], isDark, isScheduled: false),
+      );
+    }
+
+    // Failed posts sit above the queue and don't drag: they hold no slot.
+    return ReorderableListView.builder(
+      header: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          for (final post in failed)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: _buildPostCard(post, isDark, isScheduled: true),
+            ),
+        ],
+      ),
       itemCount: posts.length,
-      separatorBuilder: (_, _) => const SizedBox(height: 12),
-      itemBuilder: (context, index) {
-        final post = posts[index];
-        final formattedDate = DateFormat('EEE, MMM d • h:mm a')
-            .format(post.scheduledTime);
+      onReorderItem: (from, to) {
+        if (from == to) return;
+        final provider = context.read<PostsProvider>();
+        provider.reorderQueue(from, to);
+        _offerUndo(provider, 'Queue order changed');
+      },
+      itemBuilder: (context, index) => Padding(
+        key: ValueKey(posts[index].id),
+        padding: const EdgeInsets.only(bottom: 12),
+        child: _buildPostCard(posts[index], isDark, isScheduled: true),
+      ),
+    );
+  }
 
-        return AppleGlassCard(
-          padding: const EdgeInsets.all(16),
-          // Details row on top, actions span full width below.
-          // Side-by-side actions squeezed the middle column to ~80pt at
-          // 402pt and overflowed; stacked actions have no width pressure.
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
+  Widget _buildPostCard(
+    PostModel post,
+    bool isDark, {
+    required bool isScheduled,
+  }) {
+    final formattedDate = DateFormat('EEE, MMM d • h:mm a')
+        .format(post.scheduledTime);
+    final expiredChannels = post.expiredChannels(_expired);
+
+    return AppleGlassCard(
+      padding: const EdgeInsets.all(16),
+      // Details row on top, actions span full width below.
+      // Side-by-side actions squeezed the middle column to ~80pt at
+      // 402pt and overflowed; stacked actions have no width pressure.
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Media Preview Box (76pt keeps the details roomy).
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(12),
-                    child: SizedBox(
-                      width: 76,
-                      height: 76,
-                      child: Stack(
-                        children: [
-                          UniversalMediaPlayer(
-                            mediaUrl: post.mediaUrl,
-                            isVideo: post.isVideo,
-                            autoPlay: false,
-                            showControls: false,
-                            thumbnail: true,
-                          ),
-                          if (post.isVideo)
-                            Positioned(
-                              bottom: 6,
-                              right: 6,
-                              child: Container(
-                                padding: const EdgeInsets.all(4),
-                                decoration: BoxDecoration(
-                                  color: Colors.black.withValues(alpha: 0.7),
-                                  borderRadius: BorderRadius.circular(6),
-                                ),
-                                child: const Icon(
-                                  CupertinoIcons.videocam_fill,
-                                  size: 12,
-                                  color: Colors.white,
-                                ),
-                              ),
-                            ),
-                        ],
+              // Media Preview Box (76pt keeps the details roomy).
+              ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: SizedBox(
+                  width: 76,
+                  height: 76,
+                  child: Stack(
+                    children: [
+                      UniversalMediaPlayer(
+                        mediaUrl: post.mediaUrl,
+                        isVideo: post.isVideo,
+                        autoPlay: false,
+                        showControls: false,
+                        thumbnail: true,
                       ),
-                    ),
-                  ),
-
-                  const SizedBox(width: 16),
-
-                  // Post Details
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Platform + status chips (short, fixed-size — never overflow).
-                        // Schedule line below is width-bounded with ellipsis.
-                        Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 3,
-                              ),
-                              decoration: BoxDecoration(
-                                color: post.platformInfo.color.withValues(
-                                  alpha: 0.15,
-                                ),
-                                borderRadius: BorderRadius.circular(6),
-                              ),
-                              child: Text(
-                                post.platformInfo.name,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(
-                                  color: post.platformInfo.color,
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
+                      if (post.isVideo)
+                        Positioned(
+                          bottom: 6,
+                          right: 6,
+                          child: Container(
+                            padding: const EdgeInsets.all(4),
+                            decoration: BoxDecoration(
+                              color: Colors.black.withValues(alpha: 0.7),
+                              borderRadius: BorderRadius.circular(6),
                             ),
-                            if (post.status == 'published') ...[
-                              const SizedBox(width: 6),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 8,
-                                  vertical: 3,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: BackdropTheme.statusOnline.withValues(
-                                    alpha: 0.15,
-                                  ),
-                                  borderRadius: BorderRadius.circular(6),
-                                ),
-                                child: const Text(
-                                  'SENT',
-                                  style: TextStyle(
-                                    color: BackdropTheme.statusOnline,
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                ),
-                              ),
-                            ],
-                            if (post.isOverdue) ...[
-                              const SizedBox(width: 6),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 8,
-                                  vertical: 3,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: BackdropTheme.statusWarning.withValues(
-                                    alpha: 0.15,
-                                  ),
-                                  borderRadius: BorderRadius.circular(6),
-                                ),
-                                child: const Text(
-                                  'OVERDUE',
-                                  style: TextStyle(
-                                    color: BackdropTheme.statusWarning,
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ],
-                        ),
-                        const SizedBox(height: 6),
-                        // Schedule line: bounded by the Expanded column, so the
-                        // date ellipsizes instead of overflowing narrow cards.
-                        Row(
-                          children: [
-                            Icon(
-                              CupertinoIcons.clock,
-                              size: 11,
-                              color: isDark ? Colors.white60 : Colors.black54,
+                            child: const Icon(
+                              CupertinoIcons.videocam_fill,
+                              size: 12,
+                              color: Colors.white,
                             ),
-                            const SizedBox(width: 4),
-                            Expanded(
-                              child: Text(
-                                formattedDate,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w500,
-                                  color: isDark
-                                      ? Colors.white70
-                                      : Colors.black87,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-
-                        const SizedBox(height: 8),
-
-                        // Caption
-                        Text(
-                          post.caption,
-                          style: TextStyle(
-                            fontSize: 13.5,
-                            fontWeight: FontWeight.w500,
-                            color: isDark ? Colors.white : Colors.black87,
-                            height: 1.35,
                           ),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
                         ),
+                    ],
+                  ),
+                ),
+              ),
 
-                        const SizedBox(height: 8),
+              const SizedBox(width: 16),
 
-                        // Media File Info (clamped — the unclamped
-                        // filename was the 61px right-overflow).
-                        Text(
-                          'Asset: ${post.mediaUrl.split('/').last}',
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            fontSize: 11,
-                            color: isDark ? Colors.white38 : Colors.black38,
+              // Post Details
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Platform + status chips (short, fixed-size — never overflow).
+                    // Schedule line below is width-bounded with ellipsis.
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 3,
+                          ),
+                          decoration: BoxDecoration(
+                            color: post.platformInfo.color.withValues(
+                              alpha: 0.15,
+                            ),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text(
+                            post.platformInfo.name,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              color: post.platformInfo.color,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                        if (post.status == 'published') ...[
+                          const SizedBox(width: 6),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 3,
+                            ),
+                            decoration: BoxDecoration(
+                              color: BackdropTheme.statusOnline.withValues(
+                                alpha: 0.15,
+                              ),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: const Text(
+                              'SENT',
+                              style: TextStyle(
+                                color: BackdropTheme.statusOnline,
+                                fontSize: 10,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ),
+                        ],
+                        if (post.isOverdue) ...[
+                          const SizedBox(width: 6),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 3,
+                            ),
+                            decoration: BoxDecoration(
+                              color: BackdropTheme.statusWarning.withValues(
+                                alpha: 0.15,
+                              ),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: const Text(
+                              'OVERDUE',
+                              style: TextStyle(
+                                color: BackdropTheme.statusWarning,
+                                fontSize: 10,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    // Schedule line: bounded by the Expanded column, so the
+                    // date ellipsizes instead of overflowing narrow cards.
+                    Row(
+                      children: [
+                        Icon(
+                          CupertinoIcons.clock,
+                          size: 11,
+                          color: isDark ? Colors.white60 : Colors.black54,
+                        ),
+                        const SizedBox(width: 4),
+                        Expanded(
+                          child: Text(
+                            formattedDate,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w500,
+                              color: isDark ? Colors.white70 : Colors.black87,
+                            ),
                           ),
                         ),
                       ],
                     ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
 
-              // Action Buttons (dispatch states — Sending
-              // spinner, Failed → Retry — fronting the parked daemon).
-              // Actions span full width below the details: side-by-side
-              // buttons squeezed the middle column at 402pt.
-              Row(
-                children: [
-                  if (isScheduled)
-                    Expanded(child: _dispatchButton(post, isDark)),
-                  if (!isScheduled) const Spacer(),
-                  CupertinoButton(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 6,
+                    const SizedBox(height: 8),
+
+                    // Caption
+                    Text(
+                      post.caption,
+                      style: TextStyle(
+                        fontSize: 13.5,
+                        fontWeight: FontWeight.w500,
+                        color: isDark ? Colors.white : Colors.black87,
+                        height: 1.35,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    onPressed: () {
-                      context.read<PostsProvider>().deletePost(post.id);
-                    },
-                    child: Text(
-                      'Remove',
+
+                    const SizedBox(height: 8),
+
+                    // Media File Info (clamped — the unclamped
+                    // filename was the 61px right-overflow).
+                    Text(
+                      'Asset: ${post.mediaUrl.split('/').last}',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                         fontSize: 11,
-                        color: Colors.red.withValues(alpha: 0.9),
-                        fontWeight: FontWeight.w500,
+                        color: isDark ? Colors.white38 : Colors.black38,
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ],
           ),
-        );
-      },
+          if (post.status == 'failed') ...[
+            const SizedBox(height: 8),
+            Text(
+              'Not sent: ${post.failureReason ?? 'no reason recorded'}',
+              style: const TextStyle(fontSize: 12, color: Colors.red),
+            ),
+          ],
+          if (post.recurrence != recurrenceNone) ...[
+            const SizedBox(height: 8),
+            Text(
+              post.recurrence == recurrenceDaily
+                  ? 'Repeats daily'
+                  : 'Repeats weekly',
+              style: TextStyle(
+                fontSize: 12,
+                color: isDark ? Colors.white60 : Colors.black54,
+              ),
+            ),
+          ],
+          if (isScheduled && expiredChannels.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    '${expiredChannels.join(', ')}: connection expired, so this will not publish.',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: isDark ? Colors.white : Colors.black87,
+                    ),
+                  ),
+                ),
+                CupertinoButton(
+                  padding: const EdgeInsets.symmetric(horizontal: 10),
+                  minimumSize: const Size(44, 44),
+                  onPressed: () => context.read<AppProvider>().setNavIndex(
+                    settingsDestinationIndex,
+                  ),
+                  child: const Text(
+                    'Reconnect',
+                    style: TextStyle(fontSize: 12),
+                  ),
+                ),
+              ],
+            ),
+          ],
+          const SizedBox(height: 12),
+
+          // Action Buttons (dispatch states — Sending
+          // spinner, Failed → Retry — fronting the parked daemon).
+          // Actions span full width below the details: side-by-side
+          // buttons squeezed the middle column at 402pt.
+          Row(
+            children: [
+              if (isScheduled) Expanded(child: _dispatchButton(post, isDark)),
+              if (!isScheduled) const Spacer(),
+              CupertinoButton(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 6,
+                ),
+                onPressed: () {
+                  context.read<PostsProvider>().deletePost(post.id);
+                },
+                child: Text(
+                  'Remove',
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: Colors.red.withValues(alpha: 0.9),
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 
@@ -619,11 +743,9 @@ class _QueueViewState extends State<QueueView> {
         child: CupertinoActivityIndicator(radius: 9),
       );
     }
-    if (_failed.containsKey(post.id)) {
-      // The reason an earlier attempt failed travels with the Retry action,
-      // so "Retry" is never a blind button.
+    if (post.status == 'failed') {
       return Tooltip(
-        message: _failed[post.id]!,
+        message: post.failureReason ?? 'Publish failed',
         child: CupertinoButton(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
           color: Colors.red.withValues(alpha: 0.12),
@@ -632,11 +754,7 @@ class _QueueViewState extends State<QueueView> {
           child: const Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(
-                CupertinoIcons.refresh,
-                size: 13,
-                color: Colors.red,
-              ),
+              Icon(CupertinoIcons.refresh, size: 13, color: Colors.red),
               SizedBox(width: 6),
               Text(
                 'Retry',
@@ -695,6 +813,8 @@ class _ComposePostModalState extends State<_ComposePostModal> {
   String _mediaUrl = 'assets/samples/emms_storytelling_reel.mp4';
   bool _isVideo = true;
   DateTime _scheduledTime = DateTime.now().add(const Duration(hours: 3));
+  String _recurrence = recurrenceNone;
+  final Set<int> _days = {};
 
   @override
   void dispose() {
@@ -714,6 +834,10 @@ class _ComposePostModalState extends State<_ComposePostModal> {
       mediaUrl: _mediaUrl,
       isVideo: _isVideo,
       status: asDraft ? 'draft' : 'scheduled',
+      recurrence: _recurrence,
+      recurrenceDays: _recurrence == recurrenceWeekly
+          ? _days.toList()
+          : const [],
     );
 
     context.read<PostsProvider>().addPost(newPost);
@@ -938,6 +1062,44 @@ class _ComposePostModalState extends State<_ComposePostModal> {
                       ),
                     ],
                   ),
+
+                  const SizedBox(height: 8),
+
+                  // Repeat: with no days picked, weekly uses the scheduled day.
+                  Wrap(
+                    spacing: 8,
+                    children: [
+                      for (final (value, label) in const [
+                        (recurrenceNone, 'Once'),
+                        (recurrenceDaily, 'Daily'),
+                        (recurrenceWeekly, 'Weekly'),
+                      ])
+                        ChoiceChip(
+                          label: Text(label),
+                          selected: _recurrence == value,
+                          onSelected: (_) =>
+                              setState(() => _recurrence = value),
+                        ),
+                    ],
+                  ),
+                  if (_recurrence == recurrenceWeekly) ...[
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 6,
+                      children: [
+                        for (var d = 1; d <= 7; d++)
+                          FilterChip(
+                            label: Text(
+                              DateFormat.E().format(DateTime(2024, 1, d)),
+                            ),
+                            selected: _days.contains(d),
+                            onSelected: (on) => setState(
+                              () => on ? _days.add(d) : _days.remove(d),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ],
 
                   const SizedBox(height: 16),
 

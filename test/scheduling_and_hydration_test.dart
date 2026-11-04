@@ -205,7 +205,7 @@ void main() {
       await tester.pump(const Duration(milliseconds: 300));
 
       expect(
-        find.textContaining('token expired. Reconnect to publish'),
+        find.textContaining('connection expired. Reconnect to publish'),
         findsOneWidget,
       );
       expect(app.selectedNavIndex, isNot(settingsDestinationIndex));

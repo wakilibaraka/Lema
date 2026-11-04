@@ -2,6 +2,10 @@ import 'platform_info.dart';
 
 enum PostStatus { scheduled, published, draft, failed }
 
+const String recurrenceNone = 'none';
+const String recurrenceDaily = 'daily';
+const String recurrenceWeekly = 'weekly';
+
 class PostModel {
   final String id;
   final String title;
@@ -19,6 +23,11 @@ class PostModel {
   final int comments;
   final DateTime? createdAt;
   final DateTime? postedAt;
+
+  /// Why the last publish attempt failed, kept so it survives a restart.
+  final String? failureReason;
+  final String recurrence; // 'none' | 'daily' | 'weekly'
+  final List<int> recurrenceDays; // DateTime weekdays, for 'weekly'
 
   PostModel({
     required this.id,
@@ -39,6 +48,9 @@ class PostModel {
     this.comments = 0,
     this.createdAt,
     this.postedAt,
+    this.failureReason,
+    this.recurrence = recurrenceNone,
+    this.recurrenceDays = const [],
   })  : title = title ?? (caption.length > 30 ? caption.substring(0, 30) : caption),
         hook = hook ?? (caption.length > 45 ? caption.substring(0, 45) : caption),
         platforms = platforms ?? [platform != null ? platform.name : 'instagram'],
@@ -142,6 +154,12 @@ class PostModel {
     return DateTime(day.year, day.month, day.day, h, min);
   }
 
+  /// Display names of this post's channels that appear in [expired].
+  List<String> expiredChannels(List<String> expired) => [
+        for (final p in platforms)
+          if (expired.contains(p)) platformsMap[p.toLowerCase()]?.name ?? p,
+      ];
+
   PostStatus get postStatus {
     switch (status.toLowerCase()) {
       case 'published':
@@ -178,6 +196,10 @@ class PostModel {
     int? comments,
     DateTime? createdAt,
     DateTime? postedAt,
+    String? failureReason,
+    bool clearFailure = false,
+    String? recurrence,
+    List<int>? recurrenceDays,
   }) {
     return PostModel(
       id: id ?? this.id,
@@ -196,6 +218,9 @@ class PostModel {
       comments: comments ?? this.comments,
       createdAt: createdAt ?? this.createdAt,
       postedAt: postedAt ?? this.postedAt,
+      failureReason: clearFailure ? null : failureReason ?? this.failureReason,
+      recurrence: recurrence ?? this.recurrence,
+      recurrenceDays: recurrenceDays ?? this.recurrenceDays,
     );
   }
 
@@ -216,6 +241,9 @@ class PostModel {
         'comments': comments,
         'createdAt': createdAt?.toIso8601String(),
         'postedAt': postedAt?.toIso8601String(),
+        'failureReason': failureReason,
+        'recurrence': recurrence,
+        'recurrenceDays': recurrenceDays,
       };
 
   factory PostModel.fromJson(Map<String, dynamic> json) {
@@ -236,6 +264,9 @@ class PostModel {
       comments: json['comments'] != null ? (json['comments'] as num).toInt() : 0,
       createdAt: json['createdAt'] != null ? DateTime.tryParse(json['createdAt'] as String) : null,
       postedAt: json['postedAt'] != null ? DateTime.tryParse(json['postedAt'] as String) : null,
+      failureReason: json['failureReason'] as String?,
+      recurrence: json['recurrence'] as String? ?? recurrenceNone,
+      recurrenceDays: List<int>.from(json['recurrenceDays'] ?? const <int>[]),
     );
   }
 }
