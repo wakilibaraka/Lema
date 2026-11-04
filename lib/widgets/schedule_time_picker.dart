@@ -2,6 +2,8 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 
+const int _minuteStep = 5;
+
 /// The one schedule picker all three scheduling surfaces use.
 /// Before this, the omnichannel composer could only choose a day (the time
 /// stayed frozen at "three hours from now"), the queue's Create Post modal
@@ -15,7 +17,13 @@ Future<DateTime?> showScheduleTimePicker({
   final now = DateTime.now();
   // Nothing can be scheduled into the past; an overdue slot opens at today.
   final minDate = DateTime(now.year, now.month, now.day);
-  final start = initial.isBefore(minDate) ? minDate : initial;
+  final from = initial.isBefore(minDate) ? minDate : initial;
+  // The wheel steps by 5 minutes and asserts on anything else, such as the
+  // default "now + 3h", so round up to the next step.
+  final start = from.minute % _minuteStep == 0
+      ? from
+      : DateTime(from.year, from.month, from.day, from.hour,
+          from.minute + _minuteStep - from.minute % _minuteStep);
   var selected = start;
 
   return showCupertinoModalPopup<DateTime>(
@@ -62,7 +70,7 @@ Future<DateTime?> showScheduleTimePicker({
                 mode: CupertinoDatePickerMode.dateAndTime,
                 initialDateTime: start,
                 minimumDate: minDate,
-                minuteInterval: 5,
+                minuteInterval: _minuteStep,
                 use24hFormat: false,
                 onDateTimeChanged: (value) => selected = value,
               ),

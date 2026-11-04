@@ -269,6 +269,36 @@ void main() {
       expect(chosen, target);
     });
 
+    testWidgets('an off-step minute rounds up instead of crashing',
+        (tester) async {
+      DateTime? chosen;
+      final slot = DateTime.now().add(const Duration(days: 7));
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Builder(
+            builder: (context) => Center(
+              child: CupertinoLikeButton(
+                onTap: () async {
+                  chosen = await showScheduleTimePicker(
+                    context: context,
+                    initial: DateTime(slot.year, slot.month, slot.day, 14, 58),
+                  );
+                },
+              ),
+            ),
+          ),
+        ),
+      );
+
+      await tester.tap(find.byType(CupertinoLikeButton));
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+
+      await tester.tap(find.text('Done'));
+      await tester.pumpAndSettle();
+      expect(chosen, DateTime(slot.year, slot.month, slot.day, 15, 0));
+    });
+
     testWidgets('an overdue slot opens at today instead of crashing',
         (tester) async {
       DateTime? chosen;
