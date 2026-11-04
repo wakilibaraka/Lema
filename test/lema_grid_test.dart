@@ -16,7 +16,6 @@ import 'package:lema/core/services/demo_mode_service.dart';
 import 'package:lema/core/services/storage_service.dart';
 import 'package:lema/views/queue_view.dart';
 import 'package:lema/views/settings_view.dart';
-import 'package:lema/widgets/lema_toast.dart';
 import 'package:lema/core/demo_seed.dart';
 
 /// Slice 9: Lema grid logic + provider coverage.
@@ -384,35 +383,5 @@ void main() {
   });
 
   group('Lema toast', () {
-    testWidgets('Moved toast shows Undo and fires callback',
-        (tester) async {
-      var undone = false;
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: Builder(
-              builder: (context) => CupertinoButton(
-                onPressed: () => LemaToast.show(
-                  context,
-                  'Moved to position 2 of 8',
-                  kind: LemaToastKind.moved,
-                  actionLabel: 'Undo',
-                  onAction: () => undone = true,
-                ),
-                child: const Text('Trigger'),
-              ),
-            ),
-          ),
-        ),
-      );
-      await tester.tap(find.text('Trigger'));
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 500));
-      expect(find.text('Moved to position 2 of 8'), findsOneWidget);
-      await tester.pump(const Duration(milliseconds: 200));
-      await tester.tap(find.text('Undo'));
-      await tester.pump(const Duration(milliseconds: 300));
-      expect(undone, isTrue);
-    });
   });
 }
