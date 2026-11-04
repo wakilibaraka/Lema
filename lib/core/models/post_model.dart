@@ -26,6 +26,7 @@ class PostModel {
 
   /// Why the last publish attempt failed, kept so it survives a restart.
   final String? failureReason;
+  final String? postUrl; // Where the published post lives on the platform.
   final String recurrence; // 'none' | 'daily' | 'weekly'
   final List<int> recurrenceDays; // DateTime weekdays, for 'weekly'
 
@@ -49,6 +50,7 @@ class PostModel {
     this.createdAt,
     this.postedAt,
     this.failureReason,
+    this.postUrl,
     this.recurrence = recurrenceNone,
     this.recurrenceDays = const [],
   })  : title = title ?? (caption.length > 30 ? caption.substring(0, 30) : caption),
@@ -199,6 +201,7 @@ class PostModel {
     DateTime? createdAt,
     DateTime? postedAt,
     String? failureReason,
+    String? postUrl,
     bool clearFailure = false,
     String? recurrence,
     List<int>? recurrenceDays,
@@ -221,6 +224,7 @@ class PostModel {
       createdAt: createdAt ?? this.createdAt,
       postedAt: postedAt ?? this.postedAt,
       failureReason: clearFailure ? null : failureReason ?? this.failureReason,
+      postUrl: postUrl ?? this.postUrl,
       recurrence: recurrence ?? this.recurrence,
       recurrenceDays: recurrenceDays ?? this.recurrenceDays,
     );
@@ -244,6 +248,7 @@ class PostModel {
         'createdAt': createdAt?.toIso8601String(),
         'postedAt': postedAt?.toIso8601String(),
         'failureReason': failureReason,
+        'postUrl': postUrl,
         'recurrence': recurrence,
         'recurrenceDays': recurrenceDays,
       };
@@ -267,6 +272,7 @@ class PostModel {
       createdAt: json['createdAt'] != null ? DateTime.tryParse(json['createdAt'] as String) : null,
       postedAt: json['postedAt'] != null ? DateTime.tryParse(json['postedAt'] as String) : null,
       failureReason: json['failureReason'] as String?,
+      postUrl: json['postUrl'] as String?,
       recurrence: json['recurrence'] as String? ?? recurrenceNone,
       recurrenceDays: List<int>.from(json['recurrenceDays'] ?? const <int>[]),
     );

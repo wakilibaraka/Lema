@@ -343,6 +343,12 @@ class PostsProvider extends ChangeNotifier {
           _posts[idx] = post.copyWith(recurrence: local.recurrence);
         }
         changed = true;
+      } else if (_posts[idx].status == 'published' &&
+          _posts[idx].postUrl == null &&
+          post.postUrl != null) {
+        // A Share Now's link arrives on the next sync.
+        _posts[idx] = _posts[idx].copyWith(postUrl: post.postUrl);
+        changed = true;
       }
     }
     return changed;

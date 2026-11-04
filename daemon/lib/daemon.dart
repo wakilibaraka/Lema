@@ -6,10 +6,11 @@ import 'dart:math';
 import 'accounts.dart';
 import 'recurrence_rule.dart';
 
-/// Sends one post. Throws when the platform refused it.
-typedef Adapter = Future<void> Function(Map<String, dynamic> post);
+/// Sends one post. Throws when the platform refused it. A returned map, such
+/// as the post's link, is saved on the post.
+typedef Adapter = Future<Object?> Function(Map<String, dynamic> post);
 
-/// Proves the flow without touching a platform. Replaced from P4.
+/// Proves the flow without touching a platform. Tests only.
 Future<void> fakeAdapter(Map<String, dynamic> post) async {
   stdout.writeln('FAKE publish ${post['id']}: nothing left this machine');
 }
@@ -135,7 +136,8 @@ class Daemon {
 
   Future<bool> _send(Map<String, dynamic> p) async {
     try {
-      await adapter(p);
+      final result = await adapter(p);
+      if (result is Map<String, dynamic>) p.addAll(result);
       p['status'] = 'published';
       p['postedAt'] = clock().toIso8601String();
       p['failureReason'] = null;
@@ -271,7 +273,7 @@ class Daemon {
       }
       final route = '${req.method} ${parts.length > 1 ? parts.sublist(1).join('/') : ''}';
       if (route == 'GET settings') {
-        return _json(res, 200, {'adapter': 'fake'});
+        return _json(res, 200, {'adapter': 'live'});
       } else if (route == 'GET accounts') {
         return _json(res, 200, accounts.statuses());
       } else if (req.method == 'POST' &&
@@ -299,8 +301,9 @@ class Daemon {
           parts.length == 4 &&
           parts[1] == 'posts' &&
           parts[3] == 'publish') {
-        await publishNow(parts[2], await _body(req));
-        return _json(res, 200, {'status': 'published'});
+        final id = parts[2];
+        await publishNow(id, await _body(req));
+        return _json(res, 200, {'status': 'published', 'postUrl': _posts[id]?['postUrl']});
       } else if (req.method == 'GET' && parts.length == 3 && parts[1] == 'analytics') {
         // No platform numbers exist yet. The app shows its stored counts.
         return _json(res, 404, {'error': 'Analytics unavailable'});

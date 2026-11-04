@@ -288,7 +288,7 @@ class _SettingsViewState extends State<SettingsView> {
                               : isExpired
                               ? 'Connection expired. Reconnect to publish.'
                               : isExpiringSoon
-                              ? 'Connection expires within a day'
+                              ? 'Connection expires within a week. Reconnect to keep publishing.'
                               : 'Not connected',
                           style: TextStyle(
                             fontSize: 11,
@@ -473,7 +473,7 @@ class _SettingsViewState extends State<SettingsView> {
                               const SizedBox(height: 2),
                               Text(
                                 app.isDaemonOnline
-                                    ? 'Connected to the test publisher: scheduled posts fire while this Mac is awake and online, but nothing reaches a platform yet.'
+                                    ? 'Connected. Scheduled posts go out while this Mac is awake and online. LinkedIn is the only platform so far.'
                                     : DemoModeService.isEnabled
                                     ? 'No daemon on port 3001. Demo mode is on, so publishes are simulated locally.'
                                     : 'No daemon on port 3001. Share Now will report a failed dispatch until it is running (or turn on Demo Mode).',
@@ -549,7 +549,7 @@ class _SettingsViewState extends State<SettingsView> {
                               const SizedBox(height: 2),
                               Text(
                                 app.isDaemonOnline
-                                    ? 'The test publisher answered. Posts fire only while this Mac is awake and online, and nothing reaches a platform yet.'
+                                    ? 'The daemon answered. Posts go out only while this Mac is awake and online, and only to LinkedIn so far.'
                                     : 'No daemon answered on port 3001. Start it, or switch Demo Mode on to rehearse a publish locally.',
                                 maxLines: 3,
                                 overflow: TextOverflow.ellipsis,

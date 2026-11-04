@@ -82,6 +82,18 @@ Future<(int, Map<String, dynamic>)> httpTokenPost(
   }
 }
 
+/// Public details of the apps Lema knows how to connect. LinkedIn's standard
+/// flow is a client secret with no PKCE and no refresh tokens: 60 days, then
+/// the user signs in again.
+const knownProviders = <String, Map<String, dynamic>>{
+  'linkedin': {
+    'authUrl': 'https://www.linkedin.com/oauth/v2/authorization',
+    'tokenUrl': 'https://www.linkedin.com/oauth/v2/accessToken',
+    'scopes': 'openid profile w_member_social',
+    'pkce': false,
+  },
+};
+
 const _refreshBefore = Duration(hours: 1);
 const _loginWindow = Duration(minutes: 10);
 
@@ -149,7 +161,7 @@ class Accounts {
     if (left <= Duration.zero) return 'expired';
     // A short-lived token that refreshes itself is nothing to warn about.
     if (a['canRefresh'] == true) return 'connected';
-    return left <= const Duration(hours: 24) ? 'expiringSoon' : 'connected';
+    return left <= const Duration(days: 7) ? 'expiringSoon' : 'connected';
   }
 
   /// The URL to open in the system browser.
@@ -159,6 +171,8 @@ class Accounts {
       throw AccountError(409, 'Lema has no developer app for $platform yet');
     }
     _logins.removeWhere((_, l) => clock().difference(l.at) > _loginWindow);
+    redirect = '${p['redirect'] ?? redirect}';
+    final pkce = p['pkce'] != false;
     final state = _random();
     final verifier = _random();
     _logins[state] = _Login(platform, verifier, redirect, clock());
@@ -172,8 +186,8 @@ class Accounts {
       'redirect_uri': redirect,
       'scope': '${p['scopes'] ?? ''}',
       'state': state,
-      'code_challenge': challenge,
-      'code_challenge_method': 'S256',
+      if (pkce) 'code_challenge': challenge,
+      if (pkce) 'code_challenge_method': 'S256',
     }).toString();
   }
 
@@ -192,7 +206,7 @@ class Accounts {
       'code': code,
       'redirect_uri': login.redirect,
       'client_id': '${p['clientId']}',
-      'code_verifier': login.verifier,
+      if (p['pkce'] != false) 'code_verifier': login.verifier,
     };
     final secret = await secrets.read('client-secret:${login.platform}');
     if (secret != null) form['client_secret'] = secret;
@@ -271,6 +285,12 @@ class Accounts {
         // Same.
       }
     }
+  }
+
+  /// The platform rejected the token.
+  void markExpired(String platform) {
+    final a = _accounts[platform];
+    if (a != null) _reconnect(a);
   }
 
   void _reconnect(Map<String, dynamic> a) {
