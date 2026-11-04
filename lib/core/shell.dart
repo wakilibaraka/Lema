@@ -23,10 +23,13 @@ class LemaShell extends StatelessWidget {
   static const List<Widget> _views = [
     AnalyticsView(),
     QueueCalendarView(),
-    ComposerView(),
+    SizedBox.shrink(), // The composer is kept alive below.
     MediaVaultView(),
     SettingsView(),
   ];
+
+  // Keeps an unsaved post across tab switches and rotation between shell shapes.
+  static final GlobalKey _composerKey = GlobalKey();
 
   @override
   Widget build(BuildContext context) {
@@ -34,7 +37,11 @@ class LemaShell extends StatelessWidget {
     final width = MediaQuery.sizeOf(context).width;
     // An index saved by an older build can point past the five destinations.
     final index = app.selectedNavIndex.clamp(0, _views.length - 1);
-    final page = _views[index];
+    final page = IndexedStack(
+      index: index == composerDestinationIndex ? 1 : 0,
+      sizing: StackFit.expand,
+      children: [_views[index], ComposerView(key: _composerKey)],
+    );
 
     if (width >= kRailBreakpoint) {
       final collapsed = width < kSidebarBreakpoint || app.sidebarCollapsed;

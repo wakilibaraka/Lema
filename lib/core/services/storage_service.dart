@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../models/media_asset.dart';
 import '../models/profile_model.dart';
 import '../models/post_model.dart';
 import '../demo_seed.dart';
@@ -10,6 +11,7 @@ class StorageService {
   static const String _keyProfiles = 'lema_profiles';
   static const String _keyActiveProfileId = 'lema_active_profile_id';
   static const String _keyPosts = 'lema_posts';
+  static const String _keyAssets = 'lema_media_assets';
   static const String _keyThemeMode = 'lema_theme_mode';
   static const String _keyAutoplay = 'lema_video_autoplay';
   static const String _keySidebarCollapsed = 'lema_sidebar_collapsed';
@@ -109,6 +111,23 @@ class StorageService {
     await _prefs.remove(_keyPosts);
   }
 
+
+  // --- Media vault ---
+  /// Null when nothing usable is stored, so the caller can use the seed.
+  List<MediaAsset>? loadAssets() {
+    final raw = _prefs.getString(_keyAssets);
+    if (raw == null || raw.isEmpty) return null;
+    try {
+      final List decoded = jsonDecode(raw);
+      return decoded.map((e) => MediaAsset.fromJson(e)).toList();
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<void> saveAssets(List<MediaAsset> assets) async {
+    await _prefs.setString(_keyAssets, jsonEncode(assets.map((a) => a.toJson()).toList()));
+  }
 
   // --- Theme Mode ---
   bool isDarkMode() {

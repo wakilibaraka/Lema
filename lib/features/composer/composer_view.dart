@@ -46,9 +46,30 @@ class _ComposerViewState extends State<ComposerView> {
   String _recurrence = recurrenceNone;
   final Set<int> _days = {};
   bool _previewing = false;
+  late final AppProvider _app;
+
+  @override
+  void initState() {
+    super.initState();
+    _app = context.read<AppProvider>();
+    // The sheet is a separate draft; vault picks go to the composer tab.
+    if (!widget.inSheet) _app.addListener(_attachFromVault);
+  }
+
+  void _attachFromVault() {
+    final asset = _app.takeAssetForComposer();
+    if (asset == null) return;
+    setState(() {
+      _mediaUrl = asset.url;
+      _mediaName = asset.name;
+      _isVideo = asset.isVideo;
+      _mediaSize = null;
+    });
+  }
 
   @override
   void dispose() {
+    if (!widget.inSheet) _app.removeListener(_attachFromVault);
     _caption.dispose();
     for (final c in _overrides.values) {
       c.dispose();

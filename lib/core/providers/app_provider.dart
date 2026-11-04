@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../destinations.dart';
+import '../models/media_asset.dart';
 import '../services/api_service.dart';
 import '../services/demo_mode_service.dart';
 import '../services/storage_service.dart';
@@ -52,9 +54,27 @@ class AppProvider extends ChangeNotifier {
 
   void setNavIndex(int index) {
     if (_selectedNavIndex != index) {
+      // The composer stays alive offstage; its field must not hold the keyboard.
+      FocusManager.instance.primaryFocus?.unfocus();
       _selectedNavIndex = index;
       notifyListeners();
     }
+  }
+
+  MediaAsset? _assetForComposer;
+
+  /// Opens the composer with [asset] attached.
+  void useInPost(MediaAsset asset) {
+    _assetForComposer = asset;
+    _selectedNavIndex = composerDestinationIndex;
+    notifyListeners();
+  }
+
+  /// Hands over the asset from [useInPost], once.
+  MediaAsset? takeAssetForComposer() {
+    final asset = _assetForComposer;
+    _assetForComposer = null;
+    return asset;
   }
 
   void setActiveTab(String tab) {

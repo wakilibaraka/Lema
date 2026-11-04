@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import 'core/providers/app_provider.dart';
 import 'core/providers/auth_provider.dart';
+import 'core/providers/media_provider.dart';
 import 'core/providers/posts_provider.dart';
 import 'core/providers/profile_provider.dart';
 import 'core/services/demo_mode_service.dart';
@@ -27,6 +28,7 @@ class LemaApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => ProfileProvider()),
         ChangeNotifierProvider(create: (_) => AuthProvider()),
         ChangeNotifierProvider(create: (_) => PostsProvider()),
+        ChangeNotifierProvider(create: (_) => MediaProvider()),
       ],
       child: Consumer<AppProvider>(
         builder: (context, app, child) => MaterialApp(

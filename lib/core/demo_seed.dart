@@ -1,5 +1,6 @@
 // Demo seed data: the sample creator workspace shown on first launch.
 // Kept in one place so it can be swapped or dropped without touching models.
+import 'models/media_asset.dart';
 import 'models/post_model.dart';
 import 'models/profile_model.dart';
 import 'models/queue_slot_model.dart';
@@ -264,4 +265,13 @@ const List<QueueSlotModel> defaultQueueSlots = [
   QueueSlotModel(id: 'slot-2', time: '01:15 PM', label: 'Lunch Break'),
   QueueSlotModel(id: 'slot-3', time: '06:30 PM', label: 'Evening Prime'),
   QueueSlotModel(id: 'slot-4', time: '09:45 PM', label: 'Late Night Scroll'),
+];
+
+/// The bundled samples, so the vault opens with real files.
+final List<MediaAsset> defaultSeedAssets = [
+  MediaAsset(id: 'asset_reel', url: 'assets/samples/emms_storytelling_reel.mp4', name: 'Storytelling for business', kind: kindVideo, tags: const ['reel', 'storytelling'], addedAt: DateTime(2026, 10, 5)),
+  MediaAsset(id: 'asset_features', url: 'assets/samples/emms_story_features.mp4', name: 'Feelings vs product', kind: kindVideo, tags: const ['reel', 'sales'], addedAt: DateTime(2026, 10, 4)),
+  MediaAsset(id: 'asset_masterclass', url: 'assets/samples/emms_post1_story30mins.png', name: 'Story in 30 minutes', kind: kindGraphic, tags: const ['masterclass', 'storytelling'], addedAt: DateTime(2026, 10, 3)),
+  MediaAsset(id: 'asset_understand', url: 'assets/samples/emms_post2_understand.png', name: 'Understand before selling', kind: kindGraphic, tags: const ['carousel', 'sales'], addedAt: DateTime(2026, 10, 2)),
+  MediaAsset(id: 'asset_sentence', url: 'assets/samples/emms_post3_onesentence.png', name: 'One sentence transformation', kind: kindGraphic, tags: const ['carousel'], addedAt: DateTime(2026, 10, 1)),
 ];
