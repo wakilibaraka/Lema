@@ -2,9 +2,9 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../features/analytics/analytics_view.dart';
 import '../features/media_vault/media_vault_view.dart';
 import '../features/queue_calendar/queue_calendar_view.dart';
-import '../views/analytics_view.dart';
 import '../views/composer_view.dart';
 import '../views/settings_view.dart';
 import 'destinations.dart';

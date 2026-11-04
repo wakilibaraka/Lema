@@ -4,6 +4,52 @@ import 'models/post_model.dart';
 import 'models/profile_model.dart';
 import 'models/queue_slot_model.dart';
 
+/// Sixty days of published posts, so Analytics has a current and a previous
+/// 30-day period to compare. Fixed patterns keep the charts stable per install.
+List<PostModel> _publishedHistory() {
+  const count = 36;
+  const titles = [
+    'Facts tell, stories sell',
+    'Three hooks that hold attention',
+    'Behind the shoot in Nairobi',
+    'What your client really buys',
+    'The 30-minute reel framework',
+    'One sentence that sells',
+  ];
+  const media = [
+    'assets/samples/emms_storytelling_reel.mp4',
+    'assets/samples/emms_post1_story30mins.png',
+    'assets/samples/emms_story_features.mp4',
+    'assets/samples/emms_post2_understand.png',
+    'assets/samples/emms_post3_onesentence.png',
+  ];
+  const platforms = ['instagram', 'tiktok', 'instagram', 'linkedin', 'youtube'];
+  const hours = [9, 18, 13, 20, 7, 18];
+  const wave = [0.8, 1.3, 0.9, 1.6, 1.0, 0.7, 1.2];
+  const rates = [0.05, 0.08, 0.04, 0.07, 0.03, 0.09];
+  final now = DateTime.now();
+  return List.generate(count, (i) {
+    final at = DateTime(now.year, now.month,
+        now.day - 1 - (count - 1 - i) * 59 ~/ count, hours[i % hours.length]);
+    final views =
+        ((4000 + i * 180) * wave[i % wave.length]).round();
+    final engagements = (views * rates[at.hour % rates.length]).round();
+    return PostModel(
+      id: 'history-$i',
+      title: titles[i % titles.length],
+      caption: titles[i % titles.length],
+      platforms: [platforms[i % platforms.length]],
+      mediaUrl: media[i % media.length],
+      scheduledTime: at,
+      postedAt: at,
+      status: 'published',
+      views: '$views',
+      likes: '${engagements * 9 ~/ 10}',
+      comments: engagements ~/ 10,
+    );
+  });
+}
+
 /// Seeded posts directly extracted from Emms Digital Media dataset
 final List<PostModel> defaultSeedPosts = [
   PostModel(
@@ -127,6 +173,7 @@ final List<PostModel> defaultSeedPosts = [
     likes: '0',
     comments: 0,
   ),
+  ..._publishedHistory(),
 ];
 
 /// Pre-seeded Default Brand Profiles

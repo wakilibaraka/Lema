@@ -126,15 +126,14 @@ class AnalyticsService {
   }
 
   Future<AnalyticsResult> fetchAggregatedAnalytics(List<PostModel> posts) async {
-    final List<PostAnalytics> perPost = [];
+    // Parallel: a hung daemon would otherwise cost its timeout once per post.
+    final perPost = await Future.wait(posts.map(fetchPostAnalytics));
     int totalLikes = 0;
     int totalViews = 0;
     int totalComments = 0;
     int totalShares = 0;
 
-    for (final post in posts) {
-      final analytics = await fetchPostAnalytics(post);
-      perPost.add(analytics);
+    for (final analytics in perPost) {
       totalLikes += analytics.likes;
       totalViews += analytics.views;
       totalComments += analytics.comments;

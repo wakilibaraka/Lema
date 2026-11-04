@@ -64,7 +64,8 @@ void main() {
   group('Seeds & filters', () {
     test('default seeds load with scheduled/draft counts', () async {
       final provider = await _freshProvider();
-      expect(provider.posts.length, 8);
+      expect(provider.posts.length, 44);
+      expect(provider.publishedPosts.length, 36);
       expect(provider.scheduledPosts.length, 5);
       expect(
           provider.posts.where((p) => p.status == 'draft').length, 3);
@@ -81,7 +82,7 @@ void main() {
 
     test('filterPostsByChannel narrows correctly', () async {
       final provider = await _freshProvider();
-      expect(provider.filterPostsByChannel('all').length, 8);
+      expect(provider.filterPostsByChannel('all').length, 44);
       final tiktok = provider.filterPostsByChannel('tiktok');
       expect(tiktok, isNotEmpty);
       expect(tiktok.every((p) => p.platforms.contains('tiktok')), isTrue);
@@ -94,7 +95,7 @@ void main() {
       provider.deletePost('x');
       // A brand-new provider over empty storage must see pristine seeds.
       final fresh = await _freshProvider();
-      expect(fresh.posts.length, 8);
+      expect(fresh.posts.length, 44);
       expect(fresh.posts.where((p) => p.status == 'draft').length, 3);
     });
   });
@@ -130,7 +131,7 @@ void main() {
     test('out-of-range reorder is a no-op', () async {
       final provider = await _freshProvider(
           {'lema_posts': _postsJson(publishedFour())});
-      provider.reorderPosts(0, 9, 'all', 'published', 'all');
+      provider.reorderPosts(0, 999, 'all', 'published', 'all');
       expect(provider.posts.take(4).map((p) => p.id).toList(),
           ['a', 'b', 'c', 'd']);
       expect(provider.canUndoReorder, isFalse);
@@ -166,7 +167,7 @@ void main() {
       final oldFive = defaultSeedPosts.take(5).toList();
       final provider = await _freshProvider(
           {'lema_posts': _postsJson(oldFive)});
-      expect(provider.posts.length, 8);
+      expect(provider.posts.length, 44);
       expect(provider.posts.any((p) => p.id == 'draft-1'), isTrue);
       expect(provider.posts.any((p) => p.id == 'draft-3'), isTrue);
     });
@@ -177,10 +178,10 @@ void main() {
           await _freshProvider({'lema_posts': '[[corrupt'});
       expect(provider.loadError, isTrue);
       // Display still falls back to seeds (never a red screen).
-      expect(provider.posts.length, 8);
+      expect(provider.posts.length, 44);
       await provider.retryLoad();
       expect(provider.loadError, isFalse);
-      expect(provider.posts.length, 8);
+      expect(provider.posts.length, 44);
       expect(provider.canUndoReorder, isFalse);
     });
   });
@@ -232,7 +233,7 @@ void main() {
 
       expect(find.text('Queue'), findsOneWidget);
       expect(find.text('Scheduled (5)'), findsOneWidget);
-      expect(find.text('Published (0)'), findsOneWidget);
+      expect(find.text('Published (36)'), findsOneWidget);
       expect(find.text('Create Post'), findsOneWidget);
       // Queue item cards: badges, caption, asset, actions.
       expect(find.text('Share Now'), findsWidgets);
@@ -243,9 +244,9 @@ void main() {
     testWidgets('segment pills switch Scheduled and Published', (tester) async {
       await pumpQueue(tester);
 
-      await tester.tap(find.text('Published (0)'));
+      await tester.tap(find.text('Published (36)'));
       await tester.pump(const Duration(milliseconds: 400));
-      expect(find.text('No Published Posts Yet'), findsOneWidget);
+      expect(find.text('No Published Posts Yet'), findsNothing);
 
       await tester.tap(find.text('Scheduled (5)'));
       await tester.pump(const Duration(milliseconds: 400));
@@ -272,7 +273,7 @@ void main() {
 
       await tester.pump(const Duration(seconds: 2));
       expect(provider.scheduledPosts.length, 4);
-      expect(provider.publishedPosts.length, 1);
+      expect(provider.publishedPosts.length, 37);
       // Demo mode reports its own label now and must never claim a daemon
       // send (review finding 1) — the old 'Dispatched to … via daemon'
       // text was the bug, not the contract.
@@ -295,7 +296,7 @@ void main() {
 
       // Nothing was published, so nothing may claim it was.
       expect(provider.scheduledPosts.length, 5);
-      expect(provider.publishedPosts, isEmpty);
+      expect(provider.publishedPosts.length, 36);
       expect(find.textContaining('Dispatched to'), findsNothing);
       expect(find.textContaining('Not sent'), findsOneWidget);
       expect(find.text('Retry'), findsOneWidget);

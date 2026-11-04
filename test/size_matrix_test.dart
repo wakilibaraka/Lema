@@ -8,6 +8,7 @@ import 'package:lema/core/providers/auth_provider.dart';
 import 'package:lema/core/providers/posts_provider.dart';
 import 'package:lema/core/providers/profile_provider.dart';
 import 'package:lema/core/services/storage_service.dart';
+import 'package:lema/features/analytics/analytics_view.dart';
 import 'package:lema/theme/backdrop_theme.dart';
 import 'package:lema/views/calendar_view.dart';
 import 'package:lema/views/queue_view.dart';
@@ -93,6 +94,10 @@ void main() {
   tearDown(() {});
 
   group('Size matrix (Slice 23)', () {
+    testWidgets('Analytics survives all ratios', (tester) async {
+      await pumpMatrix(tester, const AnalyticsView(), 'Analytics');
+    });
+
     testWidgets('Queue survives all ratios', (tester) async {
       await pumpMatrix(tester, const QueueView(), 'Queue');
     });

@@ -136,7 +136,7 @@ void main() {
         provider.posts.firstWhere((p) => p.id == 'post-1').status,
         'scheduled',
       );
-      expect(provider.publishedPosts, isEmpty);
+      expect(provider.publishedPosts.where((p) => p.id == 'post-1'), isEmpty);
     });
 
     test('a refusal is reported as rejected and not published', () async {
@@ -166,7 +166,7 @@ void main() {
       final post = provider.posts.firstWhere((p) => p.id == 'post-1');
       expect(post.status, 'published');
       expect(post.postedAt, isNotNull);
-      expect(provider.publishedPosts.length, 1);
+      expect(provider.publishedPosts.where((p) => p.id == 'post-1').length, 1);
     });
 
     test('an unknown post id is reported, not silently ignored', () async {
