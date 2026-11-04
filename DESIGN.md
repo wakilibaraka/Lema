@@ -27,6 +27,8 @@ Two moments get visual weight: the reach trend on Analytics and the week timelin
 
 ## Rules
 - Separate with whitespace, then a surface step, then a hairline, and rarely a shadow. No cards inside cards.
+- Page edges 24 on desktop, 16 on phones. A screen gets a title only when nothing else names it: Analytics and Settings do; Queue has its tab; Composer and Vault open on their own controls.
+- The week grid's fixed-height hour cells keep 1 and 2pt gaps; nothing else goes off the grid.
 - Blur only on the mobile bottom bar. No gradients.
 - Icons: one outline set at 18pt in a text color, never in a tinted tile, never emoji.
 - Copy: sentence case, verb + object buttons, and every change says what it compares to.

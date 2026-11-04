@@ -1,4 +1,5 @@
 import 'package:flutter/cupertino.dart';
+import '../core/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
@@ -6,7 +7,6 @@ import '../core/services/api_service.dart';
 
 import '../core/destinations.dart';
 import '../core/models/post_model.dart';
-import '../core/models/queue_slot_model.dart';
 import '../core/providers/app_provider.dart';
 import '../core/providers/auth_provider.dart';
 import '../core/providers/posts_provider.dart';
@@ -145,56 +145,36 @@ class _QueueViewState extends State<QueueView> {
     return Scaffold(
       backgroundColor: Colors.transparent,
       body: Padding(
-        padding: const EdgeInsets.all(24.0),
+        padding: const EdgeInsets.all(LemaTheme.s6),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Top Bar (bound the title column so the
-            // 263px subtitle can never overflow narrow mobile widths).
+            // The tab above names this screen, so the first row is its controls.
             Row(
               children: [
                 Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Queue',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          // Compact 22pt H1 fits beside Create Post
-                          // at 402pt (the 26pt title truncated to "Qu…").
-                          fontSize: 22,
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: -0.5,
-                          color: isDark ? Colors.white : Colors.black,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'Buffer / Crowdfire cadence with auto-posting slots & instantaneous dispatch.',
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: isDark ? Colors.white60 : Colors.black54,
-                        ),
-                      ),
-                    ],
+                  child: Text(
+                    'Daily slots: ${queueSlots.map((slot) => '${slot.name} ${slot.formattedTime}').join(' · ')}',
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: isDark ? Colors.white60 : Colors.black54,
+                    ),
                   ),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: LemaTheme.s3),
                 CupertinoButton.filled(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 10,
+                    horizontal: LemaTheme.s4,
+                    vertical: LemaTheme.s3,
                   ),
                   borderRadius: BorderRadius.circular(12),
                   onPressed: () => context.read<AppProvider>().setNavIndex(composerDestinationIndex),
                   child: const Row(
                     children: [
                       Icon(CupertinoIcons.plus_circle_fill, size: 16),
-                      SizedBox(width: 8),
+                      SizedBox(width: LemaTheme.s2),
                       Text(
                         'Create Post',
                         style: TextStyle(
@@ -208,23 +188,7 @@ class _QueueViewState extends State<QueueView> {
               ],
             ),
 
-            const SizedBox(height: 20),
-
-            // Queue Slots Overview Strip
-            SizedBox(
-              height: 78,
-              child: ListView.separated(
-                scrollDirection: Axis.horizontal,
-                itemCount: queueSlots.length,
-                separatorBuilder: (_, _) => const SizedBox(width: 12),
-                itemBuilder: (context, index) {
-                  final slot = queueSlots[index];
-                  return _buildSlotCard(slot, isDark);
-                },
-              ),
-            ),
-
-            const SizedBox(height: 20),
+            const SizedBox(height: LemaTheme.s4),
 
             // Segment pills (Home language): the sliding control's
             // fixed labels clipped at 402pt ("Published History (0…"), so the
@@ -248,7 +212,7 @@ class _QueueViewState extends State<QueueView> {
                       onTap: () => setState(() => _selectedSegment = 0),
                       isDark: isDark,
                     ),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: LemaTheme.s2),
                     LemaPill(
                       label: 'Published (${publishedPosts.length})',
                       selected: _selectedSegment == 1,
@@ -256,7 +220,7 @@ class _QueueViewState extends State<QueueView> {
                       isDark: isDark,
                     ),
                     if (_selectedSegment == 0 && scheduledPosts.isNotEmpty) ...[
-                      const SizedBox(width: 12),
+                      const SizedBox(width: LemaTheme.s3),
                       Center(
                         child: Text(
                           _nextSlotLabel(scheduledPosts, overdue.length),
@@ -266,7 +230,7 @@ class _QueueViewState extends State<QueueView> {
                           ),
                         ),
                       ),
-                      const SizedBox(width: 8),
+                      const SizedBox(width: LemaTheme.s2),
                     ],
                   ],
                 ),
@@ -287,11 +251,11 @@ class _QueueViewState extends State<QueueView> {
             // Overdue band: the daemon can be off or the Mac asleep, so slots that have already passed are called out
             // here instead of silently sitting in the queue.
             if (_selectedSegment == 0 && overdue.isNotEmpty) ...[
-              const SizedBox(height: 12),
+              const SizedBox(height: LemaTheme.s3),
               _buildOverdueBand(isDark, overdue.length),
             ],
 
-            const SizedBox(height: 16),
+            const SizedBox(height: LemaTheme.s4),
 
             // Content List
             Expanded(
@@ -314,7 +278,7 @@ class _QueueViewState extends State<QueueView> {
   /// text label as well as colour, per the design plan's status rule.
   Widget _buildOverdueBand(bool isDark, int count) {
     return AppleGlassCard(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: LemaTheme.s4, vertical: LemaTheme.s3),
       borderRadius: 14,
       child: Row(
         children: [
@@ -323,7 +287,7 @@ class _QueueViewState extends State<QueueView> {
             size: 18,
             color: BackdropTheme.statusWarning,
           ),
-          const SizedBox(width: 10),
+          const SizedBox(width: LemaTheme.s3),
           Expanded(
             child: Text(
               count == 1
@@ -335,55 +299,6 @@ class _QueueViewState extends State<QueueView> {
                 color: isDark ? Colors.white : Colors.black87,
               ),
             ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSlotCard(QueueSlotModel slot, bool isDark) {
-    return AppleGlassCard(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-      borderRadius: 14,
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: (slot.isActive ? BackdropTheme.accent : Colors.grey)
-                  .withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Icon(
-              CupertinoIcons.clock_fill,
-              size: 16,
-              color: slot.isActive ? BackdropTheme.accent : Colors.grey,
-            ),
-          ),
-          const SizedBox(width: 12),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                slot.name,
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700,
-                  color: isDark ? Colors.white : Colors.black,
-                ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                slot.formattedTime,
-                style: TextStyle(
-                  fontSize: 11,
-                  color: isDark ? Colors.white60 : Colors.black54,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ],
           ),
         ],
       ),
@@ -406,7 +321,7 @@ class _QueueViewState extends State<QueueView> {
               size: 48,
               color: isDark ? Colors.white24 : Colors.black26,
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: LemaTheme.s3),
             Text(
               isScheduled
                   ? 'No Scheduled Posts in Queue'
@@ -417,7 +332,7 @@ class _QueueViewState extends State<QueueView> {
                 color: isDark ? Colors.white60 : Colors.black54,
               ),
             ),
-            const SizedBox(height: 6),
+            const SizedBox(height: LemaTheme.s2),
             Text(
               isScheduled
                   ? 'Click "Create Post" to add content to your next slot.'
@@ -435,7 +350,7 @@ class _QueueViewState extends State<QueueView> {
     if (!isScheduled) {
       return ListView.separated(
         itemCount: posts.length,
-        separatorBuilder: (_, _) => const SizedBox(height: 12),
+        separatorBuilder: (_, _) => const SizedBox(height: LemaTheme.s3),
         itemBuilder: (context, index) =>
             _buildPostCard(posts[index], isDark, isScheduled: false),
       );
@@ -448,7 +363,7 @@ class _QueueViewState extends State<QueueView> {
         children: [
           for (final post in failed)
             Padding(
-              padding: const EdgeInsets.only(bottom: 12),
+              padding: const EdgeInsets.only(bottom: LemaTheme.s3),
               child: _buildPostCard(post, isDark, isScheduled: true),
             ),
         ],
@@ -462,7 +377,7 @@ class _QueueViewState extends State<QueueView> {
       },
       itemBuilder: (context, index) => Padding(
         key: ValueKey(posts[index].id),
-        padding: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.only(bottom: LemaTheme.s3),
         child: _buildPostCard(posts[index], isDark, isScheduled: true),
       ),
     );
@@ -478,7 +393,7 @@ class _QueueViewState extends State<QueueView> {
     final expiredChannels = post.expiredChannels(_expired);
 
     return AppleGlassCard(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(LemaTheme.s4),
       // Details row on top, actions span full width below.
       // Side-by-side actions squeezed the middle column to ~80pt at
       // 402pt and overflowed; stacked actions have no width pressure.
@@ -508,7 +423,7 @@ class _QueueViewState extends State<QueueView> {
                           bottom: 6,
                           right: 6,
                           child: Container(
-                            padding: const EdgeInsets.all(4),
+                            padding: const EdgeInsets.all(LemaTheme.s1),
                             decoration: BoxDecoration(
                               color: Colors.black.withValues(alpha: 0.7),
                               borderRadius: BorderRadius.circular(6),
@@ -525,7 +440,7 @@ class _QueueViewState extends State<QueueView> {
                 ),
               ),
 
-              const SizedBox(width: 16),
+              const SizedBox(width: LemaTheme.s4),
 
               // Post Details
               Expanded(
@@ -538,7 +453,7 @@ class _QueueViewState extends State<QueueView> {
                       children: [
                         Container(
                           padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
+                            horizontal: LemaTheme.s2,
                             vertical: 3,
                           ),
                           decoration: BoxDecoration(
@@ -559,10 +474,10 @@ class _QueueViewState extends State<QueueView> {
                           ),
                         ),
                         if (post.status == 'published') ...[
-                          const SizedBox(width: 6),
+                          const SizedBox(width: LemaTheme.s2),
                           Container(
                             padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
+                              horizontal: LemaTheme.s2,
                               vertical: 3,
                             ),
                             decoration: BoxDecoration(
@@ -582,10 +497,10 @@ class _QueueViewState extends State<QueueView> {
                           ),
                         ],
                         if (post.isOverdue) ...[
-                          const SizedBox(width: 6),
+                          const SizedBox(width: LemaTheme.s2),
                           Container(
                             padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
+                              horizontal: LemaTheme.s2,
                               vertical: 3,
                             ),
                             decoration: BoxDecoration(
@@ -606,7 +521,7 @@ class _QueueViewState extends State<QueueView> {
                         ],
                       ],
                     ),
-                    const SizedBox(height: 6),
+                    const SizedBox(height: LemaTheme.s2),
                     // Schedule line: bounded by the Expanded column, so the
                     // date ellipsizes instead of overflowing narrow cards.
                     Row(
@@ -616,7 +531,7 @@ class _QueueViewState extends State<QueueView> {
                           size: 11,
                           color: isDark ? Colors.white60 : Colors.black54,
                         ),
-                        const SizedBox(width: 4),
+                        const SizedBox(width: LemaTheme.s1),
                         Expanded(
                           child: Text(
                             formattedDate,
@@ -632,7 +547,7 @@ class _QueueViewState extends State<QueueView> {
                       ],
                     ),
 
-                    const SizedBox(height: 8),
+                    const SizedBox(height: LemaTheme.s2),
 
                     // Caption
                     Text(
@@ -647,7 +562,7 @@ class _QueueViewState extends State<QueueView> {
                       overflow: TextOverflow.ellipsis,
                     ),
 
-                    const SizedBox(height: 8),
+                    const SizedBox(height: LemaTheme.s2),
 
                     // Media File Info (clamped — the unclamped
                     // filename was the 61px right-overflow).
@@ -666,21 +581,21 @@ class _QueueViewState extends State<QueueView> {
             ],
           ),
           if (post.status == 'failed') ...[
-            const SizedBox(height: 8),
+            const SizedBox(height: LemaTheme.s2),
             Text(
               'Not sent: ${post.failureReason ?? 'no reason recorded'}',
               style: const TextStyle(fontSize: 12, color: Colors.red),
             ),
           ],
           if (post.status == 'unknown') ...[
-            const SizedBox(height: 8),
+            const SizedBox(height: LemaTheme.s2),
             Text(
               'Result unknown: ${post.failureReason ?? 'check the platform'}',
               style: const TextStyle(fontSize: 12, color: Colors.red),
             ),
           ],
           if (post.recurrence != recurrenceNone) ...[
-            const SizedBox(height: 8),
+            const SizedBox(height: LemaTheme.s2),
             Text(
               post.recurrence == recurrenceDaily
                   ? 'Repeats daily'
@@ -692,7 +607,7 @@ class _QueueViewState extends State<QueueView> {
             ),
           ],
           if (isScheduled && expiredChannels.isNotEmpty) ...[
-            const SizedBox(height: 8),
+            const SizedBox(height: LemaTheme.s2),
             Row(
               children: [
                 Expanded(
@@ -706,7 +621,7 @@ class _QueueViewState extends State<QueueView> {
                   ),
                 ),
                 CupertinoButton(
-                  padding: const EdgeInsets.symmetric(horizontal: 10),
+                  padding: const EdgeInsets.symmetric(horizontal: LemaTheme.s3),
                   minimumSize: const Size(44, 44),
                   onPressed: () => context.read<AppProvider>().setNavIndex(
                     settingsDestinationIndex,
@@ -719,7 +634,7 @@ class _QueueViewState extends State<QueueView> {
               ],
             ),
           ],
-          const SizedBox(height: 12),
+          const SizedBox(height: LemaTheme.s3),
 
           // Action Buttons (dispatch states — Sending
           // spinner, Failed → Retry — fronting the parked daemon).
@@ -731,8 +646,8 @@ class _QueueViewState extends State<QueueView> {
               if (!isScheduled) const Spacer(),
               CupertinoButton(
                 padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 6,
+                  horizontal: LemaTheme.s3,
+                  vertical: LemaTheme.s2,
                 ),
                 onPressed: () {
                   context.read<PostsProvider>().deletePost(post.id);
@@ -780,14 +695,14 @@ class _QueueViewState extends State<QueueView> {
   Widget _dispatchButton(PostModel post, bool isDark) {
     if (_sending.contains(post.id)) {
       return const CupertinoButton(
-        padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        padding: EdgeInsets.symmetric(horizontal: LemaTheme.s4, vertical: LemaTheme.s2),
         onPressed: null,
         child: CupertinoActivityIndicator(radius: 9),
       );
     }
     if (post.status == 'unknown') {
       return CupertinoButton(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: LemaTheme.s3, vertical: LemaTheme.s2),
         color: Colors.red.withValues(alpha: 0.12),
         foregroundColor: Colors.red,
         borderRadius: BorderRadius.circular(10),
@@ -802,7 +717,7 @@ class _QueueViewState extends State<QueueView> {
       return Tooltip(
         message: post.failureReason ?? 'Publish failed',
         child: CupertinoButton(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+          padding: const EdgeInsets.symmetric(horizontal: LemaTheme.s3, vertical: LemaTheme.s2),
           color: Colors.red.withValues(alpha: 0.12),
           borderRadius: BorderRadius.circular(10),
           onPressed: () => _dispatch(post),
@@ -810,7 +725,7 @@ class _QueueViewState extends State<QueueView> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Icon(CupertinoIcons.refresh, size: 13, color: Colors.red),
-              SizedBox(width: 6),
+              SizedBox(width: LemaTheme.s2),
               Text(
                 'Retry',
                 style: TextStyle(
@@ -825,7 +740,7 @@ class _QueueViewState extends State<QueueView> {
       );
     }
     return CupertinoButton(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: LemaTheme.s3, vertical: LemaTheme.s2),
       color: BackdropTheme.accent,
       // A plain (non-.filled) CupertinoButton defaults its foreground to
       // CupertinoTheme.primaryColor — #007AFF, the same value as the
@@ -837,7 +752,7 @@ class _QueueViewState extends State<QueueView> {
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(CupertinoIcons.paperplane_fill, size: 13),
-          SizedBox(width: 6),
+          SizedBox(width: LemaTheme.s2),
           Text(
             'Share Now',
             style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),

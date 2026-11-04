@@ -1,4 +1,5 @@
 import 'dart:convert';
+import '../core/theme.dart';
 import 'dart:ui' show ImageFilter;
 
 import 'package:flutter/cupertino.dart';
@@ -264,7 +265,7 @@ class _UniversalMediaPlayerState extends State<UniversalMediaPlayer> {
         child: FittedBox(
           fit: BoxFit.scaleDown,
           child: Padding(
-            padding: const EdgeInsets.all(8.0),
+            padding: const EdgeInsets.all(LemaTheme.s2),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -273,7 +274,7 @@ class _UniversalMediaPlayerState extends State<UniversalMediaPlayer> {
                   color: Colors.white.withValues(alpha: 0.55),
                   size: 20,
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: LemaTheme.s1),
                 Text(
                   widget.mediaUrl.split('/').last,
                   maxLines: 1,
@@ -305,7 +306,7 @@ class _UniversalMediaPlayerState extends State<UniversalMediaPlayer> {
         child: BackdropFilter(
           filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
           child: Container(
-            padding: const EdgeInsets.all(4),
+            padding: const EdgeInsets.all(LemaTheme.s1),
             decoration: BoxDecoration(
               color: Colors.black.withValues(alpha: 0.45),
               borderRadius: BorderRadius.circular(9),
@@ -358,7 +359,7 @@ class _UniversalMediaPlayerState extends State<UniversalMediaPlayer> {
           physics: const NeverScrollableScrollPhysics(),
           child: Center(
             child: Padding(
-              padding: const EdgeInsets.all(16.0),
+              padding: const EdgeInsets.all(LemaTheme.s4),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -369,7 +370,7 @@ class _UniversalMediaPlayerState extends State<UniversalMediaPlayer> {
                     // Backdrop orange == iOS systemOrange; tracked for migration.
 
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: LemaTheme.s2),
                   const Text(
                     'Video Preview Standby',
                     style: TextStyle(
@@ -378,7 +379,7 @@ class _UniversalMediaPlayerState extends State<UniversalMediaPlayer> {
                       fontSize: 13,
                     ),
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: LemaTheme.s1),
                   Text(
                     _errorMessage.isNotEmpty
                         ? _errorMessage
@@ -391,11 +392,11 @@ class _UniversalMediaPlayerState extends State<UniversalMediaPlayer> {
                     overflow: TextOverflow.ellipsis,
                     textAlign: TextAlign.center,
                   ),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: LemaTheme.s3),
                   CupertinoButton(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 14,
-                      vertical: 6,
+                      horizontal: LemaTheme.s4,
+                      vertical: LemaTheme.s2,
                     ),
                     color: Colors.white.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(12),
@@ -478,7 +479,7 @@ class _UniversalMediaPlayerState extends State<UniversalMediaPlayer> {
                   GestureDetector(
                     onTap: _togglePlayPause,
                     child: Container(
-                      padding: const EdgeInsets.all(6),
+                      padding: const EdgeInsets.all(LemaTheme.s2),
                       decoration: BoxDecoration(
                         color: Colors.black.withValues(alpha: 0.6),
                         shape: BoxShape.circle,
@@ -492,7 +493,7 @@ class _UniversalMediaPlayerState extends State<UniversalMediaPlayer> {
                       ),
                     ),
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: LemaTheme.s2),
 
                   // Progress bar
                   Expanded(
@@ -514,13 +515,13 @@ class _UniversalMediaPlayerState extends State<UniversalMediaPlayer> {
                       ),
                     ),
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: LemaTheme.s2),
 
                   // Audio Mute/Unmute
                   GestureDetector(
                     onTap: _toggleMute,
                     child: Container(
-                      padding: const EdgeInsets.all(6),
+                      padding: const EdgeInsets.all(LemaTheme.s2),
                       decoration: BoxDecoration(
                         color: Colors.black.withValues(alpha: 0.6),
                         shape: BoxShape.circle,
@@ -556,7 +557,7 @@ class _UniversalMediaPlayerState extends State<UniversalMediaPlayer> {
               color: Colors.white.withValues(alpha: 0.4),
               size: 32,
             ),
-            const SizedBox(height: 6),
+            const SizedBox(height: LemaTheme.s2),
             Text(
               'Emms Media Asset',
               style: TextStyle(

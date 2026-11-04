@@ -1,4 +1,5 @@
 import 'dart:ui';
+import '../core/theme.dart';
 import 'package:flutter/material.dart';
 
 
@@ -15,7 +16,7 @@ class AppleGlassCard extends StatelessWidget {
   const AppleGlassCard({
     super.key,
     required this.child,
-    this.padding = const EdgeInsets.all(16),
+    this.padding = const EdgeInsets.all(LemaTheme.s4),
     this.margin,
     this.borderRadius = 16,
     this.blur = 18,

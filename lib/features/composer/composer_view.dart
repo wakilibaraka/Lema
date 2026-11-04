@@ -205,7 +205,7 @@ class _ComposerViewState extends State<ComposerView> {
           }
           return SingleChildScrollView(
             padding: const EdgeInsets.fromLTRB(
-                LemaTheme.s4, LemaTheme.s4, LemaTheme.s4, LemaTheme.s8 * 2),
+                LemaTheme.s4, LemaTheme.s4, LemaTheme.s4, LemaTheme.s8 * LemaTheme.s1),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [

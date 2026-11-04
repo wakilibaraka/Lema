@@ -167,7 +167,7 @@ class _Marker extends StatelessWidget {
     return Container(
       width: 6,
       height: 6,
-      margin: const EdgeInsets.symmetric(horizontal: 1),
+      margin: const EdgeInsets.symmetric(horizontal: LemaTheme.s1),
       decoration: BoxDecoration(
         shape: status == PostStatus.failed || status == PostStatus.unknown ? BoxShape.rectangle : BoxShape.circle,
         color: switch (status) {
@@ -205,7 +205,7 @@ class _DayRow extends StatelessWidget {
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(fontSize: 13)),
-                const SizedBox(height: 2),
+                const SizedBox(height: LemaTheme.s1),
                 Text(
                   '${postStatusLabel(post)} · ${post.platformInfo.name}',
                   style: TextStyle(fontSize: 12, color: scheme.onSurfaceVariant),

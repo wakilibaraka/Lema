@@ -1,4 +1,5 @@
 import 'package:flutter/cupertino.dart';
+import '../core/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -36,14 +37,14 @@ class _SettingsViewState extends State<SettingsView> {
   Widget _buildDemoAndAutomationCard(bool isDark) {
     final app = context.watch<AppProvider>();
     return AppleGlassCard(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(LemaTheme.s5),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
               Container(
-                padding: const EdgeInsets.all(10),
+                padding: const EdgeInsets.all(LemaTheme.s3),
                 decoration: BoxDecoration(
                   color: BackdropTheme.statusWarning.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(10),
@@ -54,7 +55,7 @@ class _SettingsViewState extends State<SettingsView> {
                   size: 20,
                 ),
               ),
-              const SizedBox(width: 14),
+              const SizedBox(width: LemaTheme.s4),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -69,7 +70,7 @@ class _SettingsViewState extends State<SettingsView> {
                         color: isDark ? Colors.white : Colors.black,
                       ),
                     ),
-                    const SizedBox(height: 2),
+                    const SizedBox(height: LemaTheme.s1),
                     Text(
                       'Simulated publishes for app review, and queue auto-fill.',
                       maxLines: 2,
@@ -102,7 +103,7 @@ class _SettingsViewState extends State<SettingsView> {
                         color: isDark ? Colors.white : Colors.black,
                       ),
                     ),
-                    const SizedBox(height: 2),
+                    const SizedBox(height: LemaTheme.s1),
                     Text(
                       app.demoMode
                           ? 'On: publishes and AI calls are simulated locally, so Share Now reports a local publish instead of a failed dispatch.'
@@ -117,7 +118,7 @@ class _SettingsViewState extends State<SettingsView> {
                   ],
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: LemaTheme.s3),
               CupertinoSwitch(
                 key: const ValueKey('demo_mode_switch'),
                 value: app.demoMode,
@@ -126,7 +127,7 @@ class _SettingsViewState extends State<SettingsView> {
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: LemaTheme.s3),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -144,7 +145,7 @@ class _SettingsViewState extends State<SettingsView> {
                         color: isDark ? Colors.white : Colors.black,
                       ),
                     ),
-                    const SizedBox(height: 2),
+                    const SizedBox(height: LemaTheme.s1),
                     Text(
                       'Suggest recycled content for empty calendar slots.',
                       maxLines: 2,
@@ -159,8 +160,8 @@ class _SettingsViewState extends State<SettingsView> {
               ),
               CupertinoButton(
                 padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 6,
+                  horizontal: LemaTheme.s3,
+                  vertical: LemaTheme.s2,
                 ),
                 color: BackdropTheme.accent,
                 // Plain CupertinoButton defaults its foreground to the
@@ -200,14 +201,14 @@ class _SettingsViewState extends State<SettingsView> {
     final auth = context.watch<AuthProvider>();
 
     return AppleGlassCard(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(LemaTheme.s5),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
               Container(
-                padding: const EdgeInsets.all(10),
+                padding: const EdgeInsets.all(LemaTheme.s3),
                 decoration: BoxDecoration(
                   color: BackdropTheme.violet.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(10),
@@ -218,7 +219,7 @@ class _SettingsViewState extends State<SettingsView> {
                   size: 20,
                 ),
               ),
-              const SizedBox(width: 14),
+              const SizedBox(width: LemaTheme.s4),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -233,7 +234,7 @@ class _SettingsViewState extends State<SettingsView> {
                         color: isDark ? Colors.white : Colors.black,
                       ),
                     ),
-                    const SizedBox(height: 2),
+                    const SizedBox(height: LemaTheme.s1),
                     Text(
                       'Sign in through your browser. Tokens stay in this Mac\'s keychain.',
                       maxLines: 2,
@@ -257,7 +258,7 @@ class _SettingsViewState extends State<SettingsView> {
             final isExpiringSoon = status == TokenStatus.expiringSoon;
 
             return Padding(
-              padding: const EdgeInsets.only(bottom: 12),
+              padding: const EdgeInsets.only(bottom: LemaTheme.s3),
               child: Row(
                 children: [
                   Container(
@@ -269,7 +270,7 @@ class _SettingsViewState extends State<SettingsView> {
                     ),
                     child: Icon(info.iconData, color: info.color, size: 18),
                   ),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: LemaTheme.s3),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -308,11 +309,11 @@ class _SettingsViewState extends State<SettingsView> {
                     status: ConnectionStatusDot.fromTokenStatus(status),
                     platform: info.name,
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: LemaTheme.s2),
                   CupertinoButton(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 6,
+                      horizontal: LemaTheme.s3,
+                      vertical: LemaTheme.s2,
                     ),
                     color: isConnected
                         ? BackdropTheme.statusWarning.withValues(alpha: 0.12)
@@ -387,7 +388,7 @@ class _SettingsViewState extends State<SettingsView> {
     return Scaffold(
       backgroundColor: Colors.transparent,
       body: Padding(
-        padding: const EdgeInsets.all(24.0),
+        padding: const EdgeInsets.all(LemaTheme.s6),
         child: SingleChildScrollView(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -406,19 +407,8 @@ class _SettingsViewState extends State<SettingsView> {
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
                             fontSize: 22,
-                            fontWeight: FontWeight.w800,
-                            letterSpacing: -0.5,
+                            fontWeight: FontWeight.w600,
                             color: isDark ? Colors.white : Colors.black,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          'Configure the publishing daemon and demo mode.',
-                          maxLines: 3,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: isDark ? Colors.white60 : Colors.black54,
                           ),
                         ),
                       ],
@@ -427,18 +417,18 @@ class _SettingsViewState extends State<SettingsView> {
                 ],
               ),
 
-              const SizedBox(height: 24),
+              const SizedBox(height: LemaTheme.s6),
 
               // Auto-Poster Daemon Card
               AppleGlassCard(
-                padding: const EdgeInsets.all(20),
+                padding: const EdgeInsets.all(LemaTheme.s5),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(
                       children: [
                         Container(
-                          padding: const EdgeInsets.all(10),
+                          padding: const EdgeInsets.all(LemaTheme.s3),
                           decoration: BoxDecoration(
                             color:
                                 (app.isDaemonOnline
@@ -455,7 +445,7 @@ class _SettingsViewState extends State<SettingsView> {
                             size: 20,
                           ),
                         ),
-                        const SizedBox(width: 14),
+                        const SizedBox(width: LemaTheme.s4),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -470,7 +460,7 @@ class _SettingsViewState extends State<SettingsView> {
                                   color: isDark ? Colors.white : Colors.black,
                                 ),
                               ),
-                              const SizedBox(height: 2),
+                              const SizedBox(height: LemaTheme.s1),
                               Text(
                                 app.isDaemonOnline
                                     ? 'Connected. Scheduled posts need this Mac awake and online, and a connected channel. LinkedIn is the only channel built, and it has not had a live test.'
@@ -491,8 +481,8 @@ class _SettingsViewState extends State<SettingsView> {
                         ),
                         CupertinoButton(
                           padding: const EdgeInsets.symmetric(
-                            horizontal: 14,
-                            vertical: 8,
+                            horizontal: LemaTheme.s4,
+                            vertical: LemaTheme.s2,
                           ),
                           color: BackdropTheme.accent,
                           // Plain CupertinoButton defaults its foreground to
@@ -546,7 +536,7 @@ class _SettingsViewState extends State<SettingsView> {
                                   color: isDark ? Colors.white : Colors.black,
                                 ),
                               ),
-                              const SizedBox(height: 2),
+                              const SizedBox(height: LemaTheme.s1),
                               Text(
                                 app.isDaemonOnline
                                     ? 'The daemon answered. Posts need this Mac awake and online. LinkedIn is the only channel built, and it has not had a live test.'
@@ -563,7 +553,7 @@ class _SettingsViewState extends State<SettingsView> {
                             ],
                           ),
                         ),
-                        const SizedBox(width: 12),
+                        const SizedBox(width: LemaTheme.s3),
                         ConnectionStatusDot(
                           status: app.isDaemonOnline
                               ? ConnectionStatus.connected
@@ -577,26 +567,26 @@ class _SettingsViewState extends State<SettingsView> {
                 ),
               ),
 
-              const SizedBox(height: 20),
+              const SizedBox(height: LemaTheme.s5),
 
               _buildConnectedAccountsCard(isDark),
 
-              const SizedBox(height: 20),
+              const SizedBox(height: LemaTheme.s5),
 
               _buildDemoAndAutomationCard(isDark),
 
-              const SizedBox(height: 20),
+              const SizedBox(height: LemaTheme.s5),
 
               // Media playback card — video autoplay lives here.
               AppleGlassCard(
-                padding: const EdgeInsets.all(20),
+                padding: const EdgeInsets.all(LemaTheme.s5),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(
                       children: [
                         Container(
-                          padding: const EdgeInsets.all(10),
+                          padding: const EdgeInsets.all(LemaTheme.s3),
                           decoration: BoxDecoration(
                             color: BackdropTheme.accent.withValues(alpha: 0.12),
                             borderRadius: BorderRadius.circular(10),
@@ -607,7 +597,7 @@ class _SettingsViewState extends State<SettingsView> {
                             size: 20,
                           ),
                         ),
-                        const SizedBox(width: 14),
+                        const SizedBox(width: LemaTheme.s4),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -622,7 +612,7 @@ class _SettingsViewState extends State<SettingsView> {
                                   color: isDark ? Colors.white : Colors.black,
                                 ),
                               ),
-                              const SizedBox(height: 2),
+                              const SizedBox(height: LemaTheme.s1),
                               Text(
                                 'Auto-play videos across Home and Simulator. Off by default.',
                                 maxLines: 3,
@@ -657,7 +647,7 @@ class _SettingsViewState extends State<SettingsView> {
                                   color: isDark ? Colors.white : Colors.black,
                                 ),
                               ),
-                              const SizedBox(height: 2),
+                              const SizedBox(height: LemaTheme.s1),
                               Text(
                                 'When off, videos stay paused until you press play.',
                                 maxLines: 3,
@@ -672,7 +662,7 @@ class _SettingsViewState extends State<SettingsView> {
                             ],
                           ),
                         ),
-                        const SizedBox(width: 12),
+                        const SizedBox(width: LemaTheme.s3),
                         CupertinoSwitch(
                           key: const ValueKey('autoplay_switch'),
                           value: app.autoplayVideos,
@@ -685,11 +675,11 @@ class _SettingsViewState extends State<SettingsView> {
                 ),
               ),
 
-              const SizedBox(height: 20),
+              const SizedBox(height: LemaTheme.s5),
 
               // Base Brand Persona (Emms Digital Media)
               AppleGlassCard(
-                padding: const EdgeInsets.all(20),
+                padding: const EdgeInsets.all(LemaTheme.s5),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -699,7 +689,7 @@ class _SettingsViewState extends State<SettingsView> {
                           radius: 22,
                           backgroundImage: AssetImage('assets/emms_avatar.png'),
                         ),
-                        const SizedBox(width: 14),
+                        const SizedBox(width: LemaTheme.s4),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -720,7 +710,7 @@ class _SettingsViewState extends State<SettingsView> {
                                       ),
                                     ),
                                   ),
-                                  const SizedBox(width: 6),
+                                  const SizedBox(width: LemaTheme.s2),
                                   const Icon(
                                     CupertinoIcons.checkmark_seal_fill,
                                     color: BackdropTheme.accent,
@@ -728,7 +718,7 @@ class _SettingsViewState extends State<SettingsView> {
                                   ),
                                 ],
                               ),
-                              const SizedBox(height: 2),
+                              const SizedBox(height: LemaTheme.s1),
                               Text(
                                 '${profile.instagramHandle} • Nairobi, Kenya',
                                 style: TextStyle(
@@ -743,7 +733,7 @@ class _SettingsViewState extends State<SettingsView> {
                         ),
                         Container(
                           padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
+                            horizontal: LemaTheme.s2,
                             vertical: 3,
                           ),
                           decoration: BoxDecoration(
@@ -772,7 +762,7 @@ class _SettingsViewState extends State<SettingsView> {
                         color: isDark ? Colors.white70 : Colors.black87,
                       ),
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: LemaTheme.s1),
                     Text(
                       profile.bio ?? 'Storytelling reels tailored for businesses to grab attention & convert.',
                       style: TextStyle(
@@ -781,7 +771,7 @@ class _SettingsViewState extends State<SettingsView> {
                         height: 1.3,
                       ),
                     ),
-                    const SizedBox(height: 10),
+                    const SizedBox(height: LemaTheme.s3),
                     Text(
                       'Contact Channels: 0757 638 846 • emmahsonny@gmail.com',
                       style: TextStyle(
@@ -794,15 +784,15 @@ class _SettingsViewState extends State<SettingsView> {
                 ),
               ),
 
-              const SizedBox(height: 20),
+              const SizedBox(height: LemaTheme.s5),
 
               // Project & GitHub Repo Link Card
               AppleGlassCard(
-                padding: const EdgeInsets.all(20),
+                padding: const EdgeInsets.all(LemaTheme.s5),
                 child: Row(
                   children: [
                     Container(
-                      padding: const EdgeInsets.all(10),
+                      padding: const EdgeInsets.all(LemaTheme.s3),
                       decoration: BoxDecoration(
                         color: isDark ? Colors.white12 : Colors.black12,
                         borderRadius: BorderRadius.circular(10),
@@ -813,7 +803,7 @@ class _SettingsViewState extends State<SettingsView> {
                         size: 20,
                       ),
                     ),
-                    const SizedBox(width: 14),
+                    const SizedBox(width: LemaTheme.s4),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -828,7 +818,7 @@ class _SettingsViewState extends State<SettingsView> {
                               color: isDark ? Colors.white : Colors.black,
                             ),
                           ),
-                          const SizedBox(height: 2),
+                          const SizedBox(height: LemaTheme.s1),
                           Text(
                             'Cross-platform Flutter app for macOS, Windows, iOS, Android, and Web.',
                             style: TextStyle(
@@ -841,8 +831,8 @@ class _SettingsViewState extends State<SettingsView> {
                     ),
                     CupertinoButton(
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 8,
+                        horizontal: LemaTheme.s4,
+                        vertical: LemaTheme.s2,
                       ),
                       color: isDark
                           ? Colors.white.withValues(alpha: 0.12)

@@ -1,4 +1,5 @@
 import 'dart:ui';
+import '../core/theme.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
@@ -25,7 +26,7 @@ class ErrorBanner extends StatelessWidget {
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          padding: const EdgeInsets.symmetric(horizontal: LemaTheme.s4, vertical: LemaTheme.s3),
           decoration: BoxDecoration(
             color: _errorRed.withAlpha(200),
             borderRadius: BorderRadius.circular(14),
@@ -34,7 +35,7 @@ class ErrorBanner extends StatelessWidget {
           child: Row(
             children: [
               const Icon(CupertinoIcons.exclamationmark_triangle_fill, color: Colors.white, size: 18),
-              const SizedBox(width: 10),
+              const SizedBox(width: LemaTheme.s3),
               Expanded(
                 child: Text(
                   message,
@@ -48,11 +49,11 @@ class ErrorBanner extends StatelessWidget {
                 ),
               ),
               if (actionLabel != null) ...[
-                const SizedBox(width: 10),
+                const SizedBox(width: LemaTheme.s3),
                 GestureDetector(
                   onTap: onAction,
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    padding: const EdgeInsets.symmetric(horizontal: LemaTheme.s3, vertical: LemaTheme.s2),
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(8),
@@ -69,7 +70,7 @@ class ErrorBanner extends StatelessWidget {
                 ),
               ],
               if (onDismiss != null) ...[
-                const SizedBox(width: 8),
+                const SizedBox(width: LemaTheme.s2),
                 GestureDetector(
                   onTap: onDismiss,
                   child: const Icon(CupertinoIcons.xmark, color: Colors.white70, size: 16),

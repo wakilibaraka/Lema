@@ -1,4 +1,5 @@
 import 'package:flutter/cupertino.dart';
+import '../core/theme.dart';
 import 'package:flutter/material.dart';
 
 
@@ -42,7 +43,7 @@ Future<DateTime?> showScheduleTimePicker({
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 CupertinoButton(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  padding: const EdgeInsets.symmetric(horizontal: LemaTheme.s4),
                   onPressed: () => Navigator.of(sheetContext).pop(),
                   child: const Text('Cancel'),
                 ),
@@ -56,7 +57,7 @@ Future<DateTime?> showScheduleTimePicker({
                   ),
                 ),
                 CupertinoButton(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  padding: const EdgeInsets.symmetric(horizontal: LemaTheme.s4),
                   onPressed: () => Navigator.of(sheetContext).pop(selected),
                   child: const Text(
                     'Done',

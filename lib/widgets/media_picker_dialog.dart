@@ -1,4 +1,5 @@
 import 'package:flutter/cupertino.dart';
+import '../core/theme.dart';
 import 'package:flutter/material.dart';
 import '../core/services/media_upload_service.dart';
 import '../theme/backdrop_theme.dart';
@@ -135,7 +136,7 @@ class _MediaPickerDialogState extends State<MediaPickerDialog> {
         color: Colors.transparent,
         child: Container(
           width: 580,
-          margin: const EdgeInsets.all(20),
+          margin: const EdgeInsets.all(LemaTheme.s5),
           constraints: const BoxConstraints(maxHeight: 680),
           decoration: BoxDecoration(
             color: isDark ? const Color(0xFF1E1E24) : Colors.white,
@@ -157,18 +158,18 @@ class _MediaPickerDialogState extends State<MediaPickerDialog> {
             children: [
               // Header
               Padding(
-                padding: const EdgeInsets.fromLTRB(20, 20, 16, 12),
+                padding: const EdgeInsets.fromLTRB(LemaTheme.s5, LemaTheme.s5, LemaTheme.s4, LemaTheme.s3),
                 child: Row(
                   children: [
                     Container(
-                      padding: const EdgeInsets.all(8),
+                      padding: const EdgeInsets.all(LemaTheme.s2),
                       decoration: BoxDecoration(
                         color: BackdropTheme.accent.withAlpha(30),
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: const Icon(CupertinoIcons.photo_on_rectangle, color: BackdropTheme.accent, size: 20),
                     ),
-                    const SizedBox(width: 12),
+                    const SizedBox(width: LemaTheme.s3),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -182,7 +183,7 @@ class _MediaPickerDialogState extends State<MediaPickerDialog> {
                               letterSpacing: -0.3,
                             ),
                           ),
-                          const SizedBox(height: 2),
+                          const SizedBox(height: LemaTheme.s1),
                           Text(
                             'Upload real MP4/MOV videos, images, or choose brand samples',
                             style: TextStyle(
@@ -205,9 +206,9 @@ class _MediaPickerDialogState extends State<MediaPickerDialog> {
 
               // Upload Action Area
               Padding(
-                padding: const EdgeInsets.all(16.0),
+                padding: const EdgeInsets.all(LemaTheme.s4),
                 child: CupertinoButton(
-                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  padding: const EdgeInsets.symmetric(vertical: LemaTheme.s4),
                   color: BackdropTheme.accent,
                   borderRadius: BorderRadius.circular(12),
                   onPressed: _isUploading ? null : _pickAndUpload,
@@ -216,7 +217,7 @@ class _MediaPickerDialogState extends State<MediaPickerDialog> {
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             const CupertinoActivityIndicator(color: Colors.white),
-                            const SizedBox(width: 10),
+                            const SizedBox(width: LemaTheme.s3),
                             Text(
                               _uploadStatus.isNotEmpty ? _uploadStatus : 'Processing file...',
                               style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: Colors.white),
@@ -227,7 +228,7 @@ class _MediaPickerDialogState extends State<MediaPickerDialog> {
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Icon(CupertinoIcons.cloud_upload_fill, size: 18, color: Colors.white),
-                            SizedBox(width: 8),
+                            SizedBox(width: LemaTheme.s2),
                             Text(
                               'Upload Custom Video or Photo (MP4, MOV, PNG, JPG)',
                               style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13.5, color: Colors.white),
@@ -240,7 +241,7 @@ class _MediaPickerDialogState extends State<MediaPickerDialog> {
               // Scrollable Sections
               Flexible(
                 child: SingleChildScrollView(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  padding: const EdgeInsets.symmetric(horizontal: LemaTheme.s4),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -264,13 +265,13 @@ class _MediaPickerDialogState extends State<MediaPickerDialog> {
                             ),
                           ],
                         ),
-                        const SizedBox(height: 6),
+                        const SizedBox(height: LemaTheme.s2),
                         ConstrainedBox(
                           constraints: const BoxConstraints(maxHeight: 140),
                           child: ListView.separated(
                             shrinkWrap: true,
                             itemCount: _recentUploads.length,
-                            separatorBuilder: (_, _) => const SizedBox(height: 6),
+                            separatorBuilder: (_, _) => const SizedBox(height: LemaTheme.s2),
                             itemBuilder: (context, index) {
                               final u = _recentUploads[index];
                               final sizeMb = (u.sizeBytes / (1024 * 1024)).toStringAsFixed(1);
@@ -280,7 +281,7 @@ class _MediaPickerDialogState extends State<MediaPickerDialog> {
                                 ),
                                 borderRadius: BorderRadius.circular(10),
                                 child: Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                  padding: const EdgeInsets.symmetric(horizontal: LemaTheme.s3, vertical: LemaTheme.s2),
                                   decoration: BoxDecoration(
                                     color: isDark ? Colors.white.withAlpha(10) : Colors.black.withAlpha(6),
                                     borderRadius: BorderRadius.circular(10),
@@ -293,7 +294,7 @@ class _MediaPickerDialogState extends State<MediaPickerDialog> {
                                         size: 16,
                                         color: u.isVideo ? const Color(0xFFAF52DE) : const Color(0xFF007AFF),
                                       ),
-                                      const SizedBox(width: 10),
+                                      const SizedBox(width: LemaTheme.s3),
                                       Expanded(
                                         child: Text(
                                           u.name,
@@ -306,7 +307,7 @@ class _MediaPickerDialogState extends State<MediaPickerDialog> {
                                         '$sizeMb MB',
                                         style: TextStyle(fontSize: 11, color: isDark ? Colors.white54 : Colors.black45),
                                       ),
-                                      const SizedBox(width: 8),
+                                      const SizedBox(width: LemaTheme.s2),
                                       GestureDetector(
                                         onTap: () async {
                                           await MediaUploadService.removeRecent(u.id);
@@ -321,7 +322,7 @@ class _MediaPickerDialogState extends State<MediaPickerDialog> {
                             },
                           ),
                         ),
-                        const SizedBox(height: 16),
+                        const SizedBox(height: LemaTheme.s4),
                       ],
 
                       // Brand Samples
@@ -334,15 +335,15 @@ class _MediaPickerDialogState extends State<MediaPickerDialog> {
                           color: isDark ? Colors.white38 : Colors.black38,
                         ),
                       ),
-                      const SizedBox(height: 6),
+                      const SizedBox(height: LemaTheme.s2),
                       ..._sampleMedia.map((item) {
                         return Padding(
-                          padding: const EdgeInsets.only(bottom: 6),
+                          padding: const EdgeInsets.only(bottom: LemaTheme.s2),
                           child: InkWell(
                             onTap: () => Navigator.of(context).pop(item),
                             borderRadius: BorderRadius.circular(10),
                             child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                              padding: const EdgeInsets.symmetric(horizontal: LemaTheme.s3, vertical: LemaTheme.s2),
                               decoration: BoxDecoration(
                                 color: isDark ? Colors.white.withAlpha(10) : Colors.black.withAlpha(6),
                                 borderRadius: BorderRadius.circular(10),
@@ -355,7 +356,7 @@ class _MediaPickerDialogState extends State<MediaPickerDialog> {
                                     size: 16,
                                     color: item.isVideo ? const Color(0xFFAF52DE) : const Color(0xFF007AFF),
                                   ),
-                                  const SizedBox(width: 10),
+                                  const SizedBox(width: LemaTheme.s3),
                                   Expanded(
                                     child: Text(
                                       item.name,
@@ -380,7 +381,7 @@ class _MediaPickerDialogState extends State<MediaPickerDialog> {
 
               // Direct URL Input
               Padding(
-                padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+                padding: const EdgeInsets.fromLTRB(LemaTheme.s4, LemaTheme.s3, LemaTheme.s4, LemaTheme.s4),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -393,7 +394,7 @@ class _MediaPickerDialogState extends State<MediaPickerDialog> {
                         color: isDark ? Colors.white38 : Colors.black38,
                       ),
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: LemaTheme.s2),
                     Row(
                       children: [
                         Expanded(
@@ -404,7 +405,7 @@ class _MediaPickerDialogState extends State<MediaPickerDialog> {
                               hintText: 'https://example.com/video.mp4 or image.png',
                               filled: true,
                               fillColor: isDark ? Colors.white.withAlpha(15) : Colors.black.withAlpha(10),
-                              contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                              contentPadding: const EdgeInsets.symmetric(horizontal: LemaTheme.s4, vertical: LemaTheme.s3),
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(12),
                                 borderSide: BorderSide.none,
@@ -412,9 +413,9 @@ class _MediaPickerDialogState extends State<MediaPickerDialog> {
                             ),
                           ),
                         ),
-                        const SizedBox(width: 8),
+                        const SizedBox(width: LemaTheme.s2),
                         CupertinoButton(
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                          padding: const EdgeInsets.symmetric(horizontal: LemaTheme.s4, vertical: LemaTheme.s3),
                           color: isDark ? Colors.white.withAlpha(35) : Colors.black.withAlpha(20),
                           borderRadius: BorderRadius.circular(12),
                           onPressed: () {

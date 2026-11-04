@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../core/theme.dart';
 
 enum ConnectionStatus { connected, expiringSoon, expired, neverConnected }
 
@@ -75,7 +76,7 @@ class ConnectionStatusRow extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: statuses.entries.map((entry) {
         return Padding(
-          padding: const EdgeInsets.only(left: 6),
+          padding: const EdgeInsets.only(left: LemaTheme.s2),
           child: ConnectionStatusDot(
             status: entry.value,
             platform: entry.key,

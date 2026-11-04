@@ -180,7 +180,7 @@ class _Sidebar extends StatelessWidget {
               collapsed: collapsed,
               onTap: () => onSelect(i),
             ),
-            const SizedBox(height: 2),
+            const SizedBox(height: LemaTheme.s1),
           ],
         ],
       ),

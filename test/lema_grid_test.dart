@@ -231,7 +231,7 @@ void main() {
       await pumpQueue(tester);
       expect(tester.takeException(), isNull);
 
-      expect(find.text('Queue'), findsOneWidget);
+      expect(find.text('Create Post'), findsOneWidget);
       expect(find.text('Scheduled (5)'), findsOneWidget);
       expect(find.text('Published (36)'), findsOneWidget);
       expect(find.text('Create Post'), findsOneWidget);

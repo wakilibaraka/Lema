@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../core/theme.dart';
 
 import '../theme/lema_motion.dart';
 
@@ -31,7 +32,7 @@ class LemaPill extends StatelessWidget {
       child: AnimatedContainer(
         duration: LemaMotion.quick,
         curve: LemaMotion.standardCurve,
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 9),
+        padding: const EdgeInsets.symmetric(horizontal: LemaTheme.s4, vertical: LemaTheme.s2),
         decoration: BoxDecoration(
           color: selected
               ? (isDark ? Colors.white : Colors.black)
@@ -64,7 +65,7 @@ class LemaPill extends StatelessWidget {
                   height: 7,
                   decoration:
                       BoxDecoration(color: dot, shape: BoxShape.circle)),
-              const SizedBox(width: 6),
+              const SizedBox(width: LemaTheme.s2),
             ],
             Text(
               label,
