@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
 
+import 'accounts.dart';
 import 'recurrence_rule.dart';
 
 /// Sends one post. Throws when the platform refused it.
@@ -40,17 +41,21 @@ class Daemon {
   final Adapter adapter;
   final DateTime Function() clock;
 
+  late final Accounts accounts;
   late final String token;
   final Map<String, Map<String, dynamic>> _posts = {};
   HttpServer? _server;
   Timer? _timer;
 
-  Daemon(this.home, this.adapter, {DateTime Function()? clock})
+  Daemon(this.home, this.adapter,
+      {DateTime Function()? clock, Secrets? secrets, TokenPost? tokenPost})
       : clock = clock ?? DateTime.now {
     home.createSync(recursive: true);
     Process.runSync('chmod', ['700', home.path]);
     token = _loadToken();
     _load();
+    accounts = Accounts(home, secrets ?? KeychainSecrets(),
+        post: tokenPost, clock: this.clock);
   }
 
   File get _store => File('${home.path}/posts.json');
@@ -229,8 +234,12 @@ class Daemon {
 
   Future<void> serve({int port = 3001, Duration every = const Duration(seconds: 15)}) async {
     _server = await HttpServer.bind(InternetAddress.loopbackIPv4, port);
-    _timer = Timer.periodic(every, (_) => tick());
+    _timer = Timer.periodic(every, (_) {
+      tick();
+      accounts.refreshDue();
+    });
     unawaited(tick());
+    unawaited(accounts.refreshDue());
     _server!.listen(_handle);
   }
 
@@ -248,12 +257,35 @@ class Daemon {
       if (req.method == 'GET' && parts.length == 2 && parts[0] == 'uploads') {
         return await _serveUpload(parts[1], res);
       }
+      // Tokenless because the browser lands here. The one-use state protects it.
+      if (req.method == 'GET' && req.uri.path == '/oauth/callback') {
+        final message = await accounts.finish(req.uri.queryParameters);
+        res.headers.contentType = ContentType.html;
+        res.write('<!doctype html><meta charset="utf-8"><title>Lema</title>'
+            '<p style="font:16px system-ui;margin:48px">'
+            '${const HtmlEscape().convert(message)}</p>');
+        return await res.close();
+      }
       if (req.headers.value('x-lema-token') != token) {
         return _json(res, 401, {'error': 'Missing or wrong token'});
       }
       final route = '${req.method} ${parts.length > 1 ? parts.sublist(1).join('/') : ''}';
       if (route == 'GET settings') {
         return _json(res, 200, {'adapter': 'fake'});
+      } else if (route == 'GET accounts') {
+        return _json(res, 200, accounts.statuses());
+      } else if (req.method == 'POST' &&
+          parts.length == 4 &&
+          parts[1] == 'accounts' &&
+          parts[3] == 'connect') {
+        final url = accounts.start(
+            parts[2], 'http://127.0.0.1:$port/oauth/callback');
+        return _json(res, 200, {'url': url});
+      } else if (req.method == 'DELETE' &&
+          parts.length == 3 &&
+          parts[1] == 'accounts') {
+        await accounts.remove(parts[2]);
+        return _json(res, 200, {});
       } else if (route == 'GET posts') {
         return _json(res, 200, posts);
       } else if (route == 'POST posts/sync') {
@@ -276,6 +308,8 @@ class Daemon {
         return await _upload(req);
       }
       return _json(res, 404, {'error': 'No such route'});
+    } on AccountError catch (e) {
+      return _json(res, e.status, {'error': e.message});
     } on PublishRefused catch (e) {
       return _json(res, e.status, {'error': e.message});
     } on FormatException catch (e) {

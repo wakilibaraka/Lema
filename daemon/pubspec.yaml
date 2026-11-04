@@ -3,5 +3,7 @@ description: Local publishing daemon for Lema.
 publish_to: none
 environment:
   sdk: ^3.8.0
+dependencies:
+  crypto: ^3.0.3
 dev_dependencies:
   test: ^1.25.0

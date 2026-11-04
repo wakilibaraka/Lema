@@ -235,7 +235,7 @@ class _SettingsViewState extends State<SettingsView> {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      'Manage OAuth connections for each platform.',
+                      'Sign in through your browser. Tokens stay in this Mac\'s keychain.',
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
@@ -284,11 +284,11 @@ class _SettingsViewState extends State<SettingsView> {
                         ),
                         Text(
                           isConnected
-                              ? 'Connected as ${info.handle}'
+                              ? (DemoModeService.isEnabled ? 'Connected (demo)' : 'Connected')
                               : isExpired
-                              ? 'Token expired — reconnect required'
+                              ? 'Connection expired. Reconnect to publish.'
                               : isExpiringSoon
-                              ? 'Token expiring soon'
+                              ? 'Connection expires within a day'
                               : 'Not connected',
                           style: TextStyle(
                             fontSize: 11,
@@ -318,11 +318,18 @@ class _SettingsViewState extends State<SettingsView> {
                         ? BackdropTheme.statusWarning.withValues(alpha: 0.12)
                         : BackdropTheme.accent,
                     borderRadius: BorderRadius.circular(8),
-                    onPressed: () {
+                    onPressed: () async {
                       if (isConnected) {
-                        auth.disconnectPlatform(platform.name);
+                        final messenger = ScaffoldMessenger.of(context);
+                        if (!await auth.disconnectPlatform(platform.name)) {
+                          messenger.showSnackBar(
+                            const SnackBar(
+                              content: Text('Still connected: the daemon did not answer'),
+                            ),
+                          );
+                        }
                       } else {
-                        _showConnectDialog(platform.name, info.name);
+                        _connect(platform.name);
                       }
                     },
                     child: Text(
@@ -345,51 +352,22 @@ class _SettingsViewState extends State<SettingsView> {
     );
   }
 
-  void _showConnectDialog(String platform, String platformName) {
-    final controller = TextEditingController();
-    showCupertinoDialog(
-      context: context,
-      builder: (context) => CupertinoAlertDialog(
-        title: Text('Connect $platformName'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const SizedBox(height: 8),
-            const Text(
-              'Paste an access token from the platform\'s OAuth flow.',
-              style: TextStyle(fontSize: 13),
-            ),
-            const SizedBox(height: 12),
-            CupertinoTextField(
-              controller: controller,
-              placeholder: 'Access token',
-              obscureText: true,
-            ),
-          ],
-        ),
-        actions: [
-          CupertinoDialogAction(
-            child: const Text('Cancel'),
-            onPressed: () => Navigator.of(context).pop(),
-          ),
-          CupertinoDialogAction(
-            isDefaultAction: true,
-            onPressed: () {
-              final token = controller.text.trim();
-              if (token.isNotEmpty) {
-                context.read<AuthProvider>().connectPlatform(
-                  platform,
-                  accessToken: token,
-                  expiresAt: DateTime.now().add(const Duration(days: 60)),
-                );
-              }
-              Navigator.of(context).pop();
-            },
-            child: const Text('Connect'),
-          ),
-        ],
-      ),
-    );
+  Future<void> _connect(String platform) async {
+    final auth = context.read<AuthProvider>();
+    final messenger = ScaffoldMessenger.of(context);
+    final start = await auth.startConnect(platform);
+    if (start.error != null) {
+      messenger.showSnackBar(SnackBar(content: Text('Not connected: ${start.error}')));
+      return;
+    }
+    final url = start.url;
+    if (url == null) return; // Demo mode connected it directly.
+    if (!await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication)) {
+      messenger.showSnackBar(
+          const SnackBar(content: Text('Not connected: could not open the browser')));
+      return;
+    }
+    await auth.waitForConnection(platform);
   }
 
   Future<void> _openGitHub() async {

@@ -8,6 +8,7 @@ import 'package:lema/core/providers/app_provider.dart';
 import 'package:lema/core/providers/auth_provider.dart';
 import 'package:lema/core/providers/posts_provider.dart';
 import 'package:lema/core/providers/profile_provider.dart';
+import 'package:lema/core/services/api_service.dart';
 import 'package:lema/core/services/demo_mode_service.dart';
 import 'package:lema/core/services/storage_service.dart';
 import 'package:lema/features/composer/composer_view.dart';
@@ -119,21 +120,16 @@ void main() {
   });
 
   group('Persisted state is read back at launch', () {
-    test('tokens saved by a previous run hydrate', () async {
-      await _storage();
-      final auth = AuthProvider();
-      await auth.connectPlatform('instagram',
-          accessToken: 'ig-secret',
-          expiresAt: DateTime.now().add(const Duration(days: 30)));
-      expect(auth.isConnected('instagram'), isTrue);
-
-      // A fresh provider on the same storage stands in for a restart.
-      final restarted = AuthProvider();
-      expect(restarted.isConnected('instagram'), isFalse);
-      await restarted.loadTokens();
-      expect(restarted.isConnected('instagram'), isTrue,
-          reason: 'tokens persisted but never loaded');
-      expect(restarted.getAccessToken('instagram'), 'ig-secret');
+    test('old tokens are deleted from device storage at launch', () async {
+      SharedPreferences.setMockInitialValues({
+        'lema_platform_tokens': '{"instagram":{"accessToken":"ig-secret"}}',
+      });
+      final auth = AuthProvider(api: _AccountsApi({'linkedin': 'connected'}));
+      await auth.loadTokens();
+      final prefs = await SharedPreferences.getInstance();
+      expect(prefs.getString('lema_platform_tokens'), isNull);
+      expect(auth.isConnected('instagram'), isFalse);
+      expect(auth.isConnected('linkedin'), isTrue);
     });
 
     test('demo mode is restored from storage at launch', () async {
@@ -182,10 +178,8 @@ void main() {
     testWidgets('an expired token shows a Reconnect banner that navigates',
         (tester) async {
       await _storage();
-      final auth = AuthProvider();
-      await auth.connectPlatform('instagram',
-          accessToken: 'expired',
-          expiresAt: DateTime.now().subtract(const Duration(hours: 1)));
+      final auth = AuthProvider(api: _AccountsApi({'instagram': 'expired'}));
+      await auth.loadTokens();
 
       final app = AppProvider();
       final posts = PostsProvider();
@@ -354,4 +348,11 @@ class CupertinoLikeButton extends StatelessWidget {
       ),
     );
   }
+}
+
+class _AccountsApi extends ApiService {
+  final Map<String, String> accounts;
+  const _AccountsApi(this.accounts);
+  @override
+  Future<Map<String, String>?> fetchAccounts() async => accounts;
 }

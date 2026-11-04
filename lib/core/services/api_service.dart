@@ -122,6 +122,50 @@ class ApiService {
     return null;
   }
 
+  /// Connection status per platform, or null with no daemon. Token values
+  /// stay in the daemon's keychain and never reach the app.
+  Future<Map<String, String>?> fetchAccounts() async {
+    try {
+      final res = await _http
+          .get(Uri.parse('$baseUrl/api/accounts'), headers: daemonHeaders())
+          .timeout(const Duration(seconds: 4));
+      if (res.statusCode == 200) {
+        return Map<String, String>.from(jsonDecode(res.body) as Map);
+      }
+    } catch (_) {
+      // No daemon.
+    }
+    return null;
+  }
+
+  /// The sign-in page to open in the browser, or the reason there isn't one.
+  Future<({String? url, String? error})> startConnect(String platform) async {
+    try {
+      final res = await _http
+          .post(Uri.parse('$baseUrl/api/accounts/$platform/connect'),
+              headers: daemonHeaders())
+          .timeout(const Duration(seconds: 4));
+      if (res.statusCode == 200) {
+        return (url: (jsonDecode(res.body) as Map)['url'] as String?, error: null);
+      }
+      return (url: null, error: _errorIn(res.body) ?? 'HTTP ${res.statusCode}');
+    } catch (_) {
+      return (url: null, error: 'The daemon is not running');
+    }
+  }
+
+  Future<bool> disconnectAccount(String platform) async {
+    try {
+      final res = await _http
+          .delete(Uri.parse('$baseUrl/api/accounts/$platform'),
+              headers: daemonHeaders())
+          .timeout(const Duration(seconds: 4));
+      return res.statusCode == 200;
+    } catch (_) {
+      return false;
+    }
+  }
+
   Future<bool> checkDaemonStatus() async {
     try {
       final res = await _withRetry(() => _http.get(Uri.parse('$baseUrl/api/settings'), headers: daemonHeaders()).timeout(

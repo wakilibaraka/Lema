@@ -1,22 +1,15 @@
 import 'package:flutter/material.dart';
+import '../services/api_service.dart';
+import '../services/demo_mode_service.dart';
 import '../services/token_lifecycle_service.dart';
-import '../models/platform_info.dart';
 
 class AuthProvider extends ChangeNotifier {
   final TokenLifecycleService _tokenService;
+  final ApiService _api;
 
-  AuthProvider({TokenLifecycleService? tokenService})
-      : _tokenService = tokenService ?? TokenLifecycleService();
-
-  TokenLifecycleService get tokenService => _tokenService;
-
-  Map<String, TokenStatus> get platformStatuses {
-    final statuses = <String, TokenStatus>{};
-    for (final platform in platformsMap.keys) {
-      statuses[platform] = _tokenService.getStatus(platform);
-    }
-    return statuses;
-  }
+  AuthProvider({TokenLifecycleService? tokenService, ApiService? api})
+      : _tokenService = tokenService ?? TokenLifecycleService(),
+        _api = api ?? ApiService.instance;
 
   bool isConnected(String platform) => _tokenService.isConnected(platform);
 
@@ -29,64 +22,47 @@ class AuthProvider extends ChangeNotifier {
   bool get hasAnyExpired => _tokenService.expiredPlatforms.isNotEmpty;
   bool get hasExpiringSoon => _tokenService.expiringSoonPlatforms.isNotEmpty;
 
-  List<String> get platformsWithExpiringPosts {
-    return _tokenService.expiredPlatforms;
-  }
-
-  Future<void> connectPlatform(String platform, {
-    required String accessToken,
-    String? refreshToken,
-    DateTime? expiresAt,
-  }) async {
-    final token = PlatformToken(
-      platform: platform,
-      accessToken: accessToken,
-      refreshToken: refreshToken,
-      expiresAt: expiresAt,
-    );
-    _tokenService.setToken(token);
-    await _tokenService.save();
-    notifyListeners();
-  }
-
-  Future<void> disconnectPlatform(String platform) async {
-    _tokenService.removeToken(platform);
-    await _tokenService.save();
-    notifyListeners();
-  }
-
-  Future<void> refreshToken(String platform, {
-    required String newAccessToken,
-    String? newRefreshToken,
-    DateTime? newExpiresAt,
-  }) async {
-    final existing = _tokenService.getToken(platform);
-    final token = PlatformToken(
-      platform: platform,
-      accessToken: newAccessToken,
-      refreshToken: newRefreshToken ?? existing?.refreshToken,
-      expiresAt: newExpiresAt ?? existing?.expiresAt,
-      connectedAt: existing?.connectedAt,
-    );
-    _tokenService.setToken(token);
-    await _tokenService.save();
-    notifyListeners();
-  }
-
+  /// Reads statuses. With no daemon the last known ones stay on screen.
   Future<void> loadTokens() async {
-    await _tokenService.load();
+    await _tokenService.deleteLegacyTokens();
+    if (DemoModeService.isEnabled) {
+      await _tokenService.loadDemo();
+    } else {
+      final accounts = await _api.fetchAccounts();
+      if (accounts == null) return;
+      _tokenService.apply(accounts);
+    }
     notifyListeners();
   }
 
-  String? getAccessToken(String platform) {
-    return _tokenService.getToken(platform)?.accessToken;
+  /// The browser sign-in URL, or why there isn't one. Demo mode connects
+  /// directly and returns neither.
+  Future<({String? url, String? error})> startConnect(String platform) async {
+    if (DemoModeService.isEnabled) {
+      await _tokenService.setDemo(platform, true);
+      notifyListeners();
+      return (url: null, error: null);
+    }
+    return _api.startConnect(platform);
   }
 
-  bool canPublishTo(String platform) {
-    return _tokenService.isConnected(platform);
+  /// Watches for the browser sign-in to finish, for up to two minutes.
+  Future<void> waitForConnection(String platform) async {
+    for (var i = 0; i < 40 && !isConnected(platform); i++) {
+      await Future<void>.delayed(const Duration(seconds: 3));
+      await loadTokens();
+    }
   }
 
-  List<String> getDisconnectedPlatforms(List<String> targetPlatforms) {
-    return targetPlatforms.where((p) => !isConnected(p)).toList();
+  /// False when the daemon couldn't be told, so the connection still stands.
+  Future<bool> disconnectPlatform(String platform) async {
+    if (DemoModeService.isEnabled) {
+      await _tokenService.setDemo(platform, false);
+    } else {
+      if (!await _api.disconnectAccount(platform)) return false;
+      await loadTokens();
+    }
+    notifyListeners();
+    return true;
   }
 }

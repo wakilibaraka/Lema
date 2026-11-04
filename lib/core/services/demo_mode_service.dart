@@ -2,7 +2,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class DemoModeService {
   static const String _keyEnabled = 'lema_demo_mode';
-  static const String _keyMockToken = 'lema_mock_token';
 
   static bool _enabled = false;
   static bool get isEnabled => _enabled;
@@ -16,16 +15,6 @@ class DemoModeService {
     _enabled = enabled;
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_keyEnabled, enabled);
-  }
-
-  static Future<void> saveMockToken(String platform, String token) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('${_keyMockToken}_$platform', token);
-  }
-
-  static Future<String?> getMockToken(String platform) async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getString('${_keyMockToken}_$platform');
   }
 
   static Map<String, dynamic> getMockAnalytics() => {

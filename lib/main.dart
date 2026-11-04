@@ -78,9 +78,12 @@ class _MainLayoutScreenState extends State<MainLayoutScreen> {
     // After demo mode is known, so a demo session never reaches the daemon.
     final posts = context.read<PostsProvider>()..syncWithBackend();
     // Picks up what the daemon published while the app sits open.
-    _daemonSync = Timer.periodic(
-        const Duration(seconds: 30), (_) => posts.syncWithBackend());
-    await context.read<AuthProvider>().loadTokens();
+    final auth = context.read<AuthProvider>();
+    _daemonSync = Timer.periodic(const Duration(seconds: 30), (_) {
+      posts.syncWithBackend();
+      auth.loadTokens();
+    });
+    await auth.loadTokens();
   }
 
   @override
