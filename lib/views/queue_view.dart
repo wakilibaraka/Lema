@@ -78,7 +78,7 @@ class _QueueViewState extends State<QueueView> {
       posts,
       placed == 0
           ? 'No open days to slot drafts into'
-          : 'Scheduled $placed drafts into open days',
+          : 'Scheduled $placed ${placed == 1 ? 'draft' : 'drafts'} into open days',
       canUndo: placed > 0,
     );
   }
@@ -221,15 +221,6 @@ class _QueueViewState extends State<QueueView> {
                       onTap: () => setState(() => _selectedSegment = 1),
                       isDark: isDark,
                     ),
-                    if (_selectedSegment == 0 && drafts.isNotEmpty) ...[
-                      const SizedBox(width: 8),
-                      LemaPill(
-                        label: 'Auto-slot ${drafts.length} drafts',
-                        selected: false,
-                        onTap: () => _autoSlot(postsProvider),
-                        isDark: isDark,
-                      ),
-                    ],
                     if (_selectedSegment == 0 && scheduledPosts.isNotEmpty) ...[
                       const SizedBox(width: 12),
                       Center(
@@ -247,6 +238,17 @@ class _QueueViewState extends State<QueueView> {
                 ),
               ),
             ),
+
+            if (_selectedSegment == 0 && drafts.isNotEmpty)
+              Align(
+                alignment: Alignment.centerLeft,
+                child: TextButton(
+                  onPressed: () => _autoSlot(postsProvider),
+                  child: Text(
+                    'Auto-slot ${drafts.length} ${drafts.length == 1 ? 'draft' : 'drafts'}',
+                  ),
+                ),
+              ),
 
             // Overdue band: the parked daemon never advances the clock on
             // its own, so slots that have already passed are called out

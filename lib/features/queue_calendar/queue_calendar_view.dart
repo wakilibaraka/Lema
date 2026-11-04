@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../../views/calendar_view.dart';
 import '../../views/queue_view.dart';
+import 'calendar_view.dart';
 
 /// Queue and calendar share one destination: the list of what is next, and
 /// the same posts laid out in time.

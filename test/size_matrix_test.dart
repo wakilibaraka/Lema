@@ -10,7 +10,7 @@ import 'package:lema/core/providers/profile_provider.dart';
 import 'package:lema/core/services/storage_service.dart';
 import 'package:lema/features/analytics/analytics_view.dart';
 import 'package:lema/theme/backdrop_theme.dart';
-import 'package:lema/views/calendar_view.dart';
+import 'package:lema/features/queue_calendar/calendar_view.dart';
 import 'package:lema/views/queue_view.dart';
 import 'package:lema/views/settings_view.dart';
 

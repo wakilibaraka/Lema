@@ -149,6 +149,14 @@ class PostsProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Gives one post a new time. [undoLastReorder] reverses it.
+  void reschedulePost(String id, DateTime when) {
+    final idx = _posts.indexWhere((p) => p.id == id);
+    if (idx == -1) return;
+    _lastOrderSnapshot = List<PostModel>.from(_posts);
+    updatePost(_posts[idx].copyWith(scheduledTime: when));
+  }
+
   /// Moves a post within [queuePosts]. The slot times stay where they are and
   /// the posts take new ones, so the new order is the order they go out in.
   void reorderQueue(int oldIndex, int newIndex) {
