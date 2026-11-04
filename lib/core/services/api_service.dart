@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:io';
 import 'dart:math';
 import 'package:http/http.dart' as http;
 import '../models/post_model.dart';
@@ -8,18 +7,16 @@ import 'daemon_token.dart';
 import 'demo_mode_service.dart';
 
 /// What actually happened when a post was handed to the daemon.
-/// A `bool` could not express this: it collapsed "the daemon said no" and
-/// "nothing is listening on 3001" into the same `false`, and every caller
-/// dropped it on the floor.
 enum DispatchOutcome {
-  /// The daemon accepted the publish request (2xx), or demo mode simulated it.
-  sent,
+  /// The platform has it, or demo mode simulated it (and [DispatchResult.detail] says so).
+  published,
 
-  /// Nothing was published. No daemon answered; the post is still pending.
-  offline,
+  /// Nothing went out. Safe to retry.
+  failed,
 
-  /// Nothing was published. The daemon answered with a refusal.
-  rejected,
+  /// It may have gone out. Never retried without the user checking first,
+  /// so nothing posts twice.
+  unknown,
 }
 
 class DispatchResult {
@@ -30,7 +27,7 @@ class DispatchResult {
 
   const DispatchResult(this.outcome, [this.detail]);
 
-  bool get isSent => outcome == DispatchOutcome.sent;
+  bool get isPublished => outcome == DispatchOutcome.published;
 
   @override
   String toString() => detail ?? outcome.name;
@@ -141,41 +138,59 @@ class ApiService {
   /// 5xx'd publish may already have gone out, so retrying it would post the
   /// same content twice (review finding 2). The dispatch UI owns Retry.
   /// [_withRetry] stays on the GETs, where a repeat is harmless.
-  Future<DispatchResult> dispatchPost(PostModel post) => _dispatch(post);
-
-  Future<DispatchResult> _dispatch(PostModel post) async {
+  /// [confirmedNotPosted] is the user saying they checked the platform after
+  /// an unknown result; the daemon refuses to resend one without it.
+  Future<DispatchResult> dispatchPost(PostModel post,
+      {bool confirmedNotPosted = false}) async {
     // Demo mode answers locally: no daemon and no platform APIs are touched,
     // which is what the app-review walkthroughs need.
     // The result is labelled so the UI never claims a real send.
     if (DemoModeService.isEnabled) {
       return const DispatchResult(
-          DispatchOutcome.sent, 'Demo mode: local publish simulated');
+          DispatchOutcome.published, 'Demo mode: local publish simulated');
     }
 
+    const mayHaveSent = 'Check the platform before sending again.';
     try {
       final res = await _http
           .post(Uri.parse('$baseUrl/api/posts/${post.id}/publish'),
-              headers: daemonHeaders(), body: jsonEncode(post.toJson()))
+              headers: daemonHeaders(),
+              body: jsonEncode({
+                ...post.toJson(),
+                if (confirmedNotPosted) 'confirmedNotPosted': true,
+              }))
           .timeout(const Duration(seconds: 6));
 
-      if (res.statusCode >= 200 && res.statusCode < 300) {
-        return const DispatchResult(DispatchOutcome.sent);
+      final code = res.statusCode;
+      if (code >= 200 && code < 300) {
+        return const DispatchResult(DispatchOutcome.published);
+      }
+      final reason = _errorIn(res.body) ?? 'Daemon answered HTTP $code';
+      // 502 is the platform refusing; 409 and other 5xx may follow a real send.
+      if (code == 502 || (code < 500 && code != 409)) {
+        return DispatchResult(DispatchOutcome.failed, reason);
+      }
+      return DispatchResult(DispatchOutcome.unknown, '$reason. $mayHaveSent');
+    } on TimeoutException {
+      return const DispatchResult(DispatchOutcome.unknown,
+          'No answer from the daemon after 6s. $mayHaveSent');
+    } catch (e) {
+      // Refused means the request never arrived. Any other break may have
+      // come after the daemon started sending.
+      if ('$e'.contains('Connection refused')) {
+        return const DispatchResult(
+            DispatchOutcome.failed, 'The daemon is not running');
       }
       return DispatchResult(
-        DispatchOutcome.rejected,
-        'Daemon refused the publish (HTTP ${res.statusCode})',
-      );
-    } on TimeoutException {
-      return const DispatchResult(
-          DispatchOutcome.offline, 'Daemon timed out after 6s');
-    } on SocketException catch (e) {
-      return DispatchResult(DispatchOutcome.offline,
-          'Daemon unreachable (${e.osError?.message ?? e.message})');
-    } on http.ClientException catch (e) {
-      return DispatchResult(
-          DispatchOutcome.offline, 'Daemon unreachable (${e.message})');
-    } catch (e) {
-      return DispatchResult(DispatchOutcome.offline, 'Daemon unreachable ($e)');
+          DispatchOutcome.unknown, 'Connection lost ($e). $mayHaveSent');
+    }
+  }
+
+  static String? _errorIn(String body) {
+    try {
+      return (jsonDecode(body) as Map)['error'] as String?;
+    } catch (_) {
+      return null;
     }
   }
 

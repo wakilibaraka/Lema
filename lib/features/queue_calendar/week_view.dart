@@ -312,7 +312,9 @@ class _Block extends StatelessWidget {
   Widget build(BuildContext context) {
     final status = post.postStatus;
     final scheme = Theme.of(context).colorScheme;
-    final prefix = status == PostStatus.failed || status == PostStatus.draft
+    final prefix = status == PostStatus.failed ||
+            status == PostStatus.unknown ||
+            status == PostStatus.draft
         ? '${postStatusLabel(post)} · '
         : '';
     final block = Semantics(

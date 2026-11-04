@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import '../core/services/api_service.dart';
 
 import '../core/destinations.dart';
 import '../core/models/post_model.dart';
@@ -31,14 +32,14 @@ class _QueueViewState extends State<QueueView> {
   final Set<String> _sending = {};
   List<String> _expired = const [];
 
-  Future<void> _dispatch(PostModel post) async {
+  Future<void> _dispatch(PostModel post, {bool confirmedNotPosted = false}) async {
     if (_sending.contains(post.id)) return;
     setState(() => _sending.add(post.id));
     // Short beat so Sending is perceivable; the request itself is real.
     await Future.delayed(const Duration(milliseconds: 450));
     if (!mounted) return;
 
-    final result = await context.read<PostsProvider>().publishNow(post.id);
+    final result = await context.read<PostsProvider>().publishNow(post.id, confirmedNotPosted: confirmedNotPosted);
     if (!mounted) return;
 
     setState(() => _sending.remove(post.id));
@@ -46,15 +47,52 @@ class _QueueViewState extends State<QueueView> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-          result.isSent
-              // The label travels with the result so demo mode never claims
-              // a real daemon send.
-              ? (result.detail ??
-                    'Dispatched to ${post.platformInfo.name} via daemon')
-              : 'Not sent — ${result.toString()}',
+          switch (result.outcome) {
+            // The label travels with the result so demo mode never claims
+            // a real send.
+            DispatchOutcome.published =>
+              result.detail ?? 'Published to ${post.platformInfo.name}',
+            DispatchOutcome.failed => 'Not sent: $result',
+            DispatchOutcome.unknown => 'Result unknown: $result',
+          },
         ),
       ),
     );
+  }
+
+  /// An unknown result is settled by the user looking at the platform. This
+  /// is the only way to resend one, so nothing posts twice by accident.
+  Future<void> _checkResult(PostModel post) async {
+    final posted = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Did this reach ${post.platformInfo.name}?'),
+        content: Text(
+          '${post.failureReason ?? 'Lema did not get an answer.'}\n\n'
+          'Look for the post on ${post.platformInfo.name}, then tell Lema what you found.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Not yet'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Not there, send again'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('It posted'),
+          ),
+        ],
+      ),
+    );
+    if (posted == null || !mounted) return;
+    if (posted) {
+      context.read<PostsProvider>().confirmPosted(post.id);
+    } else {
+      await _dispatch(post, confirmedNotPosted: true);
+    }
   }
 
   void _autoSlot(PostsProvider posts) {
@@ -246,8 +284,7 @@ class _QueueViewState extends State<QueueView> {
                 ),
               ),
 
-            // Overdue band: the parked daemon never advances the clock on
-            // its own, so slots that have already passed are called out
+            // Overdue band: the daemon can be off or the Mac asleep, so slots that have already passed are called out
             // here instead of silently sitting in the queue.
             if (_selectedSegment == 0 && overdue.isNotEmpty) ...[
               const SizedBox(height: 12),
@@ -263,7 +300,7 @@ class _QueueViewState extends State<QueueView> {
                       scheduledPosts,
                       isDark,
                       isScheduled: true,
-                      failed: failedPosts,
+                      failed: [...postsProvider.unknownPosts, ...failedPosts],
                     )
                   : _buildPostsList(publishedPosts, isDark, isScheduled: false),
             ),
@@ -290,8 +327,8 @@ class _QueueViewState extends State<QueueView> {
           Expanded(
             child: Text(
               count == 1
-                  ? '1 scheduled post missed its slot. The daemon never fired it.'
-                  : '$count scheduled posts missed their slots. The daemon never fired them.',
+                  ? '1 scheduled post is past its slot. Posts only go out while the daemon is running and this Mac is awake.'
+                  : '$count scheduled posts are past their slots. Posts only go out while the daemon is running and this Mac is awake.',
               style: TextStyle(
                 fontSize: 12.5,
                 fontWeight: FontWeight.w600,
@@ -635,6 +672,13 @@ class _QueueViewState extends State<QueueView> {
               style: const TextStyle(fontSize: 12, color: Colors.red),
             ),
           ],
+          if (post.status == 'unknown') ...[
+            const SizedBox(height: 8),
+            Text(
+              'Result unknown: ${post.failureReason ?? 'check the platform'}',
+              style: const TextStyle(fontSize: 12, color: Colors.red),
+            ),
+          ],
           if (post.recurrence != recurrenceNone) ...[
             const SizedBox(height: 8),
             Text(
@@ -739,6 +783,19 @@ class _QueueViewState extends State<QueueView> {
         padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         onPressed: null,
         child: CupertinoActivityIndicator(radius: 9),
+      );
+    }
+    if (post.status == 'unknown') {
+      return CupertinoButton(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        color: Colors.red.withValues(alpha: 0.12),
+        foregroundColor: Colors.red,
+        borderRadius: BorderRadius.circular(10),
+        onPressed: () => _checkResult(post),
+        child: const Text(
+          'Check result',
+          style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+        ),
       );
     }
     if (post.status == 'failed') {

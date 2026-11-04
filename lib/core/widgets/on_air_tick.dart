@@ -8,7 +8,7 @@ Color postStatusColor(PostModel post, ColorScheme scheme) =>
     switch (post.postStatus) {
       PostStatus.scheduled => LemaTheme.accent,
       PostStatus.published => LemaTheme.success,
-      PostStatus.failed => LemaTheme.danger,
+      PostStatus.failed || PostStatus.unknown => LemaTheme.danger,
       PostStatus.draft => scheme.onSurfaceVariant,
     };
 
@@ -16,6 +16,7 @@ String postStatusLabel(PostModel post) => switch (post.postStatus) {
       PostStatus.scheduled => 'Scheduled',
       PostStatus.published => 'Published',
       PostStatus.failed => 'Failed',
+      PostStatus.unknown => 'Result unknown',
       PostStatus.draft => 'Draft',
     };
 

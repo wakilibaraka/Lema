@@ -52,7 +52,7 @@ void main() {
       // Simulates the process dying: the claim is on disk, the result is not.
       final restarted = Daemon(home, record, clock: () => now);
       await restarted.tick();
-      expect(restarted.posts.single['status'], 'failed');
+      expect(restarted.posts.single['status'], 'unknown');
       expect('${restarted.posts.single['failureReason']}', contains('Check the platform'));
     })
       ..sync([post('a', now)], {'a'});
@@ -124,6 +124,21 @@ void main() {
     await d.publishNow('a', post('a', now));
     expect(() => d.publishNow('a', post('a', now)), throwsA(isA<PublishRefused>()));
     expect(sent, ['a']);
+  });
+
+  test('an unknown result is never resent without the user confirming', () async {
+    final d = start((_) async => throw ResultUnknown('Timed out.'))..sync([post('a', now)], {'a'});
+    await d.tick();
+    await d.tick();
+    expect(d.posts.single['status'], 'unknown');
+    expect('${d.posts.single['failureReason']}', contains('Check the platform'));
+
+    final e = start();
+    await expectLater(e.publishNow('a', post('a', now)), throwsA(isA<PublishRefused>()));
+    expect(sent, isEmpty);
+    await e.publishNow('a', {...post('a', now), 'confirmedNotPosted': true});
+    expect(sent, ['a']);
+    expect(e.posts.single.containsKey('confirmedNotPosted'), isFalse);
   });
 
   test('a corrupt store refuses to start rather than forget what was sent', () {

@@ -1,6 +1,6 @@
 import 'platform_info.dart';
 
-enum PostStatus { scheduled, published, draft, failed }
+enum PostStatus { scheduled, published, draft, failed, unknown }
 
 const String recurrenceNone = 'none';
 const String recurrenceDaily = 'daily';
@@ -17,7 +17,7 @@ class PostModel {
   final String? localFilePath;
   final String _scheduledDateRaw; // 'YYYY-MM-DD'
   final dynamic _scheduledTimeRaw; // String 'HH:MM' or DateTime
-  final String status; // 'scheduled' | 'published' | 'draft' | 'failed'
+  final String status; // 'scheduled' | 'published' | 'draft' | 'failed' | 'unknown'
   final String views;
   final String likes;
   final int comments;
@@ -167,6 +167,8 @@ class PostModel {
         return PostStatus.published;
       case 'failed':
         return PostStatus.failed;
+      case 'unknown':
+        return PostStatus.unknown;
       case 'draft':
         return PostStatus.draft;
       case 'scheduled':

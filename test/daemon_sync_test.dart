@@ -9,6 +9,14 @@ class _Api extends ApiService {
   List<Map<String, dynamic>>? answer;
   @override
   Future<List<Map<String, dynamic>>?> syncPosts(List<PostModel> posts) async => answer;
+  @override
+  Future<DispatchResult> dispatchPost(PostModel post, {bool confirmedNotPosted = false}) async {
+    confirmed = confirmedNotPosted;
+    return dispatch;
+  }
+
+  bool? confirmed;
+  DispatchResult dispatch = const DispatchResult(DispatchOutcome.unknown, 'Timed out');
 }
 
 void main() {
@@ -54,5 +62,32 @@ void main() {
     await provider.syncWithBackend();
     expect(byId('next').status, 'scheduled');
     expect(provider.posts.any((p) => p.id == 'deleted-here'), isFalse);
+  });
+
+  test('an unknown send stays unknown until the user settles it', () async {
+    await provider.publishNow('mine');
+    expect(byId('mine').status, 'unknown');
+    expect(byId('mine').failureReason, 'Timed out');
+    expect(provider.unknownPosts.length, 1);
+
+    provider.confirmPosted('mine');
+    expect(byId('mine').status, 'published');
+    expect(byId('mine').failureReason, isNull);
+  });
+
+  test('sending again passes the confirmation on', () async {
+    await provider.publishNow('mine');
+    api.dispatch = const DispatchResult(DispatchOutcome.published);
+    await provider.publishNow('mine', confirmedNotPosted: true);
+    expect(api.confirmed, isTrue);
+    expect(byId('mine').status, 'published');
+  });
+
+  test('a daemon result settles a local unknown', () async {
+    await provider.publishNow('mine');
+    await Future<void>.delayed(Duration.zero); // Let its own sync finish.
+    api.answer = [post('mine', 'failed').toJson()];
+    await provider.syncWithBackend();
+    expect(byId('mine').status, 'failed');
   });
 }

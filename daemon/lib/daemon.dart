@@ -20,6 +20,15 @@ const missedAfter = Duration(hours: 1);
 
 const _maxUploadBytes = 256 * 1024 * 1024;
 
+/// Thrown by an adapter when a send may have reached the platform, such as a
+/// timeout after the request went out. Such a post is never sent again by itself.
+class ResultUnknown implements Exception {
+  final String message;
+  ResultUnknown(this.message);
+  @override
+  String toString() => message;
+}
+
 class PublishRefused implements Exception {
   final int status;
   final String message;
@@ -74,7 +83,7 @@ class Daemon {
     var changed = false;
     for (final p in _posts.values) {
       if (p['status'] == 'sending') {
-        p['status'] = 'failed';
+        p['status'] = 'unknown';
         p['failureReason'] =
             'The daemon stopped during this send. Check the platform before retrying.';
         changed = true;
@@ -127,6 +136,11 @@ class Daemon {
       p['failureReason'] = null;
       _save();
       return true;
+    } on ResultUnknown catch (e) {
+      p['status'] = 'unknown';
+      p['failureReason'] = '$e Check the platform before sending again.';
+      _save();
+      return false;
     } catch (e) {
       p['status'] = 'failed';
       p['failureReason'] = '$e';
@@ -161,12 +175,20 @@ class Daemon {
   Future<void> publishNow(String id, Map<String, dynamic> post) async {
     final status = _posts[id]?['status'];
     if (status == 'sending' || status == 'published') {
-      throw PublishRefused(409, 'This post was already sent.');
+      throw PublishRefused(409, 'This post was already sent');
     }
-    final p = {...post, 'id': id, 'status': 'sending'};
+    final confirmed = post.remove('confirmedNotPosted') == true;
+    if (status == 'unknown' && !confirmed) {
+      throw PublishRefused(
+          409, 'This post may already be out. Check the platform first');
+    }
+    final p = {...post, 'id': id, 'status': 'sending', 'manual': true};
     _posts[id] = p;
     _save();
-    if (!await _send(p)) throw PublishRefused(502, '${p['failureReason']}');
+    if (!await _send(p)) {
+      throw PublishRefused(
+          p['status'] == 'unknown' ? 504 : 502, '${p['failureReason']}');
+    }
   }
 
   /// Makes the daemon's queue match the app's. [scheduled] is the app's whole
@@ -194,8 +216,8 @@ class Daemon {
       final existing = _posts[entry.key];
       final status = existing?['status'];
       if (status == 'sending' || status == 'published') continue;
-      // The app's copy of a failed post is stale until the user picks a new time.
-      if (status == 'failed' &&
+      // The app's copy of these is stale until the user picks a new time.
+      if ((status == 'failed' || status == 'unknown') &&
           existing!['scheduledTime'] == entry.value['scheduledTime']) {
         continue;
       }

@@ -14,7 +14,7 @@ class _StubApi extends ApiService {
   const _StubApi(this.result);
 
   @override
-  Future<DispatchResult> dispatchPost(PostModel post) async => result;
+  Future<DispatchResult> dispatchPost(PostModel post, {bool confirmedNotPosted = false}) async => result;
 
   @override
   Future<List<Map<String, dynamic>>?> syncPosts(List<PostModel> posts) async => null;
@@ -96,11 +96,11 @@ void main() {
         () async {
       final storage = await _storage();
       final failing = PostsProvider(storage,
-          const _StubApi(DispatchResult(DispatchOutcome.rejected, 'HTTP 422')));
+          const _StubApi(DispatchResult(DispatchOutcome.failed, 'HTTP 422')));
       await failing.publishNow('post-1');
 
       final reloaded = PostsProvider(
-          storage, const _StubApi(DispatchResult(DispatchOutcome.sent)));
+          storage, const _StubApi(DispatchResult(DispatchOutcome.published)));
       final saved = reloaded.failedPosts.single;
       expect(saved.id, 'post-1');
       expect(saved.failureReason, 'HTTP 422');
@@ -113,7 +113,7 @@ void main() {
 
     test('publishing a repeating post queues the next one once', () async {
       final provider = PostsProvider(await _storage(),
-          const _StubApi(DispatchResult(DispatchOutcome.sent)));
+          const _StubApi(DispatchResult(DispatchOutcome.published)));
       final at = DateTime.now().add(const Duration(hours: 1));
       provider.addPost(_post('rep', at, recurrence: recurrenceDaily));
 
@@ -127,7 +127,7 @@ void main() {
 
     test('a failed repeating post does not queue the next one', () async {
       final provider = PostsProvider(await _storage(),
-          const _StubApi(DispatchResult(DispatchOutcome.offline)));
+          const _StubApi(DispatchResult(DispatchOutcome.failed)));
       provider.addPost(_post('rep', DateTime.now(), recurrence: recurrenceDaily));
 
       await provider.publishNow('rep');
@@ -137,7 +137,7 @@ void main() {
 
     test('reorder keeps the slot times and undo restores them', () async {
       final provider = PostsProvider(await _storage(),
-          const _StubApi(DispatchResult(DispatchOutcome.offline)));
+          const _StubApi(DispatchResult(DispatchOutcome.failed)));
       final before = provider.queuePosts;
       final times = before.map((p) => p.scheduledTime).toList();
 
@@ -154,7 +154,7 @@ void main() {
 
     test('auto-slot schedules every draft on its own open day', () async {
       final provider = PostsProvider(await _storage(),
-          const _StubApi(DispatchResult(DispatchOutcome.offline)));
+          const _StubApi(DispatchResult(DispatchOutcome.failed)));
       final drafts = provider.draftPosts.length;
 
       expect(provider.autoSlotDrafts(const [9]), drafts);

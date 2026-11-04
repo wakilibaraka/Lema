@@ -169,9 +169,9 @@ class _Marker extends StatelessWidget {
       height: 6,
       margin: const EdgeInsets.symmetric(horizontal: 1),
       decoration: BoxDecoration(
-        shape: status == PostStatus.failed ? BoxShape.rectangle : BoxShape.circle,
+        shape: status == PostStatus.failed || status == PostStatus.unknown ? BoxShape.rectangle : BoxShape.circle,
         color: switch (status) {
-          PostStatus.failed => LemaTheme.danger,
+          PostStatus.failed || PostStatus.unknown => LemaTheme.danger,
           PostStatus.draft => null,
           PostStatus.published => color.withValues(alpha: 0.45),
           PostStatus.scheduled => color,

@@ -67,6 +67,10 @@ class PostsProvider extends ChangeNotifier {
   List<PostModel> get failedPosts =>
       _posts.where((p) => p.status == 'failed').toList();
 
+  /// Posts that may or may not have gone out, waiting on the user to check.
+  List<PostModel> get unknownPosts =>
+      _posts.where((p) => p.status == 'unknown').toList();
+
   List<PostModel> get draftPosts =>
       _posts.where((p) => p.status == 'draft').toList();
 
@@ -216,33 +220,47 @@ class PostsProvider extends ChangeNotifier {
   /// succeeded. It used to be flipped to `published` *before* the request
   /// and the daemon's answer was discarded, so a dead daemon still emptied
   /// the queue and every failure path in the dispatch UI was unreachable.
-  Future<DispatchResult> publishNow(String id) async {
+  Future<DispatchResult> publishNow(String id,
+      {bool confirmedNotPosted = false}) async {
     final idx = _posts.indexWhere((p) => p.id == id);
     if (idx == -1) {
-      return const DispatchResult(DispatchOutcome.rejected, 'Post no longer exists');
+      return const DispatchResult(DispatchOutcome.failed, 'Post no longer exists');
     }
 
-    final post = _posts[idx];
-    final result = await _api.dispatchPost(post);
+    final result = await _api.dispatchPost(_posts[idx],
+        confirmedNotPosted: confirmedNotPosted);
 
     // Re-read: the post may have been edited or deleted while the daemon
     // request was in flight.
     final current = _posts.indexWhere((p) => p.id == id);
     if (current == -1) return result;
 
-    if (!result.isSent) {
+    if (result.isPublished) {
+      _markPublished(current);
+    } else {
       _posts[current] = _posts[current].copyWith(
-        status: 'failed',
+        status: result.outcome.name,
         failureReason: result.toString(),
       );
-      _persist();
-      notifyListeners();
-      return result;
     }
+    _persist();
+    notifyListeners();
+    return result;
+  }
 
-    final sent = _posts[current];
+  /// The user checked the platform and found an unknown post did go out.
+  void confirmPosted(String id) {
+    final idx = _posts.indexWhere((p) => p.id == id);
+    if (idx == -1) return;
+    _markPublished(idx);
+    _persist();
+    notifyListeners();
+  }
+
+  void _markPublished(int idx) {
+    final sent = _posts[idx];
     final now = DateTime.now();
-    _posts[current] = sent.copyWith(
+    _posts[idx] = sent.copyWith(
       status: 'published',
       postedAt: now,
       clearFailure: true,
@@ -250,7 +268,7 @@ class PostsProvider extends ChangeNotifier {
     final next = nextOccurrence(sent, now);
     if (next != null) {
       _posts.insert(
-        current,
+        idx,
         sent.copyWith(
           id: '${sent.id}-${now.millisecondsSinceEpoch}',
           status: 'scheduled',
@@ -259,9 +277,6 @@ class PostsProvider extends ChangeNotifier {
         ),
       );
     }
-    _persist();
-    notifyListeners();
-    return result;
   }
 
   /// Scheduled posts whose slot has already passed. The daemon only fires
@@ -281,8 +296,8 @@ class PostsProvider extends ChangeNotifier {
   bool _syncAgain = false;
 
   /// Pushes the queue to the daemon and merges back what it did. Local posts
-  /// are the source of truth except for a scheduled post the daemon has since
-  /// sent or failed, and repeats it queued that the app hasn't seen.
+  /// are the source of truth except for a scheduled or unknown post the daemon
+  /// has a result for, and repeats it queued that the app hasn't seen.
   Future<void> syncWithBackend() async {
     // A failed load shows seeds, which must not replace the daemon's queue.
     if (_loadError) return;
@@ -314,8 +329,19 @@ class PostsProvider extends ChangeNotifier {
           changed = true;
         }
       } else if (_posts[idx].status == 'scheduled' &&
-          (post.status == 'published' || post.status == 'failed')) {
+          const ['published', 'failed', 'unknown'].contains(post.status)) {
         _posts[idx] = post;
+        changed = true;
+      } else if (_posts[idx].status == 'unknown' &&
+          const ['published', 'failed'].contains(post.status)) {
+        // A Share Now that timed out here but finished there. The daemon
+        // leaves its repeat to the app in that case.
+        final local = _posts[idx];
+        if (post.status == 'published' && json['manual'] == true) {
+          _markPublished(idx);
+        } else {
+          _posts[idx] = post.copyWith(recurrence: local.recurrence);
+        }
         changed = true;
       }
     }

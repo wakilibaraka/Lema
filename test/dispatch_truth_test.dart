@@ -27,7 +27,7 @@ class _StubApi extends ApiService {
   _StubApi(this.result);
 
   @override
-  Future<DispatchResult> dispatchPost(PostModel post) async {
+  Future<DispatchResult> dispatchPost(PostModel post, {bool confirmedNotPosted = false}) async {
     calls++;
     return result;
   }
@@ -124,13 +124,13 @@ void main() {
     test('an offline daemon marks the post failed with its reason', () async {
       final storage = await _storage();
       final api = _StubApi(
-          const DispatchResult(DispatchOutcome.offline, 'Daemon unreachable'));
+          const DispatchResult(DispatchOutcome.failed, 'Daemon unreachable'));
       final provider = PostsProvider(storage, api);
 
       final result = await provider.publishNow('post-1');
 
-      expect(result.outcome, DispatchOutcome.offline);
-      expect(result.isSent, isFalse);
+      expect(result.outcome, DispatchOutcome.failed);
+      expect(result.isPublished, isFalse);
       expect(api.calls, 1);
       expect(
         provider.posts.firstWhere((p) => p.id == 'post-1').status,
@@ -142,12 +142,12 @@ void main() {
     test('a refusal is reported as rejected and not published', () async {
       final storage = await _storage();
       final api = _StubApi(
-          const DispatchResult(DispatchOutcome.rejected, 'HTTP 422'));
+          const DispatchResult(DispatchOutcome.failed, 'HTTP 422'));
       final provider = PostsProvider(storage, api);
 
       final result = await provider.publishNow('post-1');
 
-      expect(result.outcome, DispatchOutcome.rejected);
+      expect(result.outcome, DispatchOutcome.failed);
       expect(result.toString(), 'HTTP 422');
       expect(
         provider.posts.firstWhere((p) => p.id == 'post-1').status,
@@ -157,12 +157,12 @@ void main() {
 
     test('a sent dispatch publishes the post and stamps postedAt', () async {
       final storage = await _storage();
-      final api = _StubApi(const DispatchResult(DispatchOutcome.sent));
+      final api = _StubApi(const DispatchResult(DispatchOutcome.published));
       final provider = PostsProvider(storage, api);
 
       final result = await provider.publishNow('post-1');
 
-      expect(result.isSent, isTrue);
+      expect(result.isPublished, isTrue);
       final post = provider.posts.firstWhere((p) => p.id == 'post-1');
       expect(post.status, 'published');
       expect(post.postedAt, isNotNull);
@@ -172,11 +172,11 @@ void main() {
     test('an unknown post id is reported, not silently ignored', () async {
       final storage = await _storage();
       final provider = PostsProvider(storage, _StubApi(
-          const DispatchResult(DispatchOutcome.sent)));
+          const DispatchResult(DispatchOutcome.published)));
 
       final result = await provider.publishNow('does-not-exist');
 
-      expect(result.outcome, DispatchOutcome.rejected);
+      expect(result.outcome, DispatchOutcome.failed);
       expect(result.toString(), contains('no longer exists'));
     });
   });
@@ -185,7 +185,7 @@ void main() {
     test('only past, still-scheduled posts count as overdue', () async {
       final storage = await _storage();
       final provider = PostsProvider(storage, _StubApi(
-          const DispatchResult(DispatchOutcome.offline)));
+          const DispatchResult(DispatchOutcome.failed)));
 
       final past = DateTime.now().subtract(const Duration(hours: 2));
       final future = DateTime.now().add(const Duration(hours: 2));
@@ -235,7 +235,7 @@ void main() {
 
       final result = await const ApiService().dispatchPost(_post('demo'));
 
-      expect(result.outcome, DispatchOutcome.sent);
+      expect(result.outcome, DispatchOutcome.published);
       expect(result.toString(), contains('Demo mode'));
     });
   });
@@ -256,7 +256,7 @@ void main() {
 
       final result = await api.dispatchPost(_post('p1'));
 
-      expect(result.outcome, DispatchOutcome.rejected);
+      expect(result.outcome, DispatchOutcome.unknown);
       expect(result.detail, contains('HTTP 500'));
       expect(attempts, 1,
           reason: 'the retry ladder would have POSTed four times');
@@ -274,10 +274,38 @@ void main() {
 
       final result = await api.dispatchPost(_post('p1'));
 
-      expect(result.outcome, DispatchOutcome.offline);
-      expect(result.detail, contains('timed out'));
+      expect(result.outcome, DispatchOutcome.unknown);
+      expect(result.detail, contains('Check the platform'));
       expect(attempts, 1,
           reason: 'the old transport retry would have sent a second POST');
+    });
+  });
+
+  group('Results are truthful', () {
+    Future<DispatchResult> answer(int code, String body) {
+      DemoModeService.setEnabled(false);
+      return ApiService(
+        client: MockClient((_) async => http.Response(body, code)),
+      ).dispatchPost(_post('p1'));
+    }
+
+    test('a platform refusal is failed, with its reason', () async {
+      final r = await answer(502, '{"error":"Too long"}');
+      expect(r.outcome, DispatchOutcome.failed);
+      expect(r.detail, 'Too long');
+    });
+
+    test('a daemon that could not tell is unknown', () async {
+      expect((await answer(504, '{"error":"Timed out"}')).outcome, DispatchOutcome.unknown);
+      expect((await answer(409, '{"error":"Sent"}')).outcome, DispatchOutcome.unknown);
+    });
+
+    test('a refused connection never arrived, so it is failed', () async {
+      await DemoModeService.setEnabled(false);
+      final r = await ApiService(
+        client: MockClient((_) async => throw http.ClientException('Connection refused')),
+      ).dispatchPost(_post('p1'));
+      expect(r.outcome, DispatchOutcome.failed);
     });
   });
 }
