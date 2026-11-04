@@ -38,6 +38,10 @@ void main() {
     final posts = await pump(tester, const Size(402, 874));
     final now = DateTime.now();
     final at = DateTime(now.year, now.month, now.day + 1, 8, 30);
+    // Seeds sit relative to now; one near 8:30 would grow its row and shift the drop.
+    for (final p in List.of(posts.posts)) {
+      posts.deletePost(p.id);
+    }
     posts.addPost(PostModel(
       id: 'drag',
       caption: 'Drag me',
