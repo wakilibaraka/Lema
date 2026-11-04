@@ -84,6 +84,18 @@ class MediaProcessingService {
       allowedFormats: ['jpg', 'jpeg', 'png', 'mp4', 'mov', 'gif'],
       requiredCodecs: ['h264'],
     ),
+    'linkedin': PlatformMediaConstraints(
+      platform: 'LinkedIn',
+      maxFileSizeMB: 250,
+      allowedFormats: ['jpg', 'jpeg', 'png', 'gif', 'mp4'],
+      requiredCodecs: ['h264'],
+    ),
+    'twitter': PlatformMediaConstraints(
+      platform: 'X',
+      maxFileSizeMB: 250,
+      allowedFormats: ['jpg', 'jpeg', 'png', 'gif', 'webp', 'mp4', 'mov'],
+      requiredCodecs: ['h264'],
+    ),
   };
 
   static MediaValidationIssue? validateMediaForPlatform({

@@ -7,11 +7,13 @@ class MediaPickerResult {
   final String pathOrUrl;
   final bool isVideo;
   final String name;
+  final int? sizeBytes;
 
   MediaPickerResult({
     required this.pathOrUrl,
     required this.isVideo,
     required this.name,
+    this.sizeBytes,
   });
 }
 
@@ -98,6 +100,7 @@ class _MediaPickerDialogState extends State<MediaPickerDialog> {
             pathOrUrl: item.url,
             isVideo: item.isVideo,
             name: item.name,
+            sizeBytes: item.sizeBytes,
           ),
         );
       }
@@ -273,7 +276,7 @@ class _MediaPickerDialogState extends State<MediaPickerDialog> {
                               final sizeMb = (u.sizeBytes / (1024 * 1024)).toStringAsFixed(1);
                               return InkWell(
                                 onTap: () => Navigator.of(context).pop(
-                                  MediaPickerResult(pathOrUrl: u.url, isVideo: u.isVideo, name: u.name),
+                                  MediaPickerResult(pathOrUrl: u.url, isVideo: u.isVideo, name: u.name, sizeBytes: u.sizeBytes),
                                 ),
                                 borderRadius: BorderRadius.circular(10),
                                 child: Container(

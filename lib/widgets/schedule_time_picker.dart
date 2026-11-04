@@ -51,6 +51,7 @@ Future<DateTime?> showScheduleTimePicker({
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w700,
+                    decoration: TextDecoration.none,
                     color: isDark ? Colors.white : Colors.black,
                   ),
                 ),

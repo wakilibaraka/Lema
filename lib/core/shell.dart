@@ -5,7 +5,7 @@ import 'package:provider/provider.dart';
 import '../features/analytics/analytics_view.dart';
 import '../features/media_vault/media_vault_view.dart';
 import '../features/queue_calendar/queue_calendar_view.dart';
-import '../views/composer_view.dart';
+import '../features/composer/composer_view.dart';
 import '../views/settings_view.dart';
 import 'destinations.dart';
 import 'providers/app_provider.dart';
@@ -104,7 +104,7 @@ Future<void> showQuickDraftSheet(BuildContext context) {
     ),
     builder: (_) => const FractionallySizedBox(
       heightFactor: 0.92,
-      child: ComposerView(),
+      child: ComposerView(inSheet: true),
     ),
   );
 }

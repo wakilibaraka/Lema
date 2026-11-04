@@ -10,7 +10,7 @@ import 'package:lema/core/providers/posts_provider.dart';
 import 'package:lema/core/providers/profile_provider.dart';
 import 'package:lema/core/services/demo_mode_service.dart';
 import 'package:lema/core/services/storage_service.dart';
-import 'package:lema/views/composer_view.dart';
+import 'package:lema/features/composer/composer_view.dart';
 import 'package:lema/widgets/schedule_time_picker.dart';
 
 /// Phase-4 defects: "Save as Draft" scheduled the post, saved tokens and demo
